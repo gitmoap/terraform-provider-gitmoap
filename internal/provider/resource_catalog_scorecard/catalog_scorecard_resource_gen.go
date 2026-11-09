@@ -194,6 +194,8 @@ func CatalogScorecardResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The scorecard's revision, incremented on every change. Send it with an update to have the\nupdate refused with a `409` if someone changed the scorecard since you read it.",
 			},
 		},
+		Description:         "A scorecard is a set of checks, and optionally named levels built from them, that every matching service in this group and the groups beneath it is measured against. Maintainers and above may declare one, but only the group's Owners may create it with its campaign armed, since an armed campaign files work items in every owning team's backlog. The slug must be unique here, each level may only require checks the scorecard carries, and the number of scorecards is capped by the plan. The token needs catalog:manage and catalog:read.",
+		MarkdownDescription: "A scorecard is a set of checks, and optionally named levels built from them, that every matching service in this group and the groups beneath it is measured against. Maintainers and above may declare one, but only the group's Owners may create it with its campaign armed, since an armed campaign files work items in every owning team's backlog. The slug must be unique here, each level may only require checks the scorecard carries, and the number of scorecards is capped by the plan.\n\nThe token needs `catalog:manage` and `catalog:read`.",
 	}
 }
 

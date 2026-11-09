@@ -48,6 +48,8 @@ func GroupLabelResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Its display name, 1–64 characters; without one it shows its key.",
 			},
 		},
+		Description:         "Adds a label to the group's vocabulary: a key, a colour and an optional description. Work items in the group and in every repository beneath it can carry it. A key written scope::name makes the label scoped, and a work item carries at most one label per scope. Maintainers and above may define labels; a key the group already defines is refused, as is a new label once the group is at its label limit. The token needs label:manage and issue:read.",
+		MarkdownDescription: "Adds a label to the group's vocabulary: a key, a colour and an optional description. Work items in the group and in every repository beneath it can carry it. A key written `scope::name` makes the label scoped, and a work item carries at most one label per scope. Maintainers and above may define labels; a key the group already defines is refused, as is a new label once the group is at its label limit.\n\nThe token needs `label:manage` and `issue:read`.",
 	}
 }
 

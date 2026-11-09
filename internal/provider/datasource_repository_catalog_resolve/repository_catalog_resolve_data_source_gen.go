@@ -137,6 +137,8 @@ func RepositoryCatalogResolveDataSourceSchema(ctx context.Context) schema.Schema
 				Computed: true,
 			},
 		},
+		Description:         "Resolve repository paths to the services that own them. Send each path as a repeated path parameter, up to 200 in one call: one request per changed file set rather than one per file. Each answer names the service that owns the path, where the most specific binding wins, and lists any other services whose bindings also match, in resolution order. Anyone who can read the repository's catalog may call it. The token needs catalog:read.",
+		MarkdownDescription: "Resolve repository paths to the services that own them. Send each path as a repeated `path` parameter, up to 200 in one call: one request per changed file set rather than one per file. Each answer names the service that owns the path, where the most specific binding wins, and lists any other services whose bindings also match, in resolution order. Anyone who can read the repository's catalog may call it.\n\nThe token needs `catalog:read`.",
 	}
 }
 

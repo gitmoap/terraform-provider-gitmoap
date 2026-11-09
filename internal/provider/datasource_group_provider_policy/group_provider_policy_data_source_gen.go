@@ -99,6 +99,8 @@ func GroupProviderPolicyDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "Get the effective provider policy for a group. Each setting comes from the nearest group, this one or one above it, that sets it, and the defaults fill the rest; the response names the group it came from, whether it is inherited, and which tiers are accepted. Anyone who can see the group; on a public group that includes callers who are not signed in. The token needs provider_policy:read.",
+		MarkdownDescription: "Get the effective provider policy for a group. Each setting comes from the nearest group, this one or one above it, that sets it, and the defaults fill the rest; the response names the group it came from, whether it is inherited, and which tiers are accepted. Anyone who can see the group; on a public group that includes callers who are not signed in.\n\nThe token needs `provider_policy:read`.",
 	}
 }
 

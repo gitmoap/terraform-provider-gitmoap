@@ -979,6 +979,40 @@ def fix_create_path_params(spec: Spec, config: dict, code_spec: dict, report: Re
     return fixed
 
 
+def first_paragraph(text: str) -> str:
+    """The first paragraph of an operation's description, unwrapped."""
+    for paragraph in re.split(r"\n\s*\n", text.strip()):
+        if paragraph.strip() and not paragraph.lstrip().startswith("**Required scope"):
+            return " ".join(line.strip() for line in paragraph.splitlines())
+    return ""
+
+
+def required_scopes(op: dict) -> list[str]:
+    return re.findall(r"\*\*Required scopes?:\*\*\s*`([^`]+)`", op.get("description") or "")
+
+
+def add_descriptions(spec: Spec, config: dict, code_spec: dict) -> None:
+    """Describe each resource and data source from its operations, for the documentation: what it
+    is, and the scopes a token needs to manage or read it."""
+    for config_key, spec_key, main in (("resources", "resources", "create"), ("data_sources", "datasources", "read")):
+        for entry in code_spec.get(spec_key, []):
+            locations = config[config_key][entry["name"]]
+            ops = {key: spec.op(locations[key]["path"], locations[key]["method"].lower()) for key in ("create", "read", "update", "delete") if key in locations}
+            op = ops[main]
+            text = first_paragraph(op.get("description") or "")
+            if config_key == "data_sources" and op.get("summary"):
+                summary = " ".join(op["summary"].split()).rstrip(".") + "."
+                text = f"{summary} {text}".strip()
+            scopes = list(dict.fromkeys(scope for found in ops.values() for scope in required_scopes(found or {})))
+            markdown = text
+            if scopes:
+                listed = [f"`{scope}`" for scope in scopes]
+                markdown += "\n\nThe token needs " + (", ".join(listed[:-1]) + " and " if len(listed) > 1 else "") + listed[-1] + "."
+            if markdown:
+                entry["schema"]["description"] = re.sub(r"[`*]", "", markdown).replace("\n\n", " ")
+                entry["schema"]["markdown_description"] = markdown
+
+
 # String attributes that hold a credential, wherever they appear. The spec marks only some of them
 # (format: password); Terraform shows the rest in plans and outputs unless they're sensitive.
 SECRET_NAMES = {"secret", "token", "client_secret", "password", "private_key", "refresh_token", "api_token"}
@@ -1444,6 +1478,7 @@ def main() -> int:
     fixed = fix_create_path_params(spec, config, code_spec, report)
     relaxed = fix_api_filled_nested(code_spec)
     secrets = mark_secrets(code_spec)
+    add_descriptions(spec, config, code_spec)
     renamed, renamed_fields = fix_nested_names(code_spec, report)
     api_map = build_api_map(spec, config, code_spec, renamed_fields, report)
     report_unmerged_allof(spec, report)

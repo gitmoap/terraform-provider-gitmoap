@@ -74,6 +74,8 @@ func GroupPackagesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Only packages whose name contains this, ignoring case (1-200 characters)",
 			},
 		},
+		Description:         "List a group's packages. Returns the packages in the group's npm, Cargo and PyPI registries, each with its newest version, version count and total size. Name a format (npm, cargo or pypi) to page through one registry with limit (up to 100, 20 by default) and cursor; without one you get an overview of up to 100 packages per format and no further pages. search keeps only the packages whose name contains it, ignoring case, before a page is cut — so an empty page means there is no match, not that the match is further on; send it again with the cursor. Anyone who can see the group may call it. The token needs package:read.",
+		MarkdownDescription: "List a group's packages. Returns the packages in the group's npm, Cargo and PyPI registries, each with its newest version, version count and total size. Name a `format` (npm, cargo or pypi) to page through one registry with `limit` (up to 100, 20 by default) and `cursor`; without one you get an overview of up to 100 packages per format and no further pages. `search` keeps only the packages whose name contains it, ignoring case, before a page is cut — so an empty page means there is no match, not that the match is further on; send it again with the cursor. Anyone who can see the group may call it.\n\nThe token needs `package:read`.",
 	}
 }
 

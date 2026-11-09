@@ -253,6 +253,8 @@ func RepositoryApprovalPolicyDataSourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "The rules this group or repository defines itself.",
 			},
 		},
+		Description:         "The approval policy and rules in force on a repository. Returns the approval switches that apply to its merge requests, the repository's own policy if it sets one, and the rules its merge requests must satisfy: every rule enforced by a group above (or the stronger version a nearer scope defines), then the nearest scope's own rules. Anyone who can see the repository may read it. The token needs approval_rule:read.",
+		MarkdownDescription: "The approval policy and rules in force on a repository. Returns the approval switches that apply to its merge requests, the repository's own policy if it sets one, and the rules its merge requests must satisfy: every rule enforced by a group above (or the stronger version a nearer scope defines), then the nearest scope's own rules. Anyone who can see the repository may read it.\n\nThe token needs `approval_rule:read`.",
 	}
 }
 

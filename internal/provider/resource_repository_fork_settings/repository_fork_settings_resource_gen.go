@@ -137,6 +137,8 @@ func RepositoryForkSettingsResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Sets the repository's own fork settings; send only the fields you change, and null to go back to what it inherits. They apply while override_group_settings is on. Maintainers may change them; letting the repository be forked outside its organization needs an Owner. A value looser than one a group above enforces is refused, naming that group, and a private repository is never forked outside its organization. The token needs repo:update and repo:read.",
+		MarkdownDescription: "Sets the repository's own fork settings; send only the fields you change, and `null` to go back to what it inherits. They apply while `override_group_settings` is on. Maintainers may change them; letting the repository be forked outside its organization needs an Owner. A value looser than one a group above enforces is refused, naming that group, and a private repository is never forked outside its organization.\n\nThe token needs `repo:update` and `repo:read`.",
 	}
 }
 

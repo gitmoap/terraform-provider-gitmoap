@@ -48,6 +48,8 @@ func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List the members of a group, with their profiles. Returns the profiles of the people who are direct members of the group named by group_id, a page at a time (at most 100). Only a signed-in member of that group may list them. The token needs user:read.",
+		MarkdownDescription: "List the members of a group, with their profiles. Returns the profiles of the people who are direct members of the group named by `group_id`, a page at a time (at most 100). Only a signed-in member of that group may list them.\n\nThe token needs `user:read`.",
 	}
 }
 

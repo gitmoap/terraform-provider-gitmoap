@@ -54,6 +54,8 @@ func GroupTagRuleDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When the rule last changed.",
 			},
 		},
+		Description:         "Read one of a group's tag rules. One of the rules the group declares itself: its pattern, its level and whether it is enforced beneath. Anyone who can see the group may read it. The token needs tag_rule:read.",
+		MarkdownDescription: "Read one of a group's tag rules. One of the rules the group declares itself: its pattern, its level and whether it is enforced beneath. Anyone who can see the group may read it.\n\nThe token needs `tag_rule:read`.",
 	}
 }
 

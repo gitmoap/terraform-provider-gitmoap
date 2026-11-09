@@ -173,6 +173,8 @@ func GroupAiOrgConventionsResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "Takes ai_org.manage on the organization, and a person; agents never write the conventions. Markdown of at most 16 KiB with a note of at most 200 characters; naming the revision it was edited from makes a later write a conflict. Counts against the organization's memory updates for the day. The token needs ai_org:manage and ai_org:read.",
+		MarkdownDescription: "Takes `ai_org.manage` on the organization, and a person; agents never write the conventions. Markdown of at most 16 KiB with a note of at most 200 characters; naming the revision it was edited from makes a later write a conflict. Counts against the organization's memory updates for the day.\n\nThe token needs `ai_org:manage` and `ai_org:read`.",
 	}
 }
 

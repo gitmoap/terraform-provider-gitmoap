@@ -253,6 +253,8 @@ func GroupApprovalPolicyDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The rules this group or repository defines itself.",
 			},
 		},
+		Description:         "The approval policy and rules in force on a group. Returns who may approve their own work and whether approvals survive a push, as they apply here; the group's own policy if it sets one; the approval rules that apply; and the rules the group defines itself. Anyone who can see the group may read it. The token needs approval_rule:read.",
+		MarkdownDescription: "The approval policy and rules in force on a group. Returns who may approve their own work and whether approvals survive a push, as they apply here; the group's own policy if it sets one; the approval rules that apply; and the rules the group defines itself. Anyone who can see the group may read it.\n\nThe token needs `approval_rule:read`.",
 	}
 }
 

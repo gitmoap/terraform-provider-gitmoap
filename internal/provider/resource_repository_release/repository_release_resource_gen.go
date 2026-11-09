@@ -212,6 +212,8 @@ func RepositoryReleaseResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Where to download the tagged source as a `.zip` archive.",
 			},
 		},
+		Description:         "Creates a release on a tag. When the tag does not exist yet, name a target — a branch, a tag or a commit — and the tag is created there in the same request. The token needs release:create, release:read, release:update and release:delete.",
+		MarkdownDescription: "Creates a release on a tag. When the tag does not exist yet, name a target — a branch, a tag or a commit — and the tag is created there in the same request.\n\nThe token needs `release:create`, `release:read`, `release:update` and `release:delete`.",
 	}
 }
 

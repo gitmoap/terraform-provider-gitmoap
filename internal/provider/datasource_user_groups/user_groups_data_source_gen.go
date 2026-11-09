@@ -54,6 +54,8 @@ func UserGroupsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "User ID",
 			},
 		},
+		Description:         "List groups the user is a member of. Your own direct group memberships, with your role in each, newest first, at most 100 per page. Only the user themselves may list them. The token needs group_member:read.",
+		MarkdownDescription: "List groups the user is a member of. Your own direct group memberships, with your role in each, newest first, at most 100 per page. Only the user themselves may list them.\n\nThe token needs `group_member:read`.",
 	}
 }
 

@@ -86,6 +86,8 @@ func GroupsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Filter by parent group path (mutually exclusive with parent_group_id)",
 			},
 		},
+		Description:         "List groups. Without a parent, lists top-level groups; with parent_group_id or parent_group_path (not both), lists that group's subgroups. Newest first, and only the groups the caller can see — public ones without signing in — so a page can hold fewer than limit groups while more remain (at most 100 per page). The token needs group:read.",
+		MarkdownDescription: "List groups. Without a parent, lists top-level groups; with `parent_group_id` or `parent_group_path` (not both), lists that group's subgroups. Newest first, and only the groups the caller can see — public ones without signing in — so a page can hold fewer than `limit` groups while more remain (at most 100 per page).\n\nThe token needs `group:read`.",
 	}
 }
 

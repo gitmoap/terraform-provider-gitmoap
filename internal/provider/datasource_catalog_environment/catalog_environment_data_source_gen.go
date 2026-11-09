@@ -166,6 +166,8 @@ func CatalogEnvironmentDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Increases with every change. Send it with an update to have the update refused with `409`\nif someone else changed the environment first.",
 			},
 		},
+		Description:         "Get an environment by id. Returns the environment's slug, tier, display name, URL, protection, concurrency rule and number of variables. Reporters and above on the group or repository that owns it may read it; environments are not public, and one you cannot see is not found. The token needs catalog:read.",
+		MarkdownDescription: "Get an environment by id. Returns the environment's slug, tier, display name, URL, protection, concurrency rule and number of variables. Reporters and above on the group or repository that owns it may read it; environments are not public, and one you cannot see is not found.\n\nThe token needs `catalog:read`.",
 	}
 }
 

@@ -78,6 +78,8 @@ func IssueCriterionKindsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "The catalogue of acceptance-criterion kinds and their argument field schemas. Lists every kind of acceptance criterion — manual, test, metric, coverage, node and scorecard_check, which is filed automatically and cannot be authored — each with a label, help text, its typed argument fields and a JSON Schema for them, enough to build one authoring form per kind. The catalogue is the same for everyone, and any signed-in caller may read it. The token needs issue:read.",
+		MarkdownDescription: "The catalogue of acceptance-criterion kinds and their argument field schemas. Lists every kind of acceptance criterion — `manual`, `test`, `metric`, `coverage`, `node` and `scorecard_check`, which is filed automatically and cannot be authored — each with a label, help text, its typed argument fields and a JSON Schema for them, enough to build one authoring form per kind. The catalogue is the same for everyone, and any signed-in caller may read it.\n\nThe token needs `issue:read`.",
 	}
 }
 

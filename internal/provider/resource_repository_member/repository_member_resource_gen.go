@@ -54,6 +54,8 @@ func RepositoryMemberResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Gives a person a built-in role directly on the repository. Callers who can manage access here may add members (Maintainers and above with the built-in roles), and nobody can give a role above their own. Refused when the person already has a role here, and when the repository's member limit is reached. The token needs repo_member:add, repo_member:read, repo_member:update and repo_member:remove.",
+		MarkdownDescription: "Gives a person a built-in role directly on the repository. Callers who can manage access here may add members (Maintainers and above with the built-in roles), and nobody can give a role above their own. Refused when the person already has a role here, and when the repository's member limit is reached.\n\nThe token needs `repo_member:add`, `repo_member:read`, `repo_member:update` and `repo_member:remove`.",
 	}
 }
 

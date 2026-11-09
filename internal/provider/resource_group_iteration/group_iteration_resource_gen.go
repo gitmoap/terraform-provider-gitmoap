@@ -197,6 +197,8 @@ func GroupIterationResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When it last changed, ISO 8601.",
 			},
 		},
+		Description:         "Creates an iteration in the group by hand: a title, an optional description, and the days it runs, both included. Work items from the group and from every repository beneath it can be put in it. Iterations a cadence generates are created for you; this is for one that follows no schedule, such as a hardening week. Maintainers and above may create iterations, up to the group's iteration limit. The token needs iteration:manage and issue:read.",
+		MarkdownDescription: "Creates an iteration in the group by hand: a title, an optional description, and the days it runs, both included. Work items from the group and from every repository beneath it can be put in it. Iterations a cadence generates are created for you; this is for one that follows no schedule, such as a hardening week. Maintainers and above may create iterations, up to the group's iteration limit.\n\nThe token needs `iteration:manage` and `issue:read`.",
 	}
 }
 

@@ -98,6 +98,8 @@ func PublisherDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a publisher's public profile. The publisher's namespace, display name, contact email, public key, status, and whether and how it was verified. Which account owns a publisher is shown only to that account and to platform administrators. Open to any signed-in caller. The token needs publisher:read.",
+		MarkdownDescription: "Get a publisher's public profile. The publisher's namespace, display name, contact email, public key, status, and whether and how it was verified. Which account owns a publisher is shown only to that account and to platform administrators. Open to any signed-in caller.\n\nThe token needs `publisher:read`.",
 	}
 }
 

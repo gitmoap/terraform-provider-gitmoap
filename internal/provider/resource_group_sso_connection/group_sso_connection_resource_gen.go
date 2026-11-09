@@ -285,6 +285,8 @@ func GroupSsoConnectionResourceSchema(ctx context.Context) schema.Schema {
 				Computed:    true,
 			},
 		},
+		Description:         "Only the organization's owners configure it, on its top-level group. The body names one protocol — SAML 2.0 (a metadata URL or document) or OpenID Connect (issuer, client id and secret) — with the attribute mapping, whether newcomers on verified domains get an account at their first sign-in, whether sign-in through the provider is enforced, and the role newcomers receive (Reporter by default). The provider is set up straight away and the response says whether that worked (active) or not (failed, with the error); a change made while another is still being set up is refused. The token needs sso:manage and sso:read.",
+		MarkdownDescription: "Only the organization's owners configure it, on its top-level group. The body names one protocol — SAML 2.0 (a metadata URL or document) or OpenID Connect (issuer, client id and secret) — with the attribute mapping, whether newcomers on verified domains get an account at their first sign-in, whether sign-in through the provider is enforced, and the role newcomers receive (Reporter by default). The provider is set up straight away and the response says whether that worked (`active`) or not (`failed`, with the error); a change made while another is still being set up is refused.\n\nThe token needs `sso:manage` and `sso:read`.",
 	}
 }
 

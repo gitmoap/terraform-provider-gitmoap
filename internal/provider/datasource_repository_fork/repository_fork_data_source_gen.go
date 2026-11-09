@@ -425,6 +425,8 @@ func RepositoryForkDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a repository's fork relationship. Where this fork came from, whether its code belongs to the repositories it was forked from, what its copy brought, how far its tracked branch has drifted as of the last refresh, and what you may do with it. A repository you cannot see is named only as {\"visible\": false}. A repository that is not a fork answers 404 with NOT_A_FORK. The token needs repo:read.",
+		MarkdownDescription: "Get a repository's fork relationship. Where this fork came from, whether its code belongs to the repositories it was forked from, what its copy brought, how far its tracked branch has drifted as of the last refresh, and what you may do with it. A repository you cannot see is named only as `{\"visible\": false}`. A repository that is not a fork answers 404 with `NOT_A_FORK`.\n\nThe token needs `repo:read`.",
 	}
 }
 

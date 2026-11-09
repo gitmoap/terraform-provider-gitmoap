@@ -49,6 +49,8 @@ func RepositoryBranchRuleDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a branch rule by ID. One of the repository's own branch rules: its pattern, the levels needed to push and merge, its force-push and code-owner settings, and its allowlists. Anyone who can see the repository may read it. The token needs branch_rule:read.",
+		MarkdownDescription: "Get a branch rule by ID. One of the repository's own branch rules: its pattern, the levels needed to push and merge, its force-push and code-owner settings, and its allowlists. Anyone who can see the repository may read it.\n\nThe token needs `branch_rule:read`.",
 	}
 }
 

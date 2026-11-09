@@ -102,6 +102,8 @@ func GroupPipelineVariablesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The variables, by name. A secret's value is never returned.",
 			},
 		},
+		Description:         "List the pipeline variables a group declares. Returns only the variables declared on this group itself, not those it inherits; ask a repository for the effective set. A secret's value is never returned. Reporters and above may read them; variables are not public, even on a public group. The token needs pipeline_variable:read.",
+		MarkdownDescription: "List the pipeline variables a group declares. Returns only the variables declared on this group itself, not those it inherits; ask a repository for the effective set. A secret's value is never returned. Reporters and above may read them; variables are not public, even on a public group.\n\nThe token needs `pipeline_variable:read`.",
 	}
 }
 

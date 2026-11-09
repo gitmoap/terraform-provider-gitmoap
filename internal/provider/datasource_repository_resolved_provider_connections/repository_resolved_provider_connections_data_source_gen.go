@@ -130,6 +130,8 @@ func RepositoryResolvedProviderConnectionsDataSourceSchema(ctx context.Context) 
 				MarkdownDescription: "Repository id",
 			},
 		},
+		Description:         "List the provider connections a repository's pipelines can use. Combines the repository's own connections with those of every group above it. Where two of them define a connection for the same provider under the same name, the one nearest the repository wins. Each entry says whether it is inherited, and one inherited from a group you cannot see shows only its provider and name. Credential values are never returned, only references to where they are kept. Reporters and above, as members of the repository: a public repository does not make its connections readable. The token needs provider_connection:read.",
+		MarkdownDescription: "List the provider connections a repository's pipelines can use. Combines the repository's own connections with those of every group above it. Where two of them define a connection for the same provider under the same name, the one nearest the repository wins. Each entry says whether it is inherited, and one inherited from a group you cannot see shows only its provider and name. Credential values are never returned, only references to where they are kept. Reporters and above, as members of the repository: a public repository does not make its connections readable.\n\nThe token needs `provider_connection:read`.",
 	}
 }
 

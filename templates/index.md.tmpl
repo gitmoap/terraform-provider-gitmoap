@@ -1,0 +1,29 @@
+---
+page_title: "Provider: gitmoap"
+description: |-
+  Manage gitmoap groups, repositories and their settings as code.
+---
+
+# gitmoap Provider
+
+Manage [gitmoap](https://gitmoap.com) as code: groups and the defaults they set for every
+repository beneath them, repositories, labels, milestones and sprints, teams, pipeline variables,
+webhooks and wikis. Data sources read nearly everything else the API serves.
+
+## Example Usage
+
+{{ tffile "examples/provider/provider.tf" }}
+
+## Authentication
+
+The provider signs in with a gitmoap access token: a personal token (`gmp_…`) or a service
+account token (`gms_…`). Set it with `token`, or in the `GITMOAP_TOKEN` environment variable. A
+token carries scopes, and each resource's page lists the ones it needs.
+
+## Group and repository settings
+
+Settings resources (`*_mr_settings`, `*_issue_settings`, `*_fork_settings`, `*_push_rules`) on a
+group apply to every repository beneath it. A repository's own settings only take effect over the
+group's when they set `override_group_settings = true`.
+
+{{ .SchemaMarkdown | trimspace }}

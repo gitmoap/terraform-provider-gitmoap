@@ -194,6 +194,8 @@ func TeamMemberResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Sets the person's role on the team (member or maintainer) and an optional end date. The team's maintainers, and whoever manages the organization's teams, may call it; when the change gives more — a new place, a higher role, a later end — the caller must also be able to give every grant the team holds. Only people join teams, and a roster kept by the identity provider is changed there instead. Answers 201 when the person is added and 200 when their place changes; with dry_run=true it says what they would gain, and nothing changes. The token needs team:manage and team:read.",
+		MarkdownDescription: "Sets the person's role on the team (member or maintainer) and an optional end date. The team's maintainers, and whoever manages the organization's teams, may call it; when the change gives more — a new place, a higher role, a later end — the caller must also be able to give every grant the team holds. Only people join teams, and a roster kept by the identity provider is changed there instead. Answers `201` when the person is added and `200` when their place changes; with `dry_run=true` it says what they would gain, and nothing changes.\n\nThe token needs `team:manage` and `team:read`.",
 	}
 }
 

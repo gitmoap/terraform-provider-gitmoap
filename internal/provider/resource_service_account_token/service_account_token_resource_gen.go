@@ -144,6 +144,8 @@ func ServiceAccountTokenResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The plaintext token. Store it securely — it is not shown again.",
 			},
 		},
+		Description:         "Mints a token that acts as the service account, carrying the scopes you name, with an optional expiry and an optional binding to one group or repository you can see. A token carries everything the account can do, so only someone who may manage the account — and holds at least its access — may mint one: the owners for a group's account, Maintainers and above for a repository's. The response holds the token itself once, and never again. At most 100 tokens per account. The token needs token:manage and token:read.",
+		MarkdownDescription: "Mints a token that acts as the service account, carrying the scopes you name, with an optional expiry and an optional binding to one group or repository you can see. A token carries everything the account can do, so only someone who may manage the account — and holds at least its access — may mint one: the owners for a group's account, Maintainers and above for a repository's. The response holds the token itself once, and never again. At most 100 tokens per account.\n\nThe token needs `token:manage` and `token:read`.",
 	}
 }
 

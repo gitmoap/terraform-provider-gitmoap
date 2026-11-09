@@ -123,6 +123,8 @@ func RepositoryForksDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "List a repository's forks. The forks of this repository that you can see, newest first unless you choose another order: its own forks, or with scope=network every fork descended from the same original. A fork names its upstream, and how many forks it sits from the original, only where you can see that upstream, and nothing says how many forks you cannot see. search matches a fork's path. Page with next_token. The token needs repo:read.",
+		MarkdownDescription: "List a repository's forks. The forks of this repository that you can see, newest first unless you choose another order: its own forks, or with `scope=network` every fork descended from the same original. A fork names its upstream, and how many forks it sits from the original, only where you can see that upstream, and nothing says how many forks you cannot see. `search` matches a fork's path. Page with `next_token`.\n\nThe token needs `repo:read`.",
 	}
 }
 

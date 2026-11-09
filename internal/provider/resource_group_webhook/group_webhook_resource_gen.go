@@ -108,6 +108,8 @@ func GroupWebhookResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Webhook ID",
 			},
 		},
+		Description:         "Registers an HTTPS endpoint that receives a signed JSON POST for each event type you subscribe to: push, merge_request, issue or access. A group webhook also receives the events of every subgroup and repository beneath the group. Every delivery carries an HMAC-SHA256 of its body, computed with the secret you supply, in the X-Gitmoap-Signature-256 header; the secret is never shown again. A group holds a limited number of webhooks of its own, set by its plan. Maintainers and above. The token needs webhook:manage and webhook:read.",
+		MarkdownDescription: "Registers an HTTPS endpoint that receives a signed JSON `POST` for each event type you subscribe to: `push`, `merge_request`, `issue` or `access`. A group webhook also receives the events of every subgroup and repository beneath the group. Every delivery carries an HMAC-SHA256 of its body, computed with the secret you supply, in the `X-Gitmoap-Signature-256` header; the secret is never shown again. A group holds a limited number of webhooks of its own, set by its plan. Maintainers and above.\n\nThe token needs `webhook:manage` and `webhook:read`.",
 	}
 }
 

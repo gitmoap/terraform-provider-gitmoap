@@ -220,6 +220,8 @@ func GroupWikiPageResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Writes the page to the wiki as a new commit. The path is the page's address and the title is separate and can change later; the format defaults to Markdown. Refused when a page already exists at the path, when the path starts with templates/ or attachments/, or when the content is larger than 1 MiB. A wiki holds at most 5,000 pages. A wiki that reads its pages from the repository is changed by committing there, not through this API. Developers and above. The token needs wiki:write and wiki:read.",
+		MarkdownDescription: "Writes the page to the wiki as a new commit. The path is the page's address and the title is separate and can change later; the format defaults to Markdown. Refused when a page already exists at the path, when the path starts with `templates/` or `attachments/`, or when the content is larger than 1 MiB. A wiki holds at most 5,000 pages. A wiki that reads its pages from the repository is changed by committing there, not through this API. Developers and above.\n\nThe token needs `wiki:write` and `wiki:read`.",
 	}
 }
 

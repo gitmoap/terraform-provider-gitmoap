@@ -71,6 +71,8 @@ func RepositoryBranchRulesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Repository ID",
 			},
 		},
+		Description:         "List branch rules for a repository. The rules the repository declares itself, or with inherited=true the rules in effect for it: its own and its groups', a nearer rule replacing a farther one for the same pattern and an enforced group rule tightening whichever wins, each naming where it comes from. Anyone who can see the repository may call it. The token needs branch_rule:read.",
+		MarkdownDescription: "List branch rules for a repository. The rules the repository declares itself, or with `inherited=true` the rules in effect for it: its own and its groups', a nearer rule replacing a farther one for the same pattern and an enforced group rule tightening whichever wins, each naming where it comes from. Anyone who can see the repository may call it.\n\nThe token needs `branch_rule:read`.",
 	}
 }
 

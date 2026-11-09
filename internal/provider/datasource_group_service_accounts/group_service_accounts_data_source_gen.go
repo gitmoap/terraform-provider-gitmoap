@@ -100,6 +100,8 @@ func GroupServiceAccountsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List service accounts in a group. The service accounts whose home is this group, newest first. Anyone signed in who can see the group may list them (Reporters and above on a private group). The token needs service_account:read.",
+		MarkdownDescription: "List service accounts in a group. The service accounts whose home is this group, newest first. Anyone signed in who can see the group may list them (Reporters and above on a private group).\n\nThe token needs `service_account:read`.",
 	}
 }
 

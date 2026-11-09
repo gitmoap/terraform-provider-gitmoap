@@ -117,6 +117,8 @@ func ChannelMembersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Members, in the order they were added.",
 			},
 		},
+		Description:         "List a private channel's members. Who reads a private channel or a direct conversation, in the order they were added. Who reads any other channel follows from access to its group, so it has no member list. The token needs channel:read.",
+		MarkdownDescription: "List a private channel's members. Who reads a private channel or a direct conversation, in the order they were added. Who reads any other channel follows from access to its group, so it has no member list.\n\nThe token needs `channel:read`.",
 	}
 }
 

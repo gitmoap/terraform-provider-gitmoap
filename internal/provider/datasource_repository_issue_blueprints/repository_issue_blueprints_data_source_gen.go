@@ -157,6 +157,8 @@ func RepositoryIssueBlueprintsDataSourceSchema(ctx context.Context) schema.Schem
 				Computed: true,
 			},
 		},
+		Description:         "List a repository's available custom types. Returns the custom types the repository defines, ordered by id. With include=inherited it adds those its parent groups define, nearest group first, and a type defined nearer the repository hides one with the same id further up; each type says whether it is inherited. Anyone who can see the repository's work items may list them — on a public repository, without signing in. The token needs issue_blueprint:read.",
+		MarkdownDescription: "List a repository's available custom types. Returns the custom types the repository defines, ordered by id. With `include=inherited` it adds those its parent groups define, nearest group first, and a type defined nearer the repository hides one with the same id further up; each type says whether it is inherited. Anyone who can see the repository's work items may list them — on a public repository, without signing in.\n\nThe token needs `issue_blueprint:read`.",
 	}
 }
 

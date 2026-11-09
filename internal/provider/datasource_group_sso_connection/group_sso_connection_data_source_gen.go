@@ -258,6 +258,8 @@ func GroupSsoConnectionDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed:    true,
 			},
 		},
+		Description:         "Read the organization's single sign-on connection. Its protocol, status, attribute mapping, verified domains and sign-in policy, with the last setup error if there was one. Secrets are never returned, only whether an OpenID Connect client secret or a SAML metadata document is set; a disabled connection reads as disabled. Only the organization's owners can read it. The token needs sso:read.",
+		MarkdownDescription: "Read the organization's single sign-on connection. Its protocol, status, attribute mapping, verified domains and sign-in policy, with the last setup error if there was one. Secrets are never returned, only whether an OpenID Connect client secret or a SAML metadata document is set; a disabled connection reads as `disabled`. Only the organization's owners can read it.\n\nThe token needs `sso:read`.",
 	}
 }
 

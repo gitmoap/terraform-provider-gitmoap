@@ -136,6 +136,8 @@ func GroupIssueBlueprintDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The blueprint's revision, incremented on every change. An update must send the version it\nread, and is refused with a `409` if the blueprint changed since.",
 			},
 		},
+		Description:         "Get one of a group's custom types. Returns a custom type the group itself defines, with its base type, facets and version; a type inherited from a group further up is read from that group. Anyone who can see the group's work items may read it — on a public group, without signing in. The token needs issue_blueprint:read.",
+		MarkdownDescription: "Get one of a group's custom types. Returns a custom type the group itself defines, with its base type, facets and version; a type inherited from a group further up is read from that group. Anyone who can see the group's work items may read it — on a public group, without signing in.\n\nThe token needs `issue_blueprint:read`.",
 	}
 }
 

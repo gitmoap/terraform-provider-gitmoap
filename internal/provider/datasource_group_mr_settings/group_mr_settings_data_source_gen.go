@@ -61,6 +61,8 @@ func GroupMrSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get MR settings for a group (raw values, no inheritance resolution). The values this group sets itself, each absent where the group leaves it to the groups above; nothing is filled in from them. Anyone who can see the group may read them. The token needs mr_settings:read.",
+		MarkdownDescription: "Get MR settings for a group (raw values, no inheritance resolution). The values this group sets itself, each absent where the group leaves it to the groups above; nothing is filled in from them. Anyone who can see the group may read them.\n\nThe token needs `mr_settings:read`.",
 	}
 }
 

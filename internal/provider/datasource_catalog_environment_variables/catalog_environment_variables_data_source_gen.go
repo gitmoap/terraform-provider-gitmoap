@@ -97,6 +97,8 @@ func CatalogEnvironmentVariablesDataSourceSchema(ctx context.Context) schema.Sch
 				MarkdownDescription: "The longest value a variable may hold, in bytes.",
 			},
 		},
+		Description:         "List an environment's variables. Returns every variable's name, whether it is secret, and the value of each one that is not; a secret's value is never returned. Reporters and above on the owning group or repository may read them, and environments are not public. The token needs catalog:read.",
+		MarkdownDescription: "List an environment's variables. Returns every variable's name, whether it is secret, and the value of each one that is not; a secret's value is never returned. Reporters and above on the owning group or repository may read them, and environments are not public.\n\nThe token needs `catalog:read`.",
 	}
 }
 

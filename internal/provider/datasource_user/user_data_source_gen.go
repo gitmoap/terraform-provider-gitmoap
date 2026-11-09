@@ -31,6 +31,8 @@ func UserDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a user by ID. Returns the person's public profile: id, username and avatar. Anyone may read it, without signing in; the email address is never part of it. The token needs user:read.",
+		MarkdownDescription: "Get a user by ID. Returns the person's public profile: id, username and avatar. Anyone may read it, without signing in; the email address is never part of it.\n\nThe token needs `user:read`.",
 	}
 }
 

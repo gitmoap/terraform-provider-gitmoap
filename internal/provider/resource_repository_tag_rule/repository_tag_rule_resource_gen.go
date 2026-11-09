@@ -78,6 +78,8 @@ func RepositoryTagRuleResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When the rule last changed.",
 			},
 		},
+		Description:         "Protects the repository's tags matching a name or a pattern, where  matches anything, / included: creating, moving or deleting a matching tag needs at least allowed_to_create (Maintainer when left out, Developer at the lowest), over git push and the API alike, and a run on a matching tag is a run on a protected ref. Maintainers and above may create one; a pattern takes one rule per repository, and a rule weaker than one a group above enforces for the same pattern is refused. The token needs tag_rule:manage and tag_rule:read.",
+		MarkdownDescription: "Protects the repository's tags matching a name or a pattern, where `*` matches anything, `/` included: creating, moving or deleting a matching tag needs at least `allowed_to_create` (Maintainer when left out, Developer at the lowest), over `git push` and the API alike, and a run on a matching tag is a run on a protected ref. Maintainers and above may create one; a pattern takes one rule per repository, and a rule weaker than one a group above enforces for the same pattern is refused.\n\nThe token needs `tag_rule:manage` and `tag_rule:read`.",
 	}
 }
 

@@ -74,6 +74,8 @@ func RepositoryTagRulesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The repository's id",
 			},
 		},
+		Description:         "List a repository's tag rules. The rules the repository declares itself, oldest first, all of them: a repository holds at most its plan's tag-rule limit. Rules its groups declare apply to it too and are listed on the groups. Anyone who can see the repository may call it. The token needs tag_rule:read.",
+		MarkdownDescription: "List a repository's tag rules. The rules the repository declares itself, oldest first, all of them: a repository holds at most its plan's tag-rule limit. Rules its groups declare apply to it too and are listed on the groups. Anyone who can see the repository may call it.\n\nThe token needs `tag_rule:read`.",
 	}
 }
 

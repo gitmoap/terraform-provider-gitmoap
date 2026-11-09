@@ -80,6 +80,8 @@ func CatalogServiceScorecardsDataSourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "The service's id",
 			},
 		},
+		Description:         "Every scorecard's verdict on one service. For each scorecard that applies to the service, returns the level it reaches and how many of its checks are in each state; a check with no result yet counts as unknown. Anyone who can see the service may call it. The token needs catalog:read.",
+		MarkdownDescription: "Every scorecard's verdict on one service. For each scorecard that applies to the service, returns the level it reaches and how many of its checks are in each state; a check with no result yet counts as unknown. Anyone who can see the service may call it.\n\nThe token needs `catalog:read`.",
 	}
 }
 

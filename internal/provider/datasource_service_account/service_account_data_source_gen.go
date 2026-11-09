@@ -85,6 +85,8 @@ func ServiceAccountDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a service account by ID. Returns the account's name, generated username and email, access level, home group or repository, and who created it. Anyone signed in who can see the account's home may read it (Reporters and above on a private group or repository). Each read is recorded in the audit log. The token needs service_account:read.",
+		MarkdownDescription: "Get a service account by ID. Returns the account's name, generated username and email, access level, home group or repository, and who created it. Anyone signed in who can see the account's home may read it (Reporters and above on a private group or repository). Each read is recorded in the audit log.\n\nThe token needs `service_account:read`.",
 	}
 }
 

@@ -54,6 +54,8 @@ func RepositoryTagRuleDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When the rule last changed.",
 			},
 		},
+		Description:         "Read one of a repository's tag rules. One of the rules the repository declares itself: its pattern, the level needed to create, move or delete a matching tag, and when it changed. Anyone who can see the repository may read it. The token needs tag_rule:read.",
+		MarkdownDescription: "Read one of a repository's tag rules. One of the rules the repository declares itself: its pattern, the level needed to create, move or delete a matching tag, and when it changed. Anyone who can see the repository may read it.\n\nThe token needs `tag_rule:read`.",
 	}
 }
 

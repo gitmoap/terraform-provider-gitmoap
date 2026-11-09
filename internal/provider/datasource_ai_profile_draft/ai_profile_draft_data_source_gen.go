@@ -130,6 +130,8 @@ func AiProfileDraftDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "An agent's job, which decides what it may do and which model tier it uses by default.",
 			},
 		},
+		Description:         "A persona draft, and once it is written, the persona. Only the person who asked for the draft can read it. The token needs ai_org:manage.",
+		MarkdownDescription: "A persona draft, and once it is written, the persona. Only the person who asked for the draft can read it.\n\nThe token needs `ai_org:manage`.",
 	}
 }
 

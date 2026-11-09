@@ -152,6 +152,8 @@ func AiAgentDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "One agent. Returns the agent's handle, state and suspension, with its position and squad from the live revision (a retired agent has neither). Reporters and above of the organization's top-level group may read it; an agent of an organization the caller cannot see is not found. The token needs ai_org:read.",
+		MarkdownDescription: "One agent. Returns the agent's handle, state and suspension, with its position and squad from the live revision (a retired agent has neither). Reporters and above of the organization's top-level group may read it; an agent of an organization the caller cannot see is not found.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

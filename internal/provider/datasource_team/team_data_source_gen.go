@@ -94,6 +94,8 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "One team. Returns the team's slug, name, description, member count and where its roster is kept. Only members of the team's organization can read it; to anyone else it is not found. The token needs team:read.",
+		MarkdownDescription: "One team. Returns the team's slug, name, description, member count and where its roster is kept. Only members of the team's organization can read it; to anyone else it is not found.\n\nThe token needs `team:read`.",
 	}
 }
 

@@ -565,6 +565,8 @@ func RepositoryPipelineComponentsDataSourceSchema(ctx context.Context) schema.Sc
 				MarkdownDescription: "Match on name and description",
 			},
 		},
+		Description:         "List the components a repository's pipelines may reference. Returns this repository's own components together with those of every group above it; when two declare the same name, the nearest wins. A component whose providers are not installed here is listed and marked rather than hidden, and one owned by a group you cannot read is left out. Filter with search (name and description) or own_scope_only; pages hold up to 100 components (20 by default) and continue with next_token. The token needs pipeline:read.",
+		MarkdownDescription: "List the components a repository's pipelines may reference. Returns this repository's own components together with those of every group above it; when two declare the same name, the nearest wins. A component whose providers are not installed here is listed and marked rather than hidden, and one owned by a group you cannot read is left out. Filter with `search` (name and description) or `own_scope_only`; pages hold up to 100 components (20 by default) and continue with `next_token`.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

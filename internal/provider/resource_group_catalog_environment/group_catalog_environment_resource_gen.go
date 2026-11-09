@@ -216,6 +216,8 @@ func GroupCatalogEnvironmentResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Increases with every change. Send it with an update to have the update refused with `409`\nif someone else changed the environment first.",
 			},
 		},
+		Description:         "Declares an environment, a place services deploy to, that every repository beneath the group can deploy to unless it declares its own environment with the same slug. Maintainers and above may declare one; a production-tier environment needs an Owner. Unless you set its protection, a production environment requires an approval from the group's direct members before each deploy and accepts deploys from main only. The token needs catalog:manage and catalog:read.",
+		MarkdownDescription: "Declares an environment, a place services deploy to, that every repository beneath the group can deploy to unless it declares its own environment with the same slug. Maintainers and above may declare one; a production-tier environment needs an Owner. Unless you set its protection, a production environment requires an approval from the group's direct members before each deploy and accepts deploys from `main` only.\n\nThe token needs `catalog:manage` and `catalog:read`.",
 	}
 }
 

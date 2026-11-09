@@ -39,6 +39,8 @@ func RepositoryReleaseAssetDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "A presigned URL to download the file from. It expires shortly.",
 			},
 		},
+		Description:         "Download a release asset. Answers with a 302 redirect to a short-lived download link. With ?redirect=false it answers 200 { url } instead, for a browser app that cannot follow an authenticated redirect to another origin and navigates to the link itself. The token needs release:read.",
+		MarkdownDescription: "Download a release asset. Answers with a `302` redirect to a short-lived download link. With `?redirect=false` it answers `200 { url }` instead, for a browser app that cannot follow an authenticated redirect to another origin and navigates to the link itself.\n\nThe token needs `release:read`.",
 	}
 }
 

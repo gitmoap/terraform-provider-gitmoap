@@ -61,6 +61,8 @@ func RepositoryMrSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get effective MR settings for a repository (resolved with group inheritance). The merge-request settings in force for the repository: merge method, squashing, deleting the source branch, what blocks a merge, and how stacks behave. Unless the repository overrides its groups, they come from the nearest group that sets each one; anything set nowhere takes its default. Anyone who can see the repository may read them. The token needs mr_settings:read.",
+		MarkdownDescription: "Get effective MR settings for a repository (resolved with group inheritance). The merge-request settings in force for the repository: merge method, squashing, deleting the source branch, what blocks a merge, and how stacks behave. Unless the repository overrides its groups, they come from the nearest group that sets each one; anything set nowhere takes its default. Anyone who can see the repository may read them.\n\nThe token needs `mr_settings:read`.",
 	}
 }
 

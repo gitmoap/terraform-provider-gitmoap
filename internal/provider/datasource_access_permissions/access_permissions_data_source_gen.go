@@ -88,6 +88,8 @@ func AccessPermissionsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The five built-in roles, lowest first.",
 			},
 		},
+		Description:         "Every permission a role can hold, and the five built-in roles made of them. The same for every caller, and readable without signing in.",
+		MarkdownDescription: "Every permission a role can hold, and the five built-in roles made of them. The same for every caller, and readable without signing in.",
 	}
 }
 

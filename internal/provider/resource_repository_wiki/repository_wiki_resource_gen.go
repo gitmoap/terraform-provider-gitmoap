@@ -125,6 +125,8 @@ func RepositoryWikiResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "The first call creates the wiki; settings you leave out take their defaults — enabled, with pages kept in the wiki's own repository and home as the home page. Later calls change only the fields you send. Instead of its own repository, the wiki can read its pages from a directory on the repository's default branch, inside its specs, docs or legal directory; such a wiki is edited by committing to the repository. Maintainers and above. The token needs wiki:manage and wiki:read.",
+		MarkdownDescription: "The first call creates the wiki; settings you leave out take their defaults — enabled, with pages kept in the wiki's own repository and `home` as the home page. Later calls change only the fields you send. Instead of its own repository, the wiki can read its pages from a directory on the repository's default branch, inside its `specs`, `docs` or `legal` directory; such a wiki is edited by committing to the repository. Maintainers and above.\n\nThe token needs `wiki:manage` and `wiki:read`.",
 	}
 }
 

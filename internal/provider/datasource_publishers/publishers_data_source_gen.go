@@ -114,6 +114,8 @@ func PublishersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Filter by verified flag",
 			},
 		},
+		Description:         "List publishers, paginated. Newest first; pass verified to list only verified or only unverified publishers. Paginated with limit (20 by default, at most 100) and next_token. Which account owns a publisher is shown only to that account and to platform administrators. Open to any signed-in caller. The token needs publisher:read.",
+		MarkdownDescription: "List publishers, paginated. Newest first; pass `verified` to list only verified or only unverified publishers. Paginated with `limit` (20 by default, at most 100) and `next_token`. Which account owns a publisher is shown only to that account and to platform administrators. Open to any signed-in caller.\n\nThe token needs `publisher:read`.",
 	}
 }
 

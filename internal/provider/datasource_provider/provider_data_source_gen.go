@@ -69,6 +69,8 @@ func ProviderDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get one provider's metadata. The provider's name, description, tier, publisher, latest version, and the credentials a connection to it needs. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
+		MarkdownDescription: "Get one provider's metadata. The provider's name, description, tier, publisher, latest version, and the credentials a connection to it needs. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 

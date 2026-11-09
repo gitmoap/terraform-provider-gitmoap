@@ -217,6 +217,8 @@ func CatalogScorecardResultsDataSourceSchema(ctx context.Context) schema.Schema 
 				MarkdownDescription: "How many services a scorecard could score, and how many it could not. External services have\nnothing to measure, so they are counted separately rather than mixed into the totals.",
 			},
 		},
+		Description:         "List a scorecard's results, worst state first. Returns one result per service and check, failing first, then stale, expired, unknown, passing and not applicable. Beside the page sits a summary over the whole scorecard, never just the page: how many services reach each level and how many are not scored at all. Filter by state, check_key or service_id; page with limit and next_token. The token needs catalog:read.",
+		MarkdownDescription: "List a scorecard's results, worst state first. Returns one result per service and check, failing first, then stale, expired, unknown, passing and not applicable. Beside the page sits a summary over the whole scorecard, never just the page: how many services reach each level and how many are not scored at all. Filter by `state`, `check_key` or `service_id`; page with `limit` and `next_token`.\n\nThe token needs `catalog:read`.",
 	}
 }
 

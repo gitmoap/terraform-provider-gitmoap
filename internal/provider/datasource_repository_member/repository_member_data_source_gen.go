@@ -38,6 +38,8 @@ func RepositoryMemberDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a specific repository member. Returns one person's direct role on the repository. A repository's roster is not public, even when the repository is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles). The token needs repo_member:read.",
+		MarkdownDescription: "Get a specific repository member. Returns one person's direct role on the repository. A repository's roster is not public, even when the repository is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles).\n\nThe token needs `repo_member:read`.",
 	}
 }
 

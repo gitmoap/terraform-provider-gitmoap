@@ -27,6 +27,8 @@ func UserByEmailDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Look up a user by email address. Returns the account registered with that exact address. Unlike the lookups by id and by username, it needs a signed-in caller. The token needs user:read.",
+		MarkdownDescription: "Look up a user by email address. Returns the account registered with that exact address. Unlike the lookups by id and by username, it needs a signed-in caller.\n\nThe token needs `user:read`.",
 	}
 }
 

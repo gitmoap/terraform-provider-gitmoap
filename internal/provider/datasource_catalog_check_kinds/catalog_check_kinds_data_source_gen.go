@@ -83,6 +83,8 @@ func CatalogCheckKindsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Describe every derived check the platform implements. The catalogue a scorecard editor offers: each check the platform computes for itself, with its key, label, description, what it depends on, and the form fields and schema for configuring it. The same for every caller. The token needs catalog:read.",
+		MarkdownDescription: "Describe every derived check the platform implements. The catalogue a scorecard editor offers: each check the platform computes for itself, with its key, label, description, what it depends on, and the form fields and schema for configuring it. The same for every caller.\n\nThe token needs `catalog:read`.",
 	}
 }
 

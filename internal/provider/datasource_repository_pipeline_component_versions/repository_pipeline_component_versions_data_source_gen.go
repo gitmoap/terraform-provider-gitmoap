@@ -135,6 +135,8 @@ func RepositoryPipelineComponentVersionsDataSourceSchema(ctx context.Context) sc
 				MarkdownDescription: "The repository's id",
 			},
 		},
+		Description:         "List a component's published versions, newest first. Versions are ordered by version number rather than alphabetically, so v0.10.0 comes above v0.3.0. Filter by lifecycle_state (active, deprecated, sunset, or all, the default); pages hold up to 100 versions (20 by default) and continue with next_token. Anyone who can read the pipelines here may call it. The token needs pipeline:read.",
+		MarkdownDescription: "List a component's published versions, newest first. Versions are ordered by version number rather than alphabetically, so v0.10.0 comes above v0.3.0. Filter by `lifecycle_state` (active, deprecated, sunset, or all, the default); pages hold up to 100 versions (20 by default) and continue with `next_token`. Anyone who can read the pipelines here may call it.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

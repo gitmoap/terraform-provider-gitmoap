@@ -167,6 +167,8 @@ func RepositoryByPathDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a repository by its full path. The same answer as reading the repository by ID, addressed by its path under its groups, such as acme/platform/my-repo. A path that changed with a rename or a transfer no longer resolves. The token needs repo:read.",
+		MarkdownDescription: "Get a repository by its full path. The same answer as reading the repository by ID, addressed by its path under its groups, such as `acme/platform/my-repo`. A path that changed with a rename or a transfer no longer resolves.\n\nThe token needs `repo:read`.",
 	}
 }
 

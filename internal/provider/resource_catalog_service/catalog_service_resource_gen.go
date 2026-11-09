@@ -269,6 +269,8 @@ func CatalogServiceResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The service's revision, incremented on every change. Send it with an update to have the\nupdate refused with a `409` if someone changed the service since you read it.",
 			},
 		},
+		Description:         "Adds a service to the catalog, declared in this group and bound to one or more repository paths (an external service is not built here and binds none). Maintainers and above on the group may declare one; naming a group as owner needs the same standing on that group, naming a team needs authority over the team, and every bound repository must be one you maintain. The slug must be unique in the organization, and the number of services is capped by the plan. The token needs catalog:manage and catalog:read.",
+		MarkdownDescription: "Adds a service to the catalog, declared in this group and bound to one or more repository paths (an external service is not built here and binds none). Maintainers and above on the group may declare one; naming a group as owner needs the same standing on that group, naming a team needs authority over the team, and every bound repository must be one you maintain. The slug must be unique in the organization, and the number of services is capped by the plan.\n\nThe token needs `catalog:manage` and `catalog:read`.",
 	}
 }
 

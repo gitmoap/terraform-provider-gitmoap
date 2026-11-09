@@ -101,6 +101,8 @@ func GroupIterationsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Keeps the iterations in this state today — upcoming, current or closed",
 			},
 		},
+		Description:         "List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with state, or to one cadence's with cadence_id. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with `state`, or to one cadence's with `cadence_id`. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 

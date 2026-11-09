@@ -64,6 +64,8 @@ func GroupSsoDomainResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The DNS-TXT verification instructions returned when a domain is claimed.",
 			},
 		},
+		Description:         "The response names a TXT record (_gitmoap-challenge.<domain>) and the value to publish in it; verify the domain once the record is live. A claim holds nothing until it is verified, so several organizations may claim the same domain and the first to publish its record owns it; claiming a domain another organization has verified is refused, and claiming your own again returns the same challenge. Only the organization's owners claim domains. The token needs sso:manage and sso:read.",
+		MarkdownDescription: "The response names a TXT record (`_gitmoap-challenge.<domain>`) and the value to publish in it; verify the domain once the record is live. A claim holds nothing until it is verified, so several organizations may claim the same domain and the first to publish its record owns it; claiming a domain another organization has verified is refused, and claiming your own again returns the same challenge. Only the organization's owners claim domains.\n\nThe token needs `sso:manage` and `sso:read`.",
 	}
 }
 

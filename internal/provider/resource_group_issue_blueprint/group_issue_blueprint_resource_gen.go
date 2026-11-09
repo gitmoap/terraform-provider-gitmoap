@@ -162,6 +162,8 @@ func GroupIssueBlueprintResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The blueprint's revision, incremented on every change. An update must send the version it\nread, and is refused with a `409` if the blueprint changed since.",
 			},
 		},
+		Description:         "Creates a blueprint: a named custom type built on one of the base work-item types, whose facets become acceptance criteria on every work item filed as that type. The repositories and groups beneath the group are offered it too. Its id is a slug, unique in the group. Maintainers and above may define types, up to the group's limit. The token needs issue_blueprint:manage and issue_blueprint:read.",
+		MarkdownDescription: "Creates a blueprint: a named custom type built on one of the base work-item types, whose facets become acceptance criteria on every work item filed as that type. The repositories and groups beneath the group are offered it too. Its id is a slug, unique in the group. Maintainers and above may define types, up to the group's limit.\n\nThe token needs `issue_blueprint:manage` and `issue_blueprint:read`.",
 	}
 }
 

@@ -348,6 +348,8 @@ func GroupAccessDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Who has access to a group, and why. Lists every live grant that reaches the group — made on it, or inherited from a group above — oldest first, each with its holder, role, expiry, reason and any limit narrowing it. Filter by where the grant was made, by the kind of holder, or by a name fragment. Callers who can see who has access here may read it (Reporters and above with the built-in roles); a public or internal group does not make its access list public. The token needs access:read.",
+		MarkdownDescription: "Who has access to a group, and why. Lists every live grant that reaches the group — made on it, or inherited from a group above — oldest first, each with its holder, role, expiry, reason and any limit narrowing it. Filter by where the grant was made, by the kind of holder, or by a name fragment. Callers who can see who has access here may read it (Reporters and above with the built-in roles); a public or internal group does not make its access list public.\n\nThe token needs `access:read`.",
 	}
 }
 

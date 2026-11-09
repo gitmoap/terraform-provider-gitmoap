@@ -131,6 +131,8 @@ func TeamMembersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Team ID",
 			},
 		},
+		Description:         "The people on a team. Only members of the team's organization can read it. The token needs team:read.",
+		MarkdownDescription: "The people on a team. Only members of the team's organization can read it.\n\nThe token needs `team:read`.",
 	}
 }
 

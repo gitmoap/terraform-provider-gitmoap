@@ -100,6 +100,8 @@ func RoleDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "One custom role. Returns the role's names, its base role, the permissions added and removed, and the full set it holds. Only members of the role's organization can read it; to anyone else it is not found. The token needs role:read.",
+		MarkdownDescription: "One custom role. Returns the role's names, its base role, the permissions added and removed, and the full set it holds. Only members of the role's organization can read it; to anyone else it is not found.\n\nThe token needs `role:read`.",
 	}
 }
 

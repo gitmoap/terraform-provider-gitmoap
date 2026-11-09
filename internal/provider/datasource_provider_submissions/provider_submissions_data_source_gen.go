@@ -56,6 +56,8 @@ func ProviderSubmissionsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Provider id",
 			},
 		},
+		Description:         "List a provider's submissions. Every submission made for the provider, across its versions, with each one's state. Answers 404 for a provider that does not exist. Only the publisher that owns the provider and platform administrators may list them. The token needs provider_publishing:read.",
+		MarkdownDescription: "List a provider's submissions. Every submission made for the provider, across its versions, with each one's state. Answers `404` for a provider that does not exist. Only the publisher that owns the provider and platform administrators may list them.\n\nThe token needs `provider_publishing:read`.",
 	}
 }
 

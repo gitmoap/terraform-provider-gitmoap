@@ -244,6 +244,8 @@ func ProviderVersionsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Provider slug",
 			},
 		},
+		Description:         "List all published versions of a provider, newest-first. Each version's manifest and lifecycle state, active, deprecated or sunset. Paginated with limit (20 by default, at most 100) and next_token; the listing is ordered by version number, highest first, and the order carries on from one page to the next. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
+		MarkdownDescription: "List all published versions of a provider, newest-first. Each version's manifest and lifecycle state, active, deprecated or sunset. Paginated with `limit` (20 by default, at most 100) and `next_token`; the listing is ordered by version number, highest first, and the order carries on from one page to the next. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 

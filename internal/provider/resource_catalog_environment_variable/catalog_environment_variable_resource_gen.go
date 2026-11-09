@@ -89,6 +89,8 @@ func CatalogEnvironmentVariableResourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "The variable's value. Absent for a secret, whose value can be written but never read back.",
 			},
 		},
+		Description:         "Sets the variable to the value you send, creating it if it does not exist — or, with create_only=true, only creating it. Mark it secret and the value is stored write-only and never returned, so a secret cannot be empty; turning a secret back into a plain variable discards the stored secret. Only Owners may write variables, at every tier. Names the platform reserves for itself are refused, and an environment holds a limited number of variables. The token needs catalog:manage and catalog:read.",
+		MarkdownDescription: "Sets the variable to the value you send, creating it if it does not exist — or, with `create_only=true`, only creating it. Mark it secret and the value is stored write-only and never returned, so a secret cannot be empty; turning a secret back into a plain variable discards the stored secret. Only Owners may write variables, at every tier. Names the platform reserves for itself are refused, and an environment holds a limited number of variables.\n\nThe token needs `catalog:manage` and `catalog:read`.",
 	}
 }
 

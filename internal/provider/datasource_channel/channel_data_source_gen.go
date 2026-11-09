@@ -211,6 +211,8 @@ func ChannelDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who reads a channel.",
 			},
 		},
+		Description:         "Get a channel. The channel, with how many of its root messages you have not marked read. A channel you cannot read is not found. The token needs channel:read.",
+		MarkdownDescription: "Get a channel. The channel, with how many of its root messages you have not marked read. A channel you cannot read is not found.\n\nThe token needs `channel:read`.",
 	}
 }
 

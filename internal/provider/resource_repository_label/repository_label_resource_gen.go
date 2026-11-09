@@ -48,6 +48,8 @@ func RepositoryLabelResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Its display name, 1–64 characters; without one it shows its key.",
 			},
 		},
+		Description:         "Adds a label to the repository's vocabulary: a key, a colour and an optional description. A key written scope::name makes the label scoped, and a work item carries at most one label per scope. Maintainers and above may define labels; a key the repository already defines is refused, as is a new label once the repository is at its label limit. The token needs label:manage and issue:read.",
+		MarkdownDescription: "Adds a label to the repository's vocabulary: a key, a colour and an optional description. A key written `scope::name` makes the label scoped, and a work item carries at most one label per scope. Maintainers and above may define labels; a key the repository already defines is refused, as is a new label once the repository is at its label limit.\n\nThe token needs `label:manage` and `issue:read`.",
 	}
 }
 

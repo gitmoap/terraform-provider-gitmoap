@@ -216,6 +216,8 @@ func RepositoryCatalogEnvironmentResourceSchema(ctx context.Context) schema.Sche
 				MarkdownDescription: "Increases with every change. Send it with an update to have the update refused with `409`\nif someone else changed the environment first.",
 			},
 		},
+		Description:         "Declares an environment — a place a service deploys to — that belongs to one repository. It shadows an environment of the same name on an ancestor group, for that repository only. A production environment is protected by default: a deploy to it waits for an approval. The token needs catalog:manage and catalog:read.",
+		MarkdownDescription: "Declares an environment — a place a service deploys to — that belongs to one repository. It shadows an environment of the same name on an ancestor group, for that repository only. A production environment is protected by default: a deploy to it waits for an approval.\n\nThe token needs `catalog:manage` and `catalog:read`.",
 	}
 }
 

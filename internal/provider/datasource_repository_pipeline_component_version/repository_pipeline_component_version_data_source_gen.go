@@ -489,6 +489,8 @@ func RepositoryPipelineComponentVersionDataSourceSchema(ctx context.Context) sch
 				MarkdownDescription: "An exact version, such as v1.2.0",
 			},
 		},
+		Description:         "Read one published version, including the body it froze. Returns the version's lifecycle state, changelog, publisher and the exact body it published, which never changes. Name the version exactly, such as v1.2.0. Anyone who can read the pipelines here may call it. The token needs pipeline:read.",
+		MarkdownDescription: "Read one published version, including the body it froze. Returns the version's lifecycle state, changelog, publisher and the exact body it published, which never changes. Name the version exactly, such as v1.2.0. Anyone who can read the pipelines here may call it.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

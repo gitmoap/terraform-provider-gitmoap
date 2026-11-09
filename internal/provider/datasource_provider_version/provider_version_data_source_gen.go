@@ -231,6 +231,8 @@ func ProviderVersionDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "SemVer (vX.Y.Z)",
 			},
 		},
+		Description:         "Get one version manifest (provider + all capabilities at that version). The provider as published at that version, with every capability it offers, each with its container image pinned by digest, its stage type and its input and output ports, and the version's lifecycle state. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
+		MarkdownDescription: "Get one version manifest (provider + all capabilities at that version). The provider as published at that version, with every capability it offers, each with its container image pinned by digest, its stage type and its input and output ports, and the version's lifecycle state. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 

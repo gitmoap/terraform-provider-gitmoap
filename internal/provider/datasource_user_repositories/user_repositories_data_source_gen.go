@@ -54,6 +54,8 @@ func UserRepositoriesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "User ID",
 			},
 		},
+		Description:         "List repositories the user is a direct member of. Your own direct repository memberships, with your role in each, newest first, at most 100 per page. Only the user themselves may list them. The token needs repo_member:read.",
+		MarkdownDescription: "List repositories the user is a direct member of. Your own direct repository memberships, with your role in each, newest first, at most 100 per page. Only the user themselves may list them.\n\nThe token needs `repo_member:read`.",
 	}
 }
 

@@ -100,6 +100,8 @@ func TemplatesDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "List file templates. The templates a new file can start from — licences, .gitignore files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without kind, every template.",
+		MarkdownDescription: "List file templates. The templates a new file can start from — licences, `.gitignore` files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without `kind`, every template.",
 	}
 }
 

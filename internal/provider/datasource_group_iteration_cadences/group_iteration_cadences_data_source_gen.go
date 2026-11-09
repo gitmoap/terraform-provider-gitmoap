@@ -109,6 +109,8 @@ func GroupIterationCadencesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List a group's iteration cadences. Returns the cadences the group defines, oldest first, active and paused alike. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List a group's iteration cadences. Returns the cadences the group defines, oldest first, active and paused alike. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 

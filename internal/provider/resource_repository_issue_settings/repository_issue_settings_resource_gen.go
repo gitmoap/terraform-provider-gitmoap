@@ -205,6 +205,8 @@ func RepositoryIssueSettingsResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Changes what the repository stores and returns it: only the fields you send change, a field sent as null is cleared so it is inherited again, and the stored values apply only while override_group_settings is on. A status set needs one unarchived open status marked as the default and at least one unarchived done status, and an existing status cannot change category — add a new status and archive the old one. Maintainers and above may do this; an empty body is refused. The token needs issue_settings:manage and issue_settings:read.",
+		MarkdownDescription: "Changes what the repository stores and returns it: only the fields you send change, a field sent as `null` is cleared so it is inherited again, and the stored values apply only while `override_group_settings` is on. A status set needs one unarchived open status marked as the default and at least one unarchived done status, and an existing status cannot change category — add a new status and archive the old one. Maintainers and above may do this; an empty body is refused.\n\nThe token needs `issue_settings:manage` and `issue_settings:read`.",
 	}
 }
 

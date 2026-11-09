@@ -51,6 +51,8 @@ func GroupBranchRuleDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a group branch rule by ID. One of the group's own branch rules, with its settings and whether it is enforced on everything beneath the group. Anyone who can see the group may read it. The token needs branch_rule:read.",
+		MarkdownDescription: "Get a group branch rule by ID. One of the group's own branch rules, with its settings and whether it is enforced on everything beneath the group. Anyone who can see the group may read it.\n\nThe token needs `branch_rule:read`.",
 	}
 }
 

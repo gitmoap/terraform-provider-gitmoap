@@ -95,6 +95,8 @@ func RepositoryPipelineVariableResourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "The variable's value. Absent for a secret, whose value can be written but never read back.",
 			},
 		},
+		Description:         "Sets the variable for this repository's pipelines, creating it or replacing its value, and overriding any group variable of the same name. Mark it secret and the value is stored write-only and never returned. Maintainers and above may write repository variables. Names the platform reserves are refused, and a repository holds a limited number of variables. The token needs pipeline_variable:manage and pipeline_variable:read.",
+		MarkdownDescription: "Sets the variable for this repository's pipelines, creating it or replacing its value, and overriding any group variable of the same name. Mark it secret and the value is stored write-only and never returned. Maintainers and above may write repository variables. Names the platform reserves are refused, and a repository holds a limited number of variables.\n\nThe token needs `pipeline_variable:manage` and `pipeline_variable:read`.",
 	}
 }
 

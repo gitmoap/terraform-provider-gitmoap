@@ -51,6 +51,8 @@ func GroupMemberResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Gives a person a built-in role directly on the group, which reaches the subgroups and repositories beneath it. Callers who can manage access here may add members (Maintainers and above with the built-in roles), and nobody can give a role above their own. Refused when the person already has a role here, and when the group's member limit is reached. The token needs group_member:add, group_member:read, group_member:update and group_member:remove.",
+		MarkdownDescription: "Gives a person a built-in role directly on the group, which reaches the subgroups and repositories beneath it. Callers who can manage access here may add members (Maintainers and above with the built-in roles), and nobody can give a role above their own. Refused when the person already has a role here, and when the group's member limit is reached.\n\nThe token needs `group_member:add`, `group_member:read`, `group_member:update` and `group_member:remove`.",
 	}
 }
 

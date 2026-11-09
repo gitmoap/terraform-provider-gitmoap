@@ -102,6 +102,8 @@ func RepositoryMrSettingsResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Saves the repository's own values for the fields you send, creating its settings if it has none; null clears a field. They take effect only once override_group_settings is on, and a field left unset still comes from the groups above. Maintainers and above may change them; the answer is the repository's own values, not the effective ones. The token needs mr_settings:manage and mr_settings:read.",
+		MarkdownDescription: "Saves the repository's own values for the fields you send, creating its settings if it has none; `null` clears a field. They take effect only once `override_group_settings` is on, and a field left unset still comes from the groups above. Maintainers and above may change them; the answer is the repository's own values, not the effective ones.\n\nThe token needs `mr_settings:manage` and `mr_settings:read`.",
 	}
 }
 

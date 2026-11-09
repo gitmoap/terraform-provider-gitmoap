@@ -458,6 +458,8 @@ func ProviderSubmissionDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a provider submission. The submission's state, its manifest, who submitted it and when, the outcome of the checks on its images, and the reviewer's decision and notes once it has been reviewed. Only the publisher that made it and platform administrators may read it. The token needs provider_publishing:read.",
+		MarkdownDescription: "Get a provider submission. The submission's state, its manifest, who submitted it and when, the outcome of the checks on its images, and the reviewer's decision and notes once it has been reviewed. Only the publisher that made it and platform administrators may read it.\n\nThe token needs `provider_publishing:read`.",
 	}
 }
 

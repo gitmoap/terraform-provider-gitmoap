@@ -121,6 +121,8 @@ func GroupProviderConnectionsDataSourceSchema(ctx context.Context) schema.Schema
 				Computed: true,
 			},
 		},
+		Description:         "List a group's provider connections. Only the connections defined here, not those inherited from groups above. Credential values are never returned, only references to where they are kept. Paginated with limit (20 by default, at most 100) and next_token. Reporters and above, as members of the group: a public group does not make its connections readable. The token needs provider_connection:read.",
+		MarkdownDescription: "List a group's provider connections. Only the connections defined here, not those inherited from groups above. Credential values are never returned, only references to where they are kept. Paginated with `limit` (20 by default, at most 100) and `next_token`. Reporters and above, as members of the group: a public group does not make its connections readable.\n\nThe token needs `provider_connection:read`.",
 	}
 }
 

@@ -87,6 +87,8 @@ func ServiceAccountTokensDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Service account ID",
 			},
 		},
+		Description:         "List a service account's access tokens. The account's tokens, newest first, with their names, scopes, bindings, expiry and last use; never the secrets. Callers who can manage service accounts at the account's home group or repository may list them (Maintainers and above with the built-in roles). Each read is recorded in the audit log. The token needs token:read.",
+		MarkdownDescription: "List a service account's access tokens. The account's tokens, newest first, with their names, scopes, bindings, expiry and last use; never the secrets. Callers who can manage service accounts at the account's home group or repository may list them (Maintainers and above with the built-in roles). Each read is recorded in the audit log.\n\nThe token needs `token:read`.",
 	}
 }
 

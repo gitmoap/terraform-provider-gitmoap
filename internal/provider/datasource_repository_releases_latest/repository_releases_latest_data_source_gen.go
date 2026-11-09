@@ -197,6 +197,8 @@ func RepositoryReleasesLatestDataSourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "Where to download the tagged source as a `.zip` archive.",
 			},
 		},
+		Description:         "Get the newest published, non-prerelease release. Drafts and prereleases are never returned here, so this is the release to point people at. A repository with no published release answers not found. Anyone who can read the repository's releases may call it. The token needs release:read.",
+		MarkdownDescription: "Get the newest published, non-prerelease release. Drafts and prereleases are never returned here, so this is the release to point people at. A repository with no published release answers not found. Anyone who can read the repository's releases may call it.\n\nThe token needs `release:read`.",
 	}
 }
 

@@ -215,6 +215,8 @@ func RepositoryReleasesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Repository ID",
 			},
 		},
+		Description:         "List a repository's releases, newest first. Returns published releases, newest first, in pages of up to 100 continued with next_token. Pass include_drafts=true to include drafts as well; it takes effect only for callers who can manage releases, and everyone else receives the published releases alone. Anyone who can read the repository's releases may call it. The token needs release:read.",
+		MarkdownDescription: "List a repository's releases, newest first. Returns published releases, newest first, in pages of up to 100 continued with `next_token`. Pass `include_drafts=true` to include drafts as well; it takes effect only for callers who can manage releases, and everyone else receives the published releases alone. Anyone who can read the repository's releases may call it.\n\nThe token needs `release:read`.",
 	}
 }
 

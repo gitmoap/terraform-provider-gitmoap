@@ -118,6 +118,8 @@ func GroupProviderPolicyResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "Decides which tiers of provider the pipelines in this group and beneath it may run: verified providers, community providers (disabled, verified_only or any), and the organization's own private providers. Platform providers are always accepted. The policy can also require that a newer version's changelog be acknowledged before a provider is upgraded to it. The body replaces the group's policy whole: a field you leave out is inherited from the groups above, unless override_parent stops the inheritance here. Answers with the policy now in effect. Owners of the group. The token needs provider_policy:manage and provider_policy:read.",
+		MarkdownDescription: "Decides which tiers of provider the pipelines in this group and beneath it may run: verified providers, community providers (`disabled`, `verified_only` or `any`), and the organization's own private providers. Platform providers are always accepted. The policy can also require that a newer version's changelog be acknowledged before a provider is upgraded to it. The body replaces the group's policy whole: a field you leave out is inherited from the groups above, unless `override_parent` stops the inheritance here. Answers with the policy now in effect. Owners of the group.\n\nThe token needs `provider_policy:manage` and `provider_policy:read`.",
 	}
 }
 

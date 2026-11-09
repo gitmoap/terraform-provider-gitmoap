@@ -50,6 +50,8 @@ func GroupSsoDomainsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The organization's top-level group",
 			},
 		},
+		Description:         "List the organization's claimed domains and their verification status. In alphabetical order. Only the organization's owners can read it. The token needs sso:read.",
+		MarkdownDescription: "List the organization's claimed domains and their verification status. In alphabetical order. Only the organization's owners can read it.\n\nThe token needs `sso:read`.",
 	}
 }
 

@@ -122,6 +122,8 @@ func GroupMilestoneDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a milestone and its burndown. Returns one of the group's milestones with the work items in it and their progress: how many are open, completed and cancelled, and the total and completed points. Only work items you can see are listed or counted. Anyone who can see the group's work items may read it. The token needs issue:read.",
+		MarkdownDescription: "Get a milestone and its burndown. Returns one of the group's milestones with the work items in it and their progress: how many are open, completed and cancelled, and the total and completed points. Only work items you can see are listed or counted. Anyone who can see the group's work items may read it.\n\nThe token needs `issue:read`.",
 	}
 }
 

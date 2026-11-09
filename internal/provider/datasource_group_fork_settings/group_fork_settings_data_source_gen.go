@@ -216,6 +216,8 @@ func GroupForkSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "One effective fork setting: its value, where it came from — `default`, `repository`, or `group:<id>` — and whether a group above enforces it as a ceiling.",
 			},
 		},
+		Description:         "Get a group's fork settings. The fork settings that apply to the repositories beneath this group, unless one of them overrides a field the group does not enforce — each with where the value came from and whether a group enforces it. Anyone who can see the group may read them. The token needs group:read.",
+		MarkdownDescription: "Get a group's fork settings. The fork settings that apply to the repositories beneath this group, unless one of them overrides a field the group does not enforce — each with where the value came from and whether a group enforces it. Anyone who can see the group may read them.\n\nThe token needs `group:read`.",
 	}
 }
 

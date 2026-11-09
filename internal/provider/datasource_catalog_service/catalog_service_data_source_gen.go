@@ -195,6 +195,8 @@ func CatalogServiceDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The service's revision, incremented on every change. Send it with an update to have the\nupdate refused with a `409` if someone changed the service since you read it.",
 			},
 		},
+		Description:         "Get a service by id. Returns the service's name, slug, kind, lifecycle, owner, repository bindings, links and annotations. A service has no visibility of its own: anyone who can see its declaring group may read it, and to anyone else it is not found. The token needs catalog:read.",
+		MarkdownDescription: "Get a service by id. Returns the service's name, slug, kind, lifecycle, owner, repository bindings, links and annotations. A service has no visibility of its own: anyone who can see its declaring group may read it, and to anyone else it is not found.\n\nThe token needs `catalog:read`.",
 	}
 }
 

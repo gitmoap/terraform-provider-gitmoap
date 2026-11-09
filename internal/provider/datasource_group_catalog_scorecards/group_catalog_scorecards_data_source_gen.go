@@ -69,6 +69,8 @@ func GroupCatalogScorecardsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List the scorecards that apply to a group. Returns the group's own scorecards together with every ancestor group's, since a scorecard declared higher up applies here too; pass include_inherited=false for the group's own only, or enabled_only=true to skip disabled ones. Page with limit and next_token; a limit above the maximum is reduced rather than refused. Anyone who can see the group may call it. The token needs catalog:read.",
+		MarkdownDescription: "List the scorecards that apply to a group. Returns the group's own scorecards together with every ancestor group's, since a scorecard declared higher up applies here too; pass `include_inherited=false` for the group's own only, or `enabled_only=true` to skip disabled ones. Page with `limit` and `next_token`; a `limit` above the maximum is reduced rather than refused. Anyone who can see the group may call it.\n\nThe token needs `catalog:read`.",
 	}
 }
 

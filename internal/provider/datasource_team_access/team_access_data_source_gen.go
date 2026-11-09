@@ -137,6 +137,8 @@ func TeamAccessDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Team ID",
 			},
 		},
+		Description:         "The access a team holds, on the groups and repositories you can see. A grant on a group or repository you cannot see is left out of the page and only counted. The token needs team:read.",
+		MarkdownDescription: "The access a team holds, on the groups and repositories you can see. A grant on a group or repository you cannot see is left out of the page and only counted.\n\nThe token needs `team:read`.",
 	}
 }
 

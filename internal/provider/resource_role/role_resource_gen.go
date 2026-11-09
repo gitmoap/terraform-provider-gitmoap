@@ -124,6 +124,8 @@ func RoleResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "A custom role starts from a built-in role other than Owner and adds or removes permissions, named by their keys from the permission catalogue. It cannot hold a permission only Owner may, nor keep one without the permissions it depends on, and its slug must be unique in the organization. Call it on the organization's top-level group; only callers who can manage its roles may (its owners, with the built-in roles). The token needs role:manage and role:read.",
+		MarkdownDescription: "A custom role starts from a built-in role other than Owner and adds or removes permissions, named by their keys from the permission catalogue. It cannot hold a permission only Owner may, nor keep one without the permissions it depends on, and its slug must be unique in the organization. Call it on the organization's top-level group; only callers who can manage its roles may (its owners, with the built-in roles).\n\nThe token needs `role:manage` and `role:read`.",
 	}
 }
 

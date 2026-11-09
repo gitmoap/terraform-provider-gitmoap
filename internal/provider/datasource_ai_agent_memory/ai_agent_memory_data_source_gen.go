@@ -163,6 +163,8 @@ func AiAgentMemoryDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "An agent's memory page — what it reads at the start of every session — at its newest revision or at an earlier one still kept. Read by whoever reads the agent's squad — the board, or anyone who can read every repository the squad owns — and, for an agent in no squad, by the board alone; anyone else is answered not found. revision names an earlier revision while it is still kept; a page nobody has written is empty at revision 0. The token needs ai_org:read.",
+		MarkdownDescription: "An agent's memory page — what it reads at the start of every session — at its newest revision or at an earlier one still kept. Read by whoever reads the agent's squad — the board, or anyone who can read every repository the squad owns — and, for an agent in no squad, by the board alone; anyone else is answered not found. `revision` names an earlier revision while it is still kept; a page nobody has written is empty at revision 0.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

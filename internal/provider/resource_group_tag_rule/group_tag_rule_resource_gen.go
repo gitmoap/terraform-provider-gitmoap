@@ -78,6 +78,8 @@ func GroupTagRuleResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When the rule last changed.",
 			},
 		},
+		Description:         "Protects the matching tags of every repository beneath the group, unless a repository or a nearer group declares its own rule for the same pattern — or, with enforcement: enforced, holds them all to at least this level whatever they declare, which only an Owner of the group may set. Maintainers and above may create a rule; a pattern takes one rule per group. The token needs tag_rule:manage and tag_rule:read.",
+		MarkdownDescription: "Protects the matching tags of every repository beneath the group, unless a repository or a nearer group declares its own rule for the same pattern — or, with `enforcement: enforced`, holds them all to at least this level whatever they declare, which only an Owner of the group may set. Maintainers and above may create a rule; a pattern takes one rule per group.\n\nThe token needs `tag_rule:manage` and `tag_rule:read`.",
 	}
 }
 

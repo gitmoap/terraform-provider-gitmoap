@@ -107,6 +107,8 @@ func GroupServiceAccountResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "A group's service account reaches every repository beneath the group at the access level it is given — Maintainer at most, never Owner, and never above the caller's own. It gets a generated username and email. Only the group's owners may create one, as people rather than service accounts. The token needs service_account:create, service_account:read, service_account:update and service_account:delete.",
+		MarkdownDescription: "A group's service account reaches every repository beneath the group at the access level it is given — Maintainer at most, never Owner, and never above the caller's own. It gets a generated username and email. Only the group's owners may create one, as people rather than service accounts.\n\nThe token needs `service_account:create`, `service_account:read`, `service_account:update` and `service_account:delete`.",
 	}
 }
 

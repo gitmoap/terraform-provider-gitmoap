@@ -581,6 +581,8 @@ func RepositoryPipelineFileDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The file its block is in, as committed.",
 			},
 		},
+		Description:         "Read one pipeline's files at a ref. Every file of the directory that declares the pipeline, as committed — the steps it runs may be written in any of them — the pipeline they declare with its names bound to what they name in your organization now, and every diagnostic with its file, line and column. Reads the default branch unless a ref or a commit is named — never both. The token needs pipeline:read.",
+		MarkdownDescription: "Read one pipeline's files at a ref. Every file of the directory that declares the pipeline, as committed — the steps it runs may be written in any of them — the pipeline they declare with its names bound to what they name in your organization now, and every diagnostic with its file, line and column. Reads the default branch unless a ref or a commit is named — never both.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

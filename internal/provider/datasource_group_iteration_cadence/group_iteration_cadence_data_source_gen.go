@@ -88,6 +88,8 @@ func GroupIterationCadenceDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When it last changed, ISO 8601.",
 			},
 		},
+		Description:         "Get an iteration cadence. Returns one of the group's cadences: its schedule, how far ahead it creates iterations, whether it is active, and the number of the last iteration it generated. Anyone who can see the group's work items may read it. The token needs issue:read.",
+		MarkdownDescription: "Get an iteration cadence. Returns one of the group's cadences: its schedule, how far ahead it creates iterations, whether it is active, and the number of the last iteration it generated. Anyone who can see the group's work items may read it.\n\nThe token needs `issue:read`.",
 	}
 }
 

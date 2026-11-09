@@ -71,6 +71,8 @@ func RepositoryMilestonesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Autocomplete fragment — keeps milestones whose title or description contains it, ignoring case",
 			},
 		},
+		Description:         "List a scope's milestones. Returns every milestone the repository defines, open and closed, newest first. Anyone who can see the repository's work items may list them — on a public repository, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List a scope's milestones. Returns every milestone the repository defines, open and closed, newest first. Anyone who can see the repository's work items may list them — on a public repository, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 

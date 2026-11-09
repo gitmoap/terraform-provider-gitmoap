@@ -142,6 +142,8 @@ func TeamResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Call it on the organization's top-level group with the team's slug, name and description, and the people to put on it, each as a member or maintainer with an optional end date. The creator joins as a maintainer unless they list themselves otherwise. Teams are made of people, never service accounts, and the slug must be unique in the organization. A new team holds no access until it is given grants. Callers who can manage the organization's teams may call it (its owners, with the built-in roles). The token needs team:manage and team:read.",
+		MarkdownDescription: "Call it on the organization's top-level group with the team's slug, name and description, and the people to put on it, each as a member or maintainer with an optional end date. The creator joins as a maintainer unless they list themselves otherwise. Teams are made of people, never service accounts, and the slug must be unique in the organization. A new team holds no access until it is given grants. Callers who can manage the organization's teams may call it (its owners, with the built-in roles).\n\nThe token needs `team:manage` and `team:read`.",
 	}
 }
 

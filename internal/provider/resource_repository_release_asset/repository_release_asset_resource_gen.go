@@ -70,6 +70,8 @@ func RepositoryReleaseAssetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "A presigned URL to download the file from. It expires shortly.",
 			},
 		},
+		Description:         "Reserves room for a file of the size you declare and returns a short-lived URL to upload it to with an HTTP PUT of exactly that size and content type. The asset can be downloaded once the upload is confirmed. Developers and above may add assets; the release must exist, the name must be unused on it, and the size must be within both the per-file limit and the organization's remaining storage. The token needs release:create, release:read and release:delete.",
+		MarkdownDescription: "Reserves room for a file of the size you declare and returns a short-lived URL to upload it to with an HTTP `PUT` of exactly that size and content type. The asset can be downloaded once the upload is confirmed. Developers and above may add assets; the release must exist, the name must be unused on it, and the size must be within both the per-file limit and the organization's remaining storage.\n\nThe token needs `release:create`, `release:read` and `release:delete`.",
 	}
 }
 

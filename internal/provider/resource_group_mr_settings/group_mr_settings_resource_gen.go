@@ -102,6 +102,8 @@ func GroupMrSettingsResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Saves the group's own values for the fields you send, creating its settings if it has none; null clears a field. Repositories and groups beneath inherit them unless they override. Maintainers and above may change them. The token needs mr_settings:manage and mr_settings:read.",
+		MarkdownDescription: "Saves the group's own values for the fields you send, creating its settings if it has none; `null` clears a field. Repositories and groups beneath inherit them unless they override. Maintainers and above may change them.\n\nThe token needs `mr_settings:manage` and `mr_settings:read`.",
 	}
 }
 

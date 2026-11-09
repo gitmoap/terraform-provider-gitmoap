@@ -180,6 +180,8 @@ func RepositoryResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Creates an empty repository in a group, with main as its default branch. It needs Maintainer on the group, and you become the repository's Owner in the same act. Leave the visibility out and it inherits the group's; set it, and it can be no wider than the group's. The path must not be taken by another repository or a group. The token needs repo:create, repo:read, repo:update and repo:delete.",
+		MarkdownDescription: "Creates an empty repository in a group, with `main` as its default branch. It needs Maintainer on the group, and you become the repository's Owner in the same act. Leave the visibility out and it inherits the group's; set it, and it can be no wider than the group's. The path must not be taken by another repository or a group.\n\nThe token needs `repo:create`, `repo:read`, `repo:update` and `repo:delete`.",
 	}
 }
 

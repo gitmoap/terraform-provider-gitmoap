@@ -146,6 +146,8 @@ func RepositoryBranchesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Only the branches whose name holds this, ignoring case",
 			},
 		},
+		Description:         "List branches in a repository. The repository's branches in name order, each described as reading the branch describes it: tip commit, distance from the default branch, protection, whether you may push, and the open merge requests that propose it. Pages hold up to 100 branches, 20 by default; pass next_token back unchanged, and a token this listing did not hand out is refused. The token needs branch:read.",
+		MarkdownDescription: "List branches in a repository. The repository's branches in name order, each described as reading the branch describes it: tip commit, distance from the default branch, protection, whether you may push, and the open merge requests that propose it. Pages hold up to 100 branches, 20 by default; pass `next_token` back unchanged, and a token this listing did not hand out is refused.\n\nThe token needs `branch:read`.",
 	}
 }
 

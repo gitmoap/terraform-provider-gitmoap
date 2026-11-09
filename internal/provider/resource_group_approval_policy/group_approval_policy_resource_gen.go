@@ -284,6 +284,8 @@ func GroupApprovalPolicyResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The rules this group or repository defines itself.",
 			},
 		},
+		Description:         "Sets whether a merge request's author, its committers and its last pusher may approve it, and whether a push resets approvals, for every repository beneath that sets nothing nearer. Maintainers and above may set it; making it enforced, so everything beneath may only be stricter, or changing it once enforced needs an Owner. A setting looser than a policy enforced above is refused. The token needs approval_rule:manage and approval_rule:read.",
+		MarkdownDescription: "Sets whether a merge request's author, its committers and its last pusher may approve it, and whether a push resets approvals, for every repository beneath that sets nothing nearer. Maintainers and above may set it; making it enforced, so everything beneath may only be stricter, or changing it once enforced needs an Owner. A setting looser than a policy enforced above is refused.\n\nThe token needs `approval_rule:manage` and `approval_rule:read`.",
 	}
 }
 

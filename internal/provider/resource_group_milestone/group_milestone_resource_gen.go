@@ -129,6 +129,8 @@ func GroupMilestoneResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Creates an open milestone in the group, with a title and an optional description and due date. Only the group's own work items can be put into it. Maintainers and above may create milestones, up to the group's milestone limit. The token needs milestone:manage and issue:read.",
+		MarkdownDescription: "Creates an open milestone in the group, with a title and an optional description and due date. Only the group's own work items can be put into it. Maintainers and above may create milestones, up to the group's milestone limit.\n\nThe token needs `milestone:manage` and `issue:read`.",
 	}
 }
 

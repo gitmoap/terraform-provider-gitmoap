@@ -204,6 +204,8 @@ func GroupAiOrgSessionsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "The organization's sessions, newest first. Narrow it to one agent, one state, one squad — the squad each session's agent was in when it started — or one ritual run's sessions. A session that read from a group or repository you cannot read is left out. The token needs ai_org:read.",
+		MarkdownDescription: "The organization's sessions, newest first. Narrow it to one agent, one state, one squad — the squad each session's agent was in when it started — or one ritual run's sessions. A session that read from a group or repository you cannot read is left out.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

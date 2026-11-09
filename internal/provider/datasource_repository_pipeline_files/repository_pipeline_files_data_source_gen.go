@@ -95,6 +95,8 @@ func RepositoryPipelineFilesDataSourceSchema(ctx context.Context) schema.Schema 
 				MarkdownDescription: "Repository id",
 			},
 		},
+		Description:         "List the pipelines declared at a ref. Every pipeline the .gitmoap/pipelines/ files declare at a branch, a tag or a full ref — the default branch when none is named — with the directory and the file that declare it, whether it validates, whether the default branch registers it, and whether its directory's files differ from the default branch's. Anyone who can read the repository's pipelines may list them, without signing in on a public repository. The token needs pipeline:read.",
+		MarkdownDescription: "List the pipelines declared at a ref. Every pipeline the `.gitmoap/pipelines/` files declare at a branch, a tag or a full ref — the default branch when none is named — with the directory and the file that declare it, whether it validates, whether the default branch registers it, and whether its directory's files differ from the default branch's. Anyone who can read the repository's pipelines may list them, without signing in on a public repository.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

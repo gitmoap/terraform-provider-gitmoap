@@ -121,6 +121,8 @@ func GroupIterationCadenceResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When it last changed, ISO 8601.",
 			},
 		},
+		Description:         "Creates a schedule that generates the group's iterations: each runs duration_weeks weeks, starting on start_day, from the first such day on or after first_start_date, with cool_down_weeks weeks between one iteration and the next — set it for Shape Up's cool-down. The current iteration and the next iterations_in_advance are created straight away and kept topped up every day, each counting toward the group's iteration limit; a cadence at that limit stops generating until one is deleted. The schedule cannot be changed afterwards. Maintainers and above may create cadences, up to the group's cadence limit. The token needs iteration:manage and issue:read.",
+		MarkdownDescription: "Creates a schedule that generates the group's iterations: each runs `duration_weeks` weeks, starting on `start_day`, from the first such day on or after `first_start_date`, with `cool_down_weeks` weeks between one iteration and the next — set it for Shape Up's cool-down. The current iteration and the next `iterations_in_advance` are created straight away and kept topped up every day, each counting toward the group's iteration limit; a cadence at that limit stops generating until one is deleted. The schedule cannot be changed afterwards. Maintainers and above may create cadences, up to the group's cadence limit.\n\nThe token needs `iteration:manage` and `issue:read`.",
 	}
 }
 

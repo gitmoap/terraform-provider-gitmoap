@@ -91,6 +91,8 @@ func GroupWebhookDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Webhook ID",
 			},
 		},
+		Description:         "Get a group webhook by ID. The webhook's URL, events, name and whether it is active; the signing secret is never included. Maintainers and above; reading a webhook needs the same access as changing it. The token needs webhook:read.",
+		MarkdownDescription: "Get a group webhook by ID. The webhook's URL, events, name and whether it is active; the signing secret is never included. Maintainers and above; reading a webhook needs the same access as changing it.\n\nThe token needs `webhook:read`.",
 	}
 }
 

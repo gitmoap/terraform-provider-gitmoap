@@ -92,6 +92,8 @@ func RepositoryBranchRuleResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Protects the repository's branches matching a name or a pattern, where  matches anything, / included: the access level needed to push and to merge (Developer at the lowest), whether force pushes are allowed, whether code owners must approve, and up to 50 people, service accounts or teams per allowlist who bypass the level. Maintainers and above may create one; a pattern takes one rule per repository, and a rule weaker than one a group above enforces for the same pattern is refused. The token needs branch_rule:manage and branch_rule:read.",
+		MarkdownDescription: "Protects the repository's branches matching a name or a pattern, where `*` matches anything, `/` included: the access level needed to push and to merge (Developer at the lowest), whether force pushes are allowed, whether code owners must approve, and up to 50 people, service accounts or teams per allowlist who bypass the level. Maintainers and above may create one; a pattern takes one rule per repository, and a rule weaker than one a group above enforces for the same pattern is refused.\n\nThe token needs `branch_rule:manage` and `branch_rule:read`.",
 	}
 }
 

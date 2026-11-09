@@ -62,6 +62,8 @@ func CatalogEnvironmentDeploymentsDataSourceSchema(ctx context.Context) schema.S
 				Computed: true,
 			},
 		},
+		Description:         "What is deployed into an environment. The current deployment of every service in this environment, up to limit services (100 at most, 20 by default). A service declared in a group you cannot see is left out, so being able to read a shared environment does not reveal every service deployed into it. Reporters and above on the environment's owner may call it. The token needs catalog:read.",
+		MarkdownDescription: "What is deployed into an environment. The current deployment of every service in this environment, up to `limit` services (100 at most, 20 by default). A service declared in a group you cannot see is left out, so being able to read a shared environment does not reveal every service deployed into it. Reporters and above on the environment's owner may call it.\n\nThe token needs `catalog:read`.",
 	}
 }
 

@@ -76,6 +76,8 @@ func GroupAiAgentByHandleDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "An agent of the organization by its handle — how @ada-ai becomes the agent it names. Its public identity, for anyone who can see the organization; a handle no agent of the organization holds is not found. The token needs group:read.",
+		MarkdownDescription: "An agent of the organization by its handle — how `@ada-ai` becomes the agent it names. Its public identity, for anyone who can see the organization; a handle no agent of the organization holds is not found.\n\nThe token needs `group:read`.",
 	}
 }
 

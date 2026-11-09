@@ -87,6 +87,8 @@ func GroupSsoInviteResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "When the person signs in through the organization's identity provider, they receive the invite's role at the top-level group — a built-in role or one of the organization's own, defaulting to the connection's default role — and the invite is used up. An invite also lets someone without an account in when the connection does not create accounts by itself. Only the organization's owners invite, and an organization holds a limited number of pending invites. The token needs sso:manage and sso:read.",
+		MarkdownDescription: "When the person signs in through the organization's identity provider, they receive the invite's role at the top-level group — a built-in role or one of the organization's own, defaulting to the connection's default role — and the invite is used up. An invite also lets someone without an account in when the connection does not create accounts by itself. Only the organization's owners invite, and an organization holds a limited number of pending invites.\n\nThe token needs `sso:manage` and `sso:read`.",
 	}
 }
 

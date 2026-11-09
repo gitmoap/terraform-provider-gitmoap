@@ -391,6 +391,8 @@ func RepositoryForkResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Chooses which of the fork's branches follows which branch of the repository it was forked from, turns auto-sync on or off, and turns code search on or off for the fork. With auto-sync on, every push to the upstream branch fast-forwards the fork's branch as you, so turning it on needs read access to the upstream; it never merges or discards anything, and stops — with its reason shown on the fork — when it cannot simply fast-forward. Needs a Maintainer of the fork. The token needs repo:fork and repo:read.",
+		MarkdownDescription: "Chooses which of the fork's branches follows which branch of the repository it was forked from, turns auto-sync on or off, and turns code search on or off for the fork. With auto-sync on, every push to the upstream branch fast-forwards the fork's branch as you, so turning it on needs read access to the upstream; it never merges or discards anything, and stops — with its reason shown on the fork — when it cannot simply fast-forward. Needs a Maintainer of the fork.\n\nThe token needs `repo:fork` and `repo:read`.",
 	}
 }
 

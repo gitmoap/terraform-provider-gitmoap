@@ -261,6 +261,8 @@ func GroupChannelsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "With `name`: the name asked for, when no channel holds it and the channel answered was\nrenamed from it. A renamed channel keeps its old names, so an address written before the\nrename still leads to it, and no other channel of the group may take them.",
 			},
 		},
+		Description:         "List a group's channels you can read. The group's channels, oldest first, each with how many of its root messages you have not marked read. A private channel appears only to its members, and an AI organization's squad and board channels only to the people who may read them. kind=direct lists the direct conversations with the group's AI agents you can read instead — your own, and, for the organization's board, every person's. With name, the channel of that name — or, when a channel was renamed from it, that channel, with redirected_from. The token needs channel:read.",
+		MarkdownDescription: "List a group's channels you can read. The group's channels, oldest first, each with how many of its root messages you have not marked read. A private channel appears only to its members, and an AI organization's squad and board channels only to the people who may read them. `kind=direct` lists the direct conversations with the group's AI agents you can read instead — your own, and, for the organization's board, every person's. With `name`, the channel of that name — or, when a channel was renamed from it, that channel, with `redirected_from`.\n\nThe token needs `channel:read`.",
 	}
 }
 

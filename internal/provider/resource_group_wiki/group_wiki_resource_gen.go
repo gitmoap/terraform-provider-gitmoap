@@ -125,6 +125,8 @@ func GroupWikiResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "The first call creates the wiki; settings you leave out take their defaults — enabled, with home as the home page. Later calls change only the fields you send. A group's wiki always keeps its pages in its own repository: a group has no default branch to read them from, so that source is refused. Maintainers and above. The token needs wiki:manage and wiki:read.",
+		MarkdownDescription: "The first call creates the wiki; settings you leave out take their defaults — enabled, with `home` as the home page. Later calls change only the fields you send. A group's wiki always keeps its pages in its own repository: a group has no default branch to read them from, so that source is refused. Maintainers and above.\n\nThe token needs `wiki:manage` and `wiki:read`.",
 	}
 }
 

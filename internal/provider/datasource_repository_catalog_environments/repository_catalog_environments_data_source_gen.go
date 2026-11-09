@@ -80,6 +80,8 @@ func RepositoryCatalogEnvironmentsDataSourceSchema(ctx context.Context) schema.S
 				MarkdownDescription: "Filter by tier",
 			},
 		},
+		Description:         "List a repository's environments. Returns the environments the repository declares, alphabetically by slug, leaving out archived ones unless include_archived=true. With inherited=true the ancestor groups' environments are included too, a nearer slug shadowing a farther one: the set a pipeline in this repository can deploy to, minus any owned by a group you cannot see. Filter by tier or search; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public repository. The token needs catalog:read.",
+		MarkdownDescription: "List a repository's environments. Returns the environments the repository declares, alphabetically by slug, leaving out archived ones unless `include_archived=true`. With `inherited=true` the ancestor groups' environments are included too, a nearer slug shadowing a farther one: the set a pipeline in this repository can deploy to, minus any owned by a group you cannot see. Filter by `tier` or `search`; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public repository.\n\nThe token needs `catalog:read`.",
 	}
 }
 

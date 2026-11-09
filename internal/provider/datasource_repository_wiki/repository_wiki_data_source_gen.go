@@ -108,6 +108,8 @@ func RepositoryWikiDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Read a repository's wiki settings. Answers whether the wiki is enabled, where its pages come from, its home page, how many pages it holds and its latest commit. A repository that has never enabled a wiki answers enabled: false rather than 404. Anyone who can see the repository may read its wiki; on a public repository that includes callers who are not signed in. The token needs wiki:read.",
+		MarkdownDescription: "Read a repository's wiki settings. Answers whether the wiki is enabled, where its pages come from, its home page, how many pages it holds and its latest commit. A repository that has never enabled a wiki answers `enabled: false` rather than `404`. Anyone who can see the repository may read its wiki; on a public repository that includes callers who are not signed in.\n\nThe token needs `wiki:read`.",
 	}
 }
 

@@ -65,6 +65,8 @@ func GroupLabelsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Autocomplete fragment — keeps labels whose key or description contains it, ignoring case",
 			},
 		},
+		Description:         "List the labels a scope defines. Returns every label the group itself defines, in alphabetical order of key. Labels defined by the groups above it are not included. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List the labels a scope defines. Returns every label the group itself defines, in alphabetical order of key. Labels defined by the groups above it are not included. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 

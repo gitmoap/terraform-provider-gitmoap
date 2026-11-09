@@ -69,6 +69,8 @@ func GroupPushRulesResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Saves the group's own values for the rules you send, creating them if it has none; null clears a rule. The body takes only the rules it lists, and a field it does not list is refused rather than ignored. Groups and repositories beneath inherit them. Maintainers and above may change them; enforcing them, or changing them once enforced, needs an Owner, and enforced rules hold for everything beneath: a rule turned on stays on, a file-size limit caps any larger one, and a pattern replaces those set beneath. The token needs push_rule:manage and push_rule:read.",
+		MarkdownDescription: "Saves the group's own values for the rules you send, creating them if it has none; `null` clears a rule. The body takes only the rules it lists, and a field it does not list is refused rather than ignored. Groups and repositories beneath inherit them. Maintainers and above may change them; enforcing them, or changing them once enforced, needs an Owner, and enforced rules hold for everything beneath: a rule turned on stays on, a file-size limit caps any larger one, and a pattern replaces those set beneath.\n\nThe token needs `push_rule:manage` and `push_rule:read`.",
 	}
 }
 

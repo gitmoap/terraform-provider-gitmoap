@@ -127,6 +127,8 @@ func RepositoryProviderConnectionResourceSchema(ctx context.Context) schema.Sche
 				MarkdownDescription: "The names of the stored credential fields, each with a reference to where it is stored.\nNever the values. Empty for an `oidc_federation` connection.",
 			},
 		},
+		Description:         "Stores, under a name, what a pipeline provider needs to reach an outside service, for use by the repository's pipelines. A connection either holds static credentials, checked against the provider's credentials schema and stored encrypted, or names an identity to assume through OIDC federation, which stores no secret and works only with providers that support it. A connection's name is unique per provider within the repository, and a repository holds a limited number of connections, set by its plan. Answers 501 when this installation has no secret storage configured. Owners of the repository. The token needs provider_connection:manage and provider_connection:read.",
+		MarkdownDescription: "Stores, under a name, what a pipeline provider needs to reach an outside service, for use by the repository's pipelines. A connection either holds static credentials, checked against the provider's credentials schema and stored encrypted, or names an identity to assume through OIDC federation, which stores no secret and works only with providers that support it. A connection's name is unique per provider within the repository, and a repository holds a limited number of connections, set by its plan. Answers `501` when this installation has no secret storage configured. Owners of the repository.\n\nThe token needs `provider_connection:manage` and `provider_connection:read`.",
 	}
 }
 

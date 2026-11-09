@@ -146,6 +146,8 @@ func GroupIterationDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "How an iteration is going, from the work items in it that you can see.",
 			},
 		},
+		Description:         "Get an iteration and how it is going. Returns one of the group's iterations with its progress, read from the work items in it as they are now: how many are open, completed and cancelled, the points it took on and completed, and what is still open to carry over. Only work items you can see are counted — an iteration may hold work from several repositories. To list the work items themselves, filter a work-item listing by iteration. Anyone who can see the group's work items may read it. The token needs issue:read.",
+		MarkdownDescription: "Get an iteration and how it is going. Returns one of the group's iterations with its progress, read from the work items in it as they are now: how many are open, completed and cancelled, the points it took on and completed, and what is still open to carry over. Only work items you can see are counted — an iteration may hold work from several repositories. To list the work items themselves, filter a work-item listing by `iteration`. Anyone who can see the group's work items may read it.\n\nThe token needs `issue:read`.",
 	}
 }
 

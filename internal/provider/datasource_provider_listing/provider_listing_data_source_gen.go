@@ -149,6 +149,8 @@ func ProviderListingDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "A provider's marketplace page. Its README, examples and badges, and its versions with their changelogs and whether each publishes an SBOM. A private provider's page is visible only to members of the organization that owns it. Open to any signed-in caller. The token needs provider_catalog:read.",
+		MarkdownDescription: "A provider's marketplace page. Its README, examples and badges, and its versions with their changelogs and whether each publishes an SBOM. A private provider's page is visible only to members of the organization that owns it. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 

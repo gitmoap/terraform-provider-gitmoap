@@ -191,6 +191,8 @@ func AiGateDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Where a gate stands: waiting for a decision, approved or denied, spent by the action it\napproved, lapsed undecided, withdrawn with its session, or — for a gate set to notify — a record\nthat the agent went ahead and people were told.",
 			},
 		},
+		Description:         "One gate: the exact action it waits on, who may decide it, and its decision. Shown to its approvers, the board and anyone who can read the session that raised it; to anyone else it is not found. The token needs ai_org:read.",
+		MarkdownDescription: "One gate: the exact action it waits on, who may decide it, and its decision. Shown to its approvers, the board and anyone who can read the session that raised it; to anyone else it is not found.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

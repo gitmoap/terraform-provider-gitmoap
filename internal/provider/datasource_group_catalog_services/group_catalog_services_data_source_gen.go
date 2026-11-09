@@ -132,6 +132,8 @@ func GroupCatalogServicesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Filter by how the entry came to exist",
 			},
 		},
+		Description:         "List a group's services, each with its deployment promotion track. Returns the services declared in this group, alphabetically by slug, each with one deployment entry per environment tier. Filter by kind, lifecycle, source (inferred, declared or api) or search; a service whose declaration has disappeared is left out unless include_orphaned=true. Pages hold up to 100 services (20 by default; a larger limit is reduced rather than refused) and continue with next_token. The token needs catalog:read.",
+		MarkdownDescription: "List a group's services, each with its deployment promotion track. Returns the services declared in this group, alphabetically by slug, each with one deployment entry per environment tier. Filter by `kind`, `lifecycle`, `source` (inferred, declared or api) or `search`; a service whose declaration has disappeared is left out unless `include_orphaned=true`. Pages hold up to 100 services (20 by default; a larger `limit` is reduced rather than refused) and continue with `next_token`.\n\nThe token needs `catalog:read`.",
 	}
 }
 

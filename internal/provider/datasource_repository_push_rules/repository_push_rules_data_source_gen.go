@@ -43,6 +43,8 @@ func RepositoryPushRulesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Whether every pushed commit must reference a work item. A push with a commit that does not is\nrejected as a whole.",
 			},
 		},
+		Description:         "Get effective push rules for a repository (resolved with group inheritance). The checks a push to the repository must pass — signed commits, a work-item reference, a maximum file size, patterns for commit messages, author emails and forbidden file names — as they apply here: the repository's own values, then the nearest group's for each it leaves unset. A rule a group above enforces holds whatever is set beneath. Anyone who can see the repository may read them. The token needs push_rule:read.",
+		MarkdownDescription: "Get effective push rules for a repository (resolved with group inheritance). The checks a push to the repository must pass — signed commits, a work-item reference, a maximum file size, patterns for commit messages, author emails and forbidden file names — as they apply here: the repository's own values, then the nearest group's for each it leaves unset. A rule a group above enforces holds whatever is set beneath. Anyone who can see the repository may read them.\n\nThe token needs `push_rule:read`.",
 	}
 }
 

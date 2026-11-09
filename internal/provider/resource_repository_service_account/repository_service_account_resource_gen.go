@@ -107,6 +107,8 @@ func RepositoryServiceAccountResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "The account holds the access level it is given on the repository — Maintainer at most, never Owner, and never above the caller's own. It gets a generated username and email. Maintainers and above may create one, as people rather than service accounts. The token needs service_account:create, service_account:read, service_account:update and service_account:delete.",
+		MarkdownDescription: "The account holds the access level it is given on the repository — Maintainer at most, never Owner, and never above the caller's own. It gets a generated username and email. Maintainers and above may create one, as people rather than service accounts.\n\nThe token needs `service_account:create`, `service_account:read`, `service_account:update` and `service_account:delete`.",
 	}
 }
 

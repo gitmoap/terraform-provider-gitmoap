@@ -189,6 +189,8 @@ func GroupCatalogDeploymentsDataSourceSchema(ctx context.Context) schema.Schema 
 				MarkdownDescription: "Show only environments of this tier",
 			},
 		},
+		Description:         "The deployment board — services × environments. Lists the group's services, alphabetically, each with its current deployment in every environment the group can deploy to, its own and those inherited from groups above it. Environments owned by a group you cannot see are left out. Every other environment is a column on every page, up to 500; a board that would show more is refused, so narrow the environments with environment_id or tier. Narrow the services with search; pages hold up to 100 services (20 by default). Commits-behind counts are not included here; ask the drift endpoint for them. The token needs catalog:read.",
+		MarkdownDescription: "The deployment board — services × environments. Lists the group's services, alphabetically, each with its current deployment in every environment the group can deploy to, its own and those inherited from groups above it. Environments owned by a group you cannot see are left out. Every other environment is a column on every page, up to 500; a board that would show more is refused, so narrow the environments with `environment_id` or `tier`. Narrow the services with `search`; pages hold up to 100 services (20 by default). Commits-behind counts are not included here; ask the drift endpoint for them.\n\nThe token needs `catalog:read`.",
 	}
 }
 

@@ -129,6 +129,8 @@ func GroupPackageDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "A package's detail with its versions. Returns the package with every published version: its size, whether it is yanked, and who published it when. The name is matched the way its registry matches names, so a PyPI name is normalized and a Cargo name is read in lower case. Anyone who can see the group may call it. The token needs package:read.",
+		MarkdownDescription: "A package's detail with its versions. Returns the package with every published version: its size, whether it is yanked, and who published it when. The name is matched the way its registry matches names, so a PyPI name is normalized and a Cargo name is read in lower case. Anyone who can see the group may call it.\n\nThe token needs `package:read`.",
 	}
 }
 

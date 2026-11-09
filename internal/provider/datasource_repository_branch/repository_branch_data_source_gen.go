@@ -130,6 +130,8 @@ func RepositoryBranchDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Whether the caller may push to this branch — the same verdict a `git push` or a commit\nwritten in the browser gets. `false` for someone not signed in.",
 			},
 		},
+		Description:         "Get a branch by name. The branch's tip commit, how far it is ahead of and behind the default branch, whether a rule protects it, whether you may push to it and why not, and the open merge requests that propose it. Anyone who can read the repository's code may call it. The token needs branch:read.",
+		MarkdownDescription: "Get a branch by name. The branch's tip commit, how far it is ahead of and behind the default branch, whether a rule protects it, whether you may push to it and why not, and the open merge requests that propose it. Anyone who can read the repository's code may call it.\n\nThe token needs `branch:read`.",
 	}
 }
 

@@ -139,6 +139,8 @@ func GroupAiOrgModelConnectionsDataSourceSchema(ctx context.Context) schema.Sche
 				MarkdownDescription: "One per connected provider.",
 			},
 		},
+		Description:         "List the organization's model connections. Each connection's provider, its state and condition, where it routes and whether only endpoints that keep nothing serve it, the key's label and last four characters, who consented and when, and when the consent lapses if its giver is no longer an Owner. Never a key. The token needs ai_org:read.",
+		MarkdownDescription: "List the organization's model connections. Each connection's provider, its state and condition, where it routes and whether only endpoints that keep nothing serve it, the key's label and last four characters, who consented and when, and when the consent lapses if its giver is no longer an Owner. Never a key.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

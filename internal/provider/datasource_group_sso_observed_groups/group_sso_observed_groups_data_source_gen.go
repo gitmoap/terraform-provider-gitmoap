@@ -53,6 +53,8 @@ func GroupSsoObservedGroupsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The names, in name order.",
 			},
 		},
+		Description:         "The group names the organization's identity provider has sent at sign-in. Every name a sign-in through the organization's own provider asserted in the last ninety days, with when it was first and last seen, in name order — what a team can be linked to. Only names are kept, never who was in a group. Whoever manages the organization's teams can read it. The token needs sso:read.",
+		MarkdownDescription: "The group names the organization's identity provider has sent at sign-in. Every name a sign-in through the organization's own provider asserted in the last ninety days, with when it was first and last seen, in name order — what a team can be linked to. Only names are kept, never who was in a group. Whoever manages the organization's teams can read it.\n\nThe token needs `sso:read`.",
 	}
 }
 

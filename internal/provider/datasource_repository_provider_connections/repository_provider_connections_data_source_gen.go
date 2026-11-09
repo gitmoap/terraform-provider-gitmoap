@@ -121,6 +121,8 @@ func RepositoryProviderConnectionsDataSourceSchema(ctx context.Context) schema.S
 				MarkdownDescription: "Repository id",
 			},
 		},
+		Description:         "List a repository's provider connections. Only the connections defined here, not those inherited from groups above. Credential values are never returned, only references to where they are kept. Paginated with limit (20 by default, at most 100) and next_token. Reporters and above, as members of the repository: a public repository does not make its connections readable. The token needs provider_connection:read.",
+		MarkdownDescription: "List a repository's provider connections. Only the connections defined here, not those inherited from groups above. Credential values are never returned, only references to where they are kept. Paginated with `limit` (20 by default, at most 100) and `next_token`. Reporters and above, as members of the repository: a public repository does not make its connections readable.\n\nThe token needs `provider_connection:read`.",
 	}
 }
 

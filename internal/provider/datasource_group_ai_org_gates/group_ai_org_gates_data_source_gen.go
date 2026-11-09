@@ -235,6 +235,8 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "An organization's gates — the actions its agents wait on a person to decide, those waiting first, then the newest. session_id keeps one session's. A gate shows the exact action it waits on: the merge request and its head, the paths a push changes, the full text of an outgoing message. The board sees every gate; anyone else who can read the organization sees the gates whose session they can read, and those they are named to decide. The token needs ai_org:read.",
+		MarkdownDescription: "An organization's gates — the actions its agents wait on a person to decide, those waiting first, then the newest. `session_id` keeps one session's. A gate shows the exact action it waits on: the merge request and its head, the paths a push changes, the full text of an outgoing message. The board sees every gate; anyone else who can read the organization sees the gates whose session they can read, and those they are named to decide.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

@@ -157,6 +157,8 @@ func GroupIssueBlueprintsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Set to `inherited` to include ancestor-group blueprints",
 			},
 		},
+		Description:         "List a group's available custom types. Returns the custom types the group defines, ordered by id. With include=inherited it adds those its parent groups define, nearest group first, and a type defined nearer the group hides one with the same id further up; each type says whether it is inherited. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue_blueprint:read.",
+		MarkdownDescription: "List a group's available custom types. Returns the custom types the group defines, ordered by id. With `include=inherited` it adds those its parent groups define, nearest group first, and a type defined nearer the group hides one with the same id further up; each type says whether it is inherited. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue_blueprint:read`.",
 	}
 }
 

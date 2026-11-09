@@ -163,6 +163,8 @@ func GroupAiOrgSquadMemoryDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "A squad's memory page — what its agents share — at its newest revision or an earlier one. Read by the board, or by anyone who can read every repository the squad owns; a squad that owns none is the board's alone, and anyone else is answered not found. revision names an earlier revision while it is still kept. The token needs ai_org:read.",
+		MarkdownDescription: "A squad's memory page — what its agents share — at its newest revision or an earlier one. Read by the board, or by anyone who can read every repository the squad owns; a squad that owns none is the board's alone, and anyone else is answered not found. `revision` names an earlier revision while it is still kept.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

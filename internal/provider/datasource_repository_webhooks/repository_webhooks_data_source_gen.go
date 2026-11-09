@@ -101,6 +101,8 @@ func RepositoryWebhooksDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Repository ID",
 			},
 		},
+		Description:         "List webhooks for a repository. Every webhook on the repository, in one response, with its URL, events and whether it is active; signing secrets are never included. Maintainers and above; reading a webhook needs the same access as changing it. The token needs webhook:read.",
+		MarkdownDescription: "List webhooks for a repository. Every webhook on the repository, in one response, with its URL, events and whether it is active; signing secrets are never included. Maintainers and above; reading a webhook needs the same access as changing it.\n\nThe token needs `webhook:read`.",
 	}
 }
 

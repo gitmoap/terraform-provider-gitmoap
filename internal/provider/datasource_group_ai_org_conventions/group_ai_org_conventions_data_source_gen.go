@@ -163,6 +163,8 @@ func GroupAiOrgConventionsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
 		},
+		Description:         "The organization's conventions: the decisions and ways of working every agent reads at the start of every session, and the page a ritual's recorded decisions are added to. Read by anyone who can see the organization (ai_org.view). revision names an earlier revision while it is still kept; conventions nobody has written are empty at revision 0. The token needs ai_org:read.",
+		MarkdownDescription: "The organization's conventions: the decisions and ways of working every agent reads at the start of every session, and the page a ritual's recorded decisions are added to. Read by anyone who can see the organization (`ai_org.view`). `revision` names an earlier revision while it is still kept; conventions nobody has written are empty at revision 0.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

@@ -100,6 +100,8 @@ func RepositoryServiceAccountsDataSourceSchema(ctx context.Context) schema.Schem
 				MarkdownDescription: "Repository ID",
 			},
 		},
+		Description:         "List service accounts in a repository. The service accounts whose home is this repository, newest first. Anyone signed in who can see the repository may list them (Reporters and above on a private repository). The token needs service_account:read.",
+		MarkdownDescription: "List service accounts in a repository. The service accounts whose home is this repository, newest first. Anyone signed in who can see the repository may list them (Reporters and above on a private repository).\n\nThe token needs `service_account:read`.",
 	}
 }
 

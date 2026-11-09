@@ -138,6 +138,8 @@ func RepositoryBranchResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Whether the caller may push to this branch — the same verdict a `git push` or a commit\nwritten in the browser gets. `false` for someone not signed in.",
 			},
 		},
+		Description:         "Creates a branch at a commit, a branch or a tag. It passes the same branch rules and push rules a git push does, so a name a rule protects is refused here just as it would be from git. The token needs branch:create, branch:read and branch:delete.",
+		MarkdownDescription: "Creates a branch at a commit, a branch or a tag. It passes the same branch rules and push rules a `git push` does, so a name a rule protects is refused here just as it would be from git.\n\nThe token needs `branch:create`, `branch:read` and `branch:delete`.",
 	}
 }
 

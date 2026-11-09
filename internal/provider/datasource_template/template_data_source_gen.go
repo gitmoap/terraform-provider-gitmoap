@@ -89,6 +89,8 @@ func TemplateDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Get a file template. One template with its content. A field the content asks for is written {{name}} where its value goes.",
+		MarkdownDescription: "Get a file template. One template with its content. A field the content asks for is written `{{name}}` where its value goes.",
 	}
 }
 

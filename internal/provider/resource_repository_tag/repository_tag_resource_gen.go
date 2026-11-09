@@ -126,6 +126,8 @@ func RepositoryTagResourceSchema(ctx context.Context) schema.Schema {
 				Required: true,
 			},
 		},
+		Description:         "Tags a commit, named by its SHA or by a branch whose tip it is. With a message the tag is annotated, with you as the tagger; without one it is lightweight. Developers and above may create tags; a name already taken is refused, and a service account can create only lightweight tags. The token needs tag:create, tag:read and tag:delete.",
+		MarkdownDescription: "Tags a commit, named by its SHA or by a branch whose tip it is. With a `message` the tag is annotated, with you as the tagger; without one it is lightweight. Developers and above may create tags; a name already taken is refused, and a service account can create only lightweight tags.\n\nThe token needs `tag:create`, `tag:read` and `tag:delete`.",
 	}
 }
 

@@ -115,6 +115,8 @@ func GroupTeamsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "An organization's teams. Only members of the organization can read it. The token needs team:read.",
+		MarkdownDescription: "An organization's teams. Only members of the organization can read it.\n\nThe token needs `team:read`.",
 	}
 }
 

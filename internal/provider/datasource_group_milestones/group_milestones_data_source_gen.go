@@ -71,6 +71,8 @@ func GroupMilestonesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Autocomplete fragment — keeps milestones whose title or description contains it, ignoring case",
 			},
 		},
+		Description:         "List a scope's milestones. Returns every milestone the group defines, open and closed, newest first. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List a scope's milestones. Returns every milestone the group defines, open and closed, newest first. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 

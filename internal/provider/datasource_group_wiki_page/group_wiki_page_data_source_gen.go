@@ -196,6 +196,8 @@ func GroupWikiPageDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Read one wiki page. Answers the page's content, its table of contents and the wiki's head commit, which you send back as expected_head_sha when you save an edit. A page that has moved is still found at its old address, and the response then names the address you asked for so you can update the link. The table of contents can be empty for a page written moments ago, until it has been indexed. Anyone who can see the group may read its wiki; on a public group that includes callers who are not signed in. The token needs wiki:read.",
+		MarkdownDescription: "Read one wiki page. Answers the page's content, its table of contents and the wiki's head commit, which you send back as `expected_head_sha` when you save an edit. A page that has moved is still found at its old address, and the response then names the address you asked for so you can update the link. The table of contents can be empty for a page written moments ago, until it has been indexed. Anyone who can see the group may read its wiki; on a public group that includes callers who are not signed in.\n\nThe token needs `wiki:read`.",
 	}
 }
 

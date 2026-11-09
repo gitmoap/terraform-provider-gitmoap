@@ -154,6 +154,8 @@ func GroupAiOrgDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "An AI organization: its state, live revision, pause epoch, consent and today's spend. Today's spend counts what the organization has been charged since midnight UTC. Reporters and above of the top-level group may read it; a group that is not top-level has no AI organization. The token needs ai_org:read.",
+		MarkdownDescription: "An AI organization: its state, live revision, pause epoch, consent and today's spend. Today's spend counts what the organization has been charged since midnight UTC. Reporters and above of the top-level group may read it; a group that is not top-level has no AI organization.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

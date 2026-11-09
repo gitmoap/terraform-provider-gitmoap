@@ -207,6 +207,8 @@ func ProviderCapabilitiesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Pin to a version (default: latest)",
 			},
 		},
+		Description:         "List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the version you name; the response says which version it used. Narrow them with stage_type. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
+		MarkdownDescription: "List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the `version` you name; the response says which version it used. Narrow them with `stage_type`. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 

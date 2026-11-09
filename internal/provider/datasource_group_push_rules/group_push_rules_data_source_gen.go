@@ -44,6 +44,8 @@ func GroupPushRulesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get push rules for a group (raw values, no inheritance resolution). The rules this group sets itself, each absent where it leaves the rule to the groups above, and whether they are enforced on everything beneath. Anyone who can see the group may read them. The token needs push_rule:read.",
+		MarkdownDescription: "Get push rules for a group (raw values, no inheritance resolution). The rules this group sets itself, each absent where it leaves the rule to the groups above, and whether they are enforced on everything beneath. Anyone who can see the group may read them.\n\nThe token needs `push_rule:read`.",
 	}
 }
 

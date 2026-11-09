@@ -133,6 +133,8 @@ func GroupProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List the providers in effect at a group. Every provider set at this group or a group above it, as the nearest setting decides: whether it is enabled, the version pinned and the versions allowed, whether it follows the latest version and a newer one is published, and whether the organization's policy accepts its tier. Each entry says where it was set; for a setting made at a group you cannot see, who made it and where are withheld. Anyone who can see the group; on a public group that includes callers who are not signed in. The token needs provider_settings:read.",
+		MarkdownDescription: "List the providers in effect at a group. Every provider set at this group or a group above it, as the nearest setting decides: whether it is enabled, the version pinned and the versions allowed, whether it follows the latest version and a newer one is published, and whether the organization's policy accepts its tier. Each entry says where it was set; for a setting made at a group you cannot see, who made it and where are withheld. Anyone who can see the group; on a public group that includes callers who are not signed in.\n\nThe token needs `provider_settings:read`.",
 	}
 }
 

@@ -60,6 +60,8 @@ func RepositoryMembersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Autocomplete fragment — substring match on the member's username or email",
 			},
 		},
+		Description:         "List repository members. The people with a direct role on the repository, newest first, at most 100 per page; search narrows them by username or email. A repository's roster is not public, even when the repository is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles). The token needs repo_member:read.",
+		MarkdownDescription: "List repository members. The people with a direct role on the repository, newest first, at most 100 per page; `search` narrows them by username or email. A repository's roster is not public, even when the repository is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles).\n\nThe token needs `repo_member:read`.",
 	}
 }
 

@@ -115,6 +115,8 @@ func GroupRolesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "An organization's custom roles. Only members of the organization can read it. The token needs role:read.",
+		MarkdownDescription: "An organization's custom roles. Only members of the organization can read it.\n\nThe token needs `role:read`.",
 	}
 }
 

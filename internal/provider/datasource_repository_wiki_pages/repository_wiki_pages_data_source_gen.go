@@ -107,6 +107,8 @@ func RepositoryWikiPagesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Repository ID",
 			},
 		},
+		Description:         "List a wiki's pages as a tree. Pages come in path order, so the pages of one directory sit together. Paginated with limit (at most 200) and next_token. Answers 404 when there is no enabled wiki. Anyone who can see the repository may read its wiki; on a public repository that includes callers who are not signed in. The token needs wiki:read.",
+		MarkdownDescription: "List a wiki's pages as a tree. Pages come in path order, so the pages of one directory sit together. Paginated with `limit` (at most 200) and `next_token`. Answers `404` when there is no enabled wiki. Anyone who can see the repository may read its wiki; on a public repository that includes callers who are not signed in.\n\nThe token needs `wiki:read`.",
 	}
 }
 

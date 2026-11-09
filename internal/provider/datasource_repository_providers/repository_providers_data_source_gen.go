@@ -133,6 +133,8 @@ func RepositoryProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Repository id",
 			},
 		},
+		Description:         "List the providers in effect for a repository. What the repository's pipelines may use. A repository has no provider settings of its own, so this resolves those of its group and every group above it, the nearest setting deciding: whether it is enabled, the version pinned and the versions allowed, whether it follows the latest version and a newer one is published, and whether the organization's policy accepts its tier. Each entry says where it was set; for a setting made at a group you cannot see, who made it and where are withheld. Anyone who can see the repository; on a public repository that includes callers who are not signed in. The token needs provider_settings:read.",
+		MarkdownDescription: "List the providers in effect for a repository. What the repository's pipelines may use. A repository has no provider settings of its own, so this resolves those of its group and every group above it, the nearest setting deciding: whether it is enabled, the version pinned and the versions allowed, whether it follows the latest version and a newer one is published, and whether the organization's policy accepts its tier. Each entry says where it was set; for a setting made at a group you cannot see, who made it and where are withheld. Anyone who can see the repository; on a public repository that includes callers who are not signed in.\n\nThe token needs `provider_settings:read`.",
 	}
 }
 

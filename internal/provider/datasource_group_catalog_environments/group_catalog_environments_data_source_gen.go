@@ -80,6 +80,8 @@ func GroupCatalogEnvironmentsDataSourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "Filter by tier",
 			},
 		},
+		Description:         "List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless include_archived=true. With inherited=true the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by tier or search; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group. The token needs catalog:read.",
+		MarkdownDescription: "List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless `include_archived=true`. With `inherited=true` the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by `tier` or `search`; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.\n\nThe token needs `catalog:read`.",
 	}
 }
 

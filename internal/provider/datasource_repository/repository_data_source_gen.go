@@ -167,6 +167,8 @@ func RepositoryDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a repository by ID. Returns the repository's name, path, visibility, default branch and description, whether anything has been pushed to it, and the address to push to. Anyone who can see the repository may call it, without signing in on a public repository; a private repository you cannot see answers 404. The token needs repo:read.",
+		MarkdownDescription: "Get a repository by ID. Returns the repository's name, path, visibility, default branch and description, whether anything has been pushed to it, and the address to push to. Anyone who can see the repository may call it, without signing in on a public repository; a private repository you cannot see answers 404.\n\nThe token needs `repo:read`.",
 	}
 }
 

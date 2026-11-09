@@ -58,6 +58,8 @@ func GroupDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a group by ID. Anyone who can see the group may read it: a public group without signing in, an internal one when signed in, and a private one only with access to it. A private group the caller cannot see is not found. The token needs group:read.",
+		MarkdownDescription: "Get a group by ID. Anyone who can see the group may read it: a public group without signing in, an internal one when signed in, and a private one only with access to it. A private group the caller cannot see is not found.\n\nThe token needs `group:read`.",
 	}
 }
 

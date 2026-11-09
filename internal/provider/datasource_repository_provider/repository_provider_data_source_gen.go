@@ -123,6 +123,8 @@ func RepositoryProviderDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Whether a newer version than the install's `default_version` is published\n— a pure semver compare that never mutates the install (D5 K6).",
 			},
 		},
+		Description:         "Get the setting in effect for one provider at a repository. The entry the repository's listing gives for this provider: whether it is enabled, the version pinned and the versions allowed, whether it follows the latest version and a newer one is published, and whether the organization's policy accepts its tier. Each entry says where it was set; for a setting made at a group you cannot see, who made it and where are withheld. Answers 404 when no group above the repository has a setting for the provider. Anyone who can see the repository; on a public repository that includes callers who are not signed in. The token needs provider_settings:read.",
+		MarkdownDescription: "Get the setting in effect for one provider at a repository. The entry the repository's listing gives for this provider: whether it is enabled, the version pinned and the versions allowed, whether it follows the latest version and a newer one is published, and whether the organization's policy accepts its tier. Each entry says where it was set; for a setting made at a group you cannot see, who made it and where are withheld. Answers `404` when no group above the repository has a setting for the provider. Anyone who can see the repository; on a public repository that includes callers who are not signed in.\n\nThe token needs `provider_settings:read`.",
 	}
 }
 

@@ -112,6 +112,8 @@ func RepositoryPipelineTriggersDataSourceSchema(ctx context.Context) schema.Sche
 				MarkdownDescription: "Repository id",
 			},
 		},
+		Description:         "The trigger configuration in effect for a pipeline at one ref. Answers \"will a push to this branch run this pipeline?\" without the caller having to reason about globs. The response names the ref it answered for, because a pipeline's triggers are what its author declared at that ref and an answer without one would read as universal. The token needs pipeline:read.",
+		MarkdownDescription: "The trigger configuration in effect for a pipeline at one ref. Answers \"will a push to this branch run this pipeline?\" without the caller having to reason about globs. The response names the ref it answered for, because a pipeline's triggers are what its author declared *at that ref* and an answer without one would read as universal.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

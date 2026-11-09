@@ -65,6 +65,8 @@ func RepositoryLabelsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Autocomplete fragment — keeps labels whose key or description contains it, ignoring case",
 			},
 		},
+		Description:         "List the labels a scope defines. Returns every label the repository itself defines, in alphabetical order of key. Labels defined by the groups above it are not included, though its work items can carry them. Anyone who can see the repository's work items may list them — on a public repository, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List the labels a scope defines. Returns every label the repository itself defines, in alphabetical order of key. Labels defined by the groups above it are not included, though its work items can carry them. Anyone who can see the repository's work items may list them — on a public repository, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 

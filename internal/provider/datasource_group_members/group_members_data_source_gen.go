@@ -60,6 +60,8 @@ func GroupMembersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Autocomplete fragment — substring match on the member's username or email",
 			},
 		},
+		Description:         "List group members. The people with a direct role on the group, newest first, at most 100 per page; search narrows them by username or email. A group's roster is not public, even when the group is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles). The token needs group_member:read.",
+		MarkdownDescription: "List group members. The people with a direct role on the group, newest first, at most 100 per page; `search` narrows them by username or email. A group's roster is not public, even when the group is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles).\n\nThe token needs `group_member:read`.",
 	}
 }
 

@@ -35,6 +35,8 @@ func GroupMemberDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a specific group member. Returns one person's direct role on the group. A group's roster is not public, even when the group is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles). The token needs group_member:read.",
+		MarkdownDescription: "Get a specific group member. Returns one person's direct role on the group. A group's roster is not public, even when the group is: the caller must be signed in and able to see who has access here (Reporters and above with the built-in roles).\n\nThe token needs `group_member:read`.",
 	}
 }
 

@@ -163,6 +163,8 @@ func CatalogScorecardDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The scorecard's revision, incremented on every change. Send it with an update to have the\nupdate refused with a `409` if someone changed the scorecard since you read it.",
 			},
 		},
+		Description:         "Read one scorecard. Returns the scorecard's checks, levels, the services it applies to, whether it is enabled, and its campaign settings. Anyone who can see the group that owns it may read it; to anyone else it is not found. The token needs catalog:read.",
+		MarkdownDescription: "Read one scorecard. Returns the scorecard's checks, levels, the services it applies to, whether it is enabled, and its campaign settings. Anyone who can see the group that owns it may read it; to anyone else it is not found.\n\nThe token needs `catalog:read`.",
 	}
 }
 

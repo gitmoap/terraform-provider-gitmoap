@@ -164,6 +164,8 @@ func ProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Only providers whose publisher namespace is verified",
 			},
 		},
+		Description:         "Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted. The token needs provider_catalog:read.",
+		MarkdownDescription: "Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 

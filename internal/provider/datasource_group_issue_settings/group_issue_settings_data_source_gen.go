@@ -116,6 +116,8 @@ func GroupIssueSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The kind of work item. The type decides where an item may live (a group or a repository), which\ntypes it may have as children, and which fields it accepts.",
 			},
 		},
+		Description:         "Get the issue settings a group declares. Returns only what the group itself sets — nothing is resolved from the groups above it and no defaults are filled in, so a field the group does not set comes back unset. Anyone who can see the group's work items may read them — on a public group, without signing in. The token needs issue_settings:read.",
+		MarkdownDescription: "Get the issue settings a group declares. Returns only what the group itself sets — nothing is resolved from the groups above it and no defaults are filled in, so a field the group does not set comes back unset. Anyone who can see the group's work items may read them — on a public group, without signing in.\n\nThe token needs `issue_settings:read`.",
 	}
 }
 

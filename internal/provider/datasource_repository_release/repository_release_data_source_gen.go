@@ -199,6 +199,8 @@ func RepositoryReleaseDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Where to download the tagged source as a `.zip` archive.",
 			},
 		},
+		Description:         "Get a release by its tag. Returns the release's title, notes, flags, author, assets and source-archive links. Anyone who can read the repository's releases may call it, without signing in on a public repository; a draft is visible only to those who can manage releases, and to anyone else it is not found. The token needs release:read.",
+		MarkdownDescription: "Get a release by its tag. Returns the release's title, notes, flags, author, assets and source-archive links. Anyone who can read the repository's releases may call it, without signing in on a public repository; a draft is visible only to those who can manage releases, and to anyone else it is not found.\n\nThe token needs `release:read`.",
 	}
 }
 

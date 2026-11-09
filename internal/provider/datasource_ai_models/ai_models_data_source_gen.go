@@ -141,6 +141,8 @@ func AiModelsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Every model an organization can use, with its current and announced list prices. The same for every caller, and readable without signing in.",
+		MarkdownDescription: "Every model an organization can use, with its current and announced list prices. The same for every caller, and readable without signing in.",
 	}
 }
 

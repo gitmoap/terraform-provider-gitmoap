@@ -15,6 +15,8 @@ Run it after scripts/generate_generator_config.py, or run both with `make genera
      from provider_api.json.
   3. Writes internal/provider/registry_gen.go, which gives each resource and data source to the
      shared implementation (rest_resource.go, rest_data_source.go) with its generated schema.
+  4. Writes examples/resources/<type>/import.sh for each resource, from the attributes it's
+     imported by, for the documentation. The other examples are written by hand.
 
 What one resource needs beyond the shared implementation goes in an override, by hand: see
 internal/provider/overrides.go.
@@ -156,6 +158,29 @@ def write_registry(resources: list[str], data_sources: list[str], module: str) -
     return path
 
 
+def write_import_examples(api_map: dict) -> list[str]:
+    """Write each resource's import example, and remove those of resources that are gone. Returns
+    the example directories left with hand-written files for a resource that's gone."""
+    examples = REPO_ROOT / "examples" / "resources"
+    stale = []
+    for directory in sorted(examples.glob("gitmoap_*")):
+        if directory.name.removeprefix("gitmoap_") not in api_map["resources"]:
+            (directory / "import.sh").unlink(missing_ok=True)
+            if any(directory.iterdir()):
+                stale.append(str(directory.relative_to(REPO_ROOT)))
+            else:
+                directory.rmdir()
+    for name, api in sorted(api_map["resources"].items()):
+        names = [attribute.rsplit(".", 1)[-1] for attribute in api["identity"]]
+        how = f"its {names[0]}" if len(names) == 1 else f"its {', '.join(names[:-1])} and {names[-1]}, joined with slashes"
+        directory = examples / f"gitmoap_{name}"
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "import.sh").write_text(
+            f"# Import by {how}.\nterraform import gitmoap_{name}.example \"{'/'.join(f'<{n}>' for n in names)}\"\n"
+        )
+    return stale
+
+
 def main() -> int:
     if not shutil.which("go"):
         sys.exit("error: go is not on PATH; it runs tfplugingen-framework at the version pinned in go.mod")
@@ -171,7 +196,13 @@ def main() -> int:
     regenerate_packages()
     written = [write_api(api_map), write_registry(resources, data_sources, module_path())]
     subprocess.run(["gofmt", "-w", *map(str, written)], check=True)
+    stale = write_import_examples(api_map)
     print(f"generated {len(resources)} resources and {len(data_sources)} data sources in {PROVIDER_DIR.relative_to(REPO_ROOT)}", file=sys.stderr)
+    if stale:
+        print(f"{len(stale)} problems to fix:", file=sys.stderr)
+        for directory in stale:
+            print(f"  {directory}: has examples for a resource that isn't generated any more. Fix: delete them", file=sys.stderr)
+        return 1
     return 0
 
 

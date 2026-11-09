@@ -137,6 +137,8 @@ func GroupForkSettingsResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "A group's only: enforce `proposal_runs` as a ceiling beneath it.",
 			},
 		},
+		Description:         "Sets the group's own fork settings for every repository beneath it; send only the fields you change, and null to inherit. A group can also enforce a field with its _enforced flag: groups and repositories beneath may then choose a stricter value and never a looser one. Maintainers may change the settings; letting repositories be forked outside the organization, or lifting an enforced flag, needs an Owner. A value looser than one a group above enforces is refused, naming that group. The token needs group:update and group:read.",
+		MarkdownDescription: "Sets the group's own fork settings for every repository beneath it; send only the fields you change, and `null` to inherit. A group can also enforce a field with its `_enforced` flag: groups and repositories beneath may then choose a stricter value and never a looser one. Maintainers may change the settings; letting repositories be forked outside the organization, or lifting an enforced flag, needs an Owner. A value looser than one a group above enforces is refused, naming that group.\n\nThe token needs `group:update` and `group:read`.",
 	}
 }
 

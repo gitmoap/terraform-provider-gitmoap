@@ -132,6 +132,8 @@ func RepositoryCatalogServicesDataSourceSchema(ctx context.Context) schema.Schem
 				MarkdownDescription: "Filter by how the entry came to exist",
 			},
 		},
+		Description:         "List the services bound to a repository, each with its deployment promotion track. Returns every service with a path binding in this repository, alphabetically by slug, with the same filters and paging as the group listing. A service declared in a group you cannot see is left out, so a page can come back shorter than limit while still carrying a next_token. The token needs catalog:read.",
+		MarkdownDescription: "List the services bound to a repository, each with its deployment promotion track. Returns every service with a path binding in this repository, alphabetically by slug, with the same filters and paging as the group listing. A service declared in a group you cannot see is left out, so a page can come back shorter than `limit` while still carrying a `next_token`.\n\nThe token needs `catalog:read`.",
 	}
 }
 

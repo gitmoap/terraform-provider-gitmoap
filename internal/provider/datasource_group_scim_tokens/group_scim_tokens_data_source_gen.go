@@ -93,6 +93,8 @@ func GroupScimTokensDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "The organization's SCIM tokens, live and revoked. Only the organization's owners can read it. The token needs sso:read.",
+		MarkdownDescription: "The organization's SCIM tokens, live and revoked. Only the organization's owners can read it.\n\nThe token needs `sso:read`.",
 	}
 }
 

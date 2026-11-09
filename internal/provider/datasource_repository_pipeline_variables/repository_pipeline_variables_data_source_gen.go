@@ -85,6 +85,8 @@ func RepositoryPipelineVariablesDataSourceSchema(ctx context.Context) schema.Sch
 				MarkdownDescription: "The variables that apply, each naming the scope that declared it.",
 			},
 		},
+		Description:         "List the variables that apply to a repository's pipelines. Returns the effective set, ordered by name: the repository's own variables and those of every group above it, the nearest declaration of a name winning, each naming the scope it came from and whether it shadows a farther one. A secret's value is never returned. Reporters and above may read them; variables are not public, even on a public repository. The token needs pipeline_variable:read.",
+		MarkdownDescription: "List the variables that apply to a repository's pipelines. Returns the effective set, ordered by name: the repository's own variables and those of every group above it, the nearest declaration of a name winning, each naming the scope it came from and whether it shadows a farther one. A secret's value is never returned. Reporters and above may read them; variables are not public, even on a public repository.\n\nThe token needs `pipeline_variable:read`.",
 	}
 }
 

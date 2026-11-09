@@ -74,6 +74,8 @@ func GroupTagRulesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The rules, oldest first.",
 			},
 		},
+		Description:         "List a group's tag rules. The rules the group declares itself, oldest first, all of them. Anyone who can see the group may call it. The token needs tag_rule:read.",
+		MarkdownDescription: "List a group's tag rules. The rules the group declares itself, oldest first, all of them. Anyone who can see the group may call it.\n\nThe token needs `tag_rule:read`.",
 	}
 }
 

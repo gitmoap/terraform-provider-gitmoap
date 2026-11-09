@@ -73,6 +73,8 @@ func RepositoryPushRulesResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Whether every pushed commit must reference a work item. A push with a commit that does not is\nrejected as a whole.",
 			},
 		},
+		Description:         "Saves the repository's own values for the rules you send, creating them if it has none; null clears a rule so it is inherited again. The body takes only the rules it lists, and a field it does not list is refused rather than ignored. Maintainers and above may change them. Turning off, loosening or replacing a rule a group above enforces is refused, and a repository's rules cannot be enforced. The answer is the repository's own values, not the effective ones. The token needs push_rule:manage and push_rule:read.",
+		MarkdownDescription: "Saves the repository's own values for the rules you send, creating them if it has none; `null` clears a rule so it is inherited again. The body takes only the rules it lists, and a field it does not list is refused rather than ignored. Maintainers and above may change them. Turning off, loosening or replacing a rule a group above enforces is refused, and a repository's rules cannot be enforced. The answer is the repository's own values, not the effective ones.\n\nThe token needs `push_rule:manage` and `push_rule:read`.",
 	}
 }
 

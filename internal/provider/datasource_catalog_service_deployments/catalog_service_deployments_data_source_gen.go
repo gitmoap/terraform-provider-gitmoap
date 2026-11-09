@@ -163,6 +163,8 @@ func CatalogServiceDeploymentsDataSourceSchema(ctx context.Context) schema.Schem
 				MarkdownDescription: "Filter by deployment status",
 			},
 		},
+		Description:         "A service's deployment history. Every deployment of the service, newest first: the environment, the repository and commit, the pipeline run that performed it, and its status. Deployments are recorded by the platform as pipelines run, never written through the API; a rollback is a new deployment that supersedes the previous one. Filter by environment_id or status; pages hold up to 100 (20 by default). Reporters and above may call it: deployments are not public, even on a public group. The token needs catalog:read.",
+		MarkdownDescription: "A service's deployment history. Every deployment of the service, newest first: the environment, the repository and commit, the pipeline run that performed it, and its status. Deployments are recorded by the platform as pipelines run, never written through the API; a rollback is a new deployment that supersedes the previous one. Filter by `environment_id` or `status`; pages hold up to 100 (20 by default). Reporters and above may call it: deployments are not public, even on a public group.\n\nThe token needs `catalog:read`.",
 	}
 }
 

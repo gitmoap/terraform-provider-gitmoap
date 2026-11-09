@@ -114,6 +114,8 @@ func RepositoryTagDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Get a tag by name. The tag with the commit it points to and, for an annotated tag, its tagger and message. Anyone who can read the repository's code may call it, without signing in on a public repository. The token needs tag:read.",
+		MarkdownDescription: "Get a tag by name. The tag with the commit it points to and, for an annotated tag, its tagger and message. Anyone who can read the repository's code may call it, without signing in on a public repository.\n\nThe token needs `tag:read`.",
 	}
 }
 

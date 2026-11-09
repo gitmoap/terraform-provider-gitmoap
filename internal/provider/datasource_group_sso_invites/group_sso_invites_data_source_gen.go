@@ -118,6 +118,8 @@ func GroupSsoInvitesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List the organization's pending single sign-on invites. Ordered by email address. Only the organization's owners can read it. The token needs sso:read.",
+		MarkdownDescription: "List the organization's pending single sign-on invites. Ordered by email address. Only the organization's owners can read it.\n\nThe token needs `sso:read`.",
 	}
 }
 

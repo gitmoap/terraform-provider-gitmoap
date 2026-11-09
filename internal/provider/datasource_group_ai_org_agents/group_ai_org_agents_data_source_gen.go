@@ -167,6 +167,8 @@ func GroupAiOrgAgentsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "The organization's agents, with their positions and squads. Readable by anyone who can view the AI organization. The token needs ai_org:read.",
+		MarkdownDescription: "The organization's agents, with their positions and squads. Readable by anyone who can view the AI organization.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

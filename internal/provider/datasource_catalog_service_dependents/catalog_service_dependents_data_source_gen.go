@@ -151,6 +151,8 @@ func CatalogServiceDependentsDataSourceSchema(ctx context.Context) schema.Schema
 				MarkdownDescription: "Whether the list stopped at its limit of 500 and more exist.",
 			},
 		},
+		Description:         "List the services that depend on this service. Returns each inbound dependency with its kind (package, api or datastore), how it was learned, and the repository whose file established it. A dependent you cannot see is left out but counted, and a very large list is cut short and flagged. Anyone who can see the service may call it. The token needs catalog:read.",
+		MarkdownDescription: "List the services that depend on this service. Returns each inbound dependency with its kind (package, api or datastore), how it was learned, and the repository whose file established it. A dependent you cannot see is left out but counted, and a very large list is cut short and flagged. Anyone who can see the service may call it.\n\nThe token needs `catalog:read`.",
 	}
 }
 

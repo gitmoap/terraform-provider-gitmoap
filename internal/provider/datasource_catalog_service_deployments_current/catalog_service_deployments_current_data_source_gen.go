@@ -62,6 +62,8 @@ func CatalogServiceDeploymentsCurrentDataSourceSchema(ctx context.Context) schem
 				MarkdownDescription: "The service's id",
 			},
 		},
+		Description:         "What a service has deployed right now. The service's current deployment in each environment it has been deployed to. Reporters and above on the service's declaring group may call it; deployments are not public. The token needs catalog:read.",
+		MarkdownDescription: "What a service has deployed right now. The service's current deployment in each environment it has been deployed to. Reporters and above on the service's declaring group may call it; deployments are not public.\n\nThe token needs `catalog:read`.",
 	}
 }
 

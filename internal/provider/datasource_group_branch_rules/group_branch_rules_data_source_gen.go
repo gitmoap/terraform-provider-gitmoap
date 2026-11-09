@@ -70,6 +70,8 @@ func GroupBranchRulesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List branch rules for a group. The rules the group declares itself, not those of the groups above it. Anyone who can see the group may call it. The token needs branch_rule:read.",
+		MarkdownDescription: "List branch rules for a group. The rules the group declares itself, not those of the groups above it. Anyone who can see the group may call it.\n\nThe token needs `branch_rule:read`.",
 	}
 }
 

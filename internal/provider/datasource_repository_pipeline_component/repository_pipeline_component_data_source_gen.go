@@ -532,6 +532,8 @@ func RepositoryPipelineComponentDataSourceSchema(ctx context.Context) schema.Sch
 				MarkdownDescription: "Published versions, newest first. Present on a single-component read.",
 			},
 		},
+		Description:         "Read one component, its newest version's body and its published versions. Returns the component with the body of its newest published version, where its files are in its repository, and every version it has published, newest first. A component can be read through the repository that publishes it — or, for one a group owns, through any repository beneath the group; anywhere else it is not found. Anyone who can read the pipelines here may call it. The token needs pipeline:read.",
+		MarkdownDescription: "Read one component, its newest version's body and its published versions. Returns the component with the body of its newest published version, where its files are in its repository, and every version it has published, newest first. A component can be read through the repository that publishes it — or, for one a group owns, through any repository beneath the group; anywhere else it is not found. Anyone who can read the pipelines here may call it.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

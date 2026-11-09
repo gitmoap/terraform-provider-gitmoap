@@ -1,0 +1,32 @@
+name: Acceptance tests
+
+# They create and delete real objects in the group GITMOAP_TEST_GROUP names, so they run by hand
+# and once a week, one run at a time.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - run: make testacc
+        env:
+          GITMOAP_TOKEN: ${{ secrets.GITMOAP_TOKEN }}
+          GITMOAP_TEST_GROUP: ${{ vars.GITMOAP_TEST_GROUP }}
+          GITMOAP_TEST_USER_ID: ${{ vars.GITMOAP_TEST_USER_ID }}

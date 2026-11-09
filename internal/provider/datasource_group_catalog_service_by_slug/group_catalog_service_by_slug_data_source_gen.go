@@ -197,6 +197,8 @@ func GroupCatalogServiceBySlugDataSourceSchema(ctx context.Context) schema.Schem
 				MarkdownDescription: "The service's revision, incremented on every change. Send it with an update to have the\nupdate refused with a `409` if someone changed the service since you read it.",
 			},
 		},
+		Description:         "Get a service by its slug within a namespace. A slug is unique across the whole organization rather than within one group, so naming any group of the organization resolves the slug, including a service declared in a sibling group. You need to be able to see both the group in the path and the group that declares the service; a service declared in a group you cannot see is not found, exactly as it is when fetched by id. The token needs catalog:read.",
+		MarkdownDescription: "Get a service by its slug within a namespace. A slug is unique across the whole organization rather than within one group, so naming any group of the organization resolves the slug, including a service declared in a sibling group. You need to be able to see both the group in the path and the group that declares the service; a service declared in a group you cannot see is not found, exactly as it is when fetched by id.\n\nThe token needs `catalog:read`.",
 	}
 }
 

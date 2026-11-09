@@ -72,6 +72,8 @@ func GroupResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
+		Description:         "Creates a group, a namespace for repositories and other groups. Without a parent it is a top-level group — an organization — which any signed-in person can create, up to a limit; under a parent it needs Maintainer on the parent and can be no more visible than the parent. You become the new group's Owner in the same act, and its path must not be taken by another group or a repository. An organization's name must not be one the platform keeps, a well-known organization's name or one that looks like it, or a name another organization gave up recently; a well-known organization takes its own name by verifying its domain, then renaming. The token needs group:create, group:read, group:update and group:delete.",
+		MarkdownDescription: "Creates a group, a namespace for repositories and other groups. Without a parent it is a top-level group — an organization — which any signed-in person can create, up to a limit; under a parent it needs Maintainer on the parent and can be no more visible than the parent. You become the new group's Owner in the same act, and its path must not be taken by another group or a repository. An organization's name must not be one the platform keeps, a well-known organization's name or one that looks like it, or a name another organization gave up recently; a well-known organization takes its own name by verifying its domain, then renaming.\n\nThe token needs `group:create`, `group:read`, `group:update` and `group:delete`.",
 	}
 }
 

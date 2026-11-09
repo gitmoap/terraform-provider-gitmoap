@@ -111,6 +111,8 @@ func RepositoryProviderConnectionDataSourceSchema(ctx context.Context) schema.Sc
 				MarkdownDescription: "The names of the stored credential fields, each with a reference to where it is stored.\nNever the values. Empty for an `oidc_federation` connection.",
 			},
 		},
+		Description:         "Get one of a repository's provider connections. The connection's provider, name, how it authenticates, its configuration overrides and when its credentials were last rotated. Credential values are never returned, only references to where they are kept. Reporters and above, as members of the repository: a public repository does not make its connections readable. The token needs provider_connection:read.",
+		MarkdownDescription: "Get one of a repository's provider connections. The connection's provider, name, how it authenticates, its configuration overrides and when its credentials were last rotated. Credential values are never returned, only references to where they are kept. Reporters and above, as members of the repository: a public repository does not make its connections readable.\n\nThe token needs `provider_connection:read`.",
 	}
 }
 

@@ -89,6 +89,8 @@ func GroupBranchRuleResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "A branch rule that every repository beneath the group inherits, unless a nearer group or the repository defines its own rule for the same pattern. It takes the same settings as a repository's rule; Maintainers of the group and above may create one, a pattern takes one rule per group, and a rule weaker than one a group above enforces for the same pattern is refused. Creating it enforced, which takes an Owner of the group, makes it a floor beneath: a nearer rule for the same pattern still applies, tightened to be at least as strict. The token needs branch_rule:manage and branch_rule:read.",
+		MarkdownDescription: "A branch rule that every repository beneath the group inherits, unless a nearer group or the repository defines its own rule for the same pattern. It takes the same settings as a repository's rule; Maintainers of the group and above may create one, a pattern takes one rule per group, and a rule weaker than one a group above enforces for the same pattern is refused. Creating it enforced, which takes an Owner of the group, makes it a floor beneath: a nearer rule for the same pattern still applies, tightened to be at least as strict.\n\nThe token needs `branch_rule:manage` and `branch_rule:read`.",
 	}
 }
 

@@ -94,6 +94,8 @@ func GroupScimTokenResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The bearer the identity provider sends. Shown once, and never again.",
 			},
 		},
+		Description:         "Only the organization's owners mint tokens, on its top-level group. The response carries the token's secret this once: paste it into the identity provider, which sends it as a bearer token to the SCIM 2.0 endpoints. While the organization holds a live token, its identity provider keeps team rosters through SCIM, and signing in no longer syncs them from the groups claim. The token needs sso:manage and sso:read.",
+		MarkdownDescription: "Only the organization's owners mint tokens, on its top-level group. The response carries the token's secret this once: paste it into the identity provider, which sends it as a bearer token to the SCIM 2.0 endpoints. While the organization holds a live token, its identity provider keeps team rosters through SCIM, and signing in no longer syncs them from the groups claim.\n\nThe token needs `sso:manage` and `sso:read`.",
 	}
 }
 

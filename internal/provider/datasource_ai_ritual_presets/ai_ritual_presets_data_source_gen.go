@@ -126,6 +126,8 @@ func AiRitualPresetsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The presets.",
 			},
 		},
+		Description:         "The rituals to start from: Scrum, Kanban, Shape Up and continuous delivery — each a set of rituals[] entries ready to paste into a revision. The same for every caller, and readable without signing in.",
+		MarkdownDescription: "The rituals to start from: Scrum, Kanban, Shape Up and continuous delivery — each a set of `rituals[]` entries ready to paste into a revision. The same for every caller, and readable without signing in.",
 	}
 }
 

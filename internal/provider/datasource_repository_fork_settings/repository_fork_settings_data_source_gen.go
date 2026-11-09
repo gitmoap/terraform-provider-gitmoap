@@ -216,6 +216,8 @@ func RepositoryForkSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Repository ID",
 			},
 		},
+		Description:         "Get a repository's fork settings. Who may fork this repository and where to, who may propose changes to it from a fork, and how its pipelines treat those proposals — each as it applies here, with where the value came from: the repository itself, a group above it, or the default. A value a group above enforces says so. Anyone who can see the repository may read them. The token needs repo:read.",
+		MarkdownDescription: "Get a repository's fork settings. Who may fork this repository and where to, who may propose changes to it from a fork, and how its pipelines treat those proposals — each as it applies here, with where the value came from: the repository itself, a group above it, or the default. A value a group above enforces says so. Anyone who can see the repository may read them.\n\nThe token needs `repo:read`.",
 	}
 }
 

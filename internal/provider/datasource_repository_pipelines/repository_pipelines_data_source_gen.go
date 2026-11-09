@@ -433,6 +433,8 @@ func RepositoryPipelinesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Lifecycle filter: draft | published | all (default published; drafts writers-only)",
 			},
 		},
+		Description:         "List a repository's pipeline definitions. Published pipelines by default; ?status=draft|published|all chooses. Drafts are listed only to those who can write pipelines (Maintainer and above). The token needs pipeline:read.",
+		MarkdownDescription: "List a repository's pipeline definitions. Published pipelines by default; `?status=draft|published|all` chooses. Drafts are listed only to those who can write pipelines (Maintainer and above).\n\nThe token needs `pipeline:read`.",
 	}
 }
 

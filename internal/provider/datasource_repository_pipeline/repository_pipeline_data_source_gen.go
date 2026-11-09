@@ -414,6 +414,8 @@ func RepositoryPipelineDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "RFC 3339.",
 			},
 		},
+		Description:         "Get a single pipeline definition. Returns the pipeline's name, description, status, stages, edges, component references and triggers, with the advisory diagnostics a draft carries. Anyone who can read the repository's pipelines may call it, without signing in on a public repository; a draft is visible only to those who can manage pipelines (Maintainers and above), and to anyone else it is not found. The token needs pipeline:read.",
+		MarkdownDescription: "Get a single pipeline definition. Returns the pipeline's name, description, status, stages, edges, component references and triggers, with the advisory diagnostics a draft carries. Anyone who can read the repository's pipelines may call it, without signing in on a public repository; a draft is visible only to those who can manage pipelines (Maintainers and above), and to anyone else it is not found.\n\nThe token needs `pipeline:read`.",
 	}
 }
 

@@ -101,6 +101,8 @@ func GroupWebhooksDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List webhooks for a group. Every webhook the group itself holds, in one response, with its URL, events and whether it is active; signing secrets are never included. Webhooks of its subgroups and repositories are not listed. Maintainers and above; reading a webhook needs the same access as changing it. The token needs webhook:read.",
+		MarkdownDescription: "List webhooks for a group. Every webhook the group itself holds, in one response, with its URL, events and whether it is active; signing secrets are never included. Webhooks of its subgroups and repositories are not listed. Maintainers and above; reading a webhook needs the same access as changing it.\n\nThe token needs `webhook:read`.",
 	}
 }
 

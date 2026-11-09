@@ -170,6 +170,8 @@ func ProviderListingResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Edits the provider's marketplace page: its README, homepage and repository links, usage examples, and the categories and keywords it is found by. A field you leave out is unchanged and an explicit null clears it; categories, when sent, cannot be empty. Answers with the updated page. Only the publisher that owns the provider may edit it. The token needs provider_publishing:write and provider_catalog:read.",
+		MarkdownDescription: "Edits the provider's marketplace page: its README, homepage and repository links, usage examples, and the categories and keywords it is found by. A field you leave out is unchanged and an explicit `null` clears it; categories, when sent, cannot be empty. Answers with the updated page. Only the publisher that owns the provider may edit it.\n\nThe token needs `provider_publishing:write` and `provider_catalog:read`.",
 	}
 }
 

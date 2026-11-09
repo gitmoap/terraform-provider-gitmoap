@@ -71,6 +71,8 @@ func AiAgentProfileDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "An agent's public identity. The agent's handle, name, picture, position and state and the organization it works in — the way a person has a public profile — and nothing of its sessions, spend or configuration. Anyone who can see the organization's top-level group may read it, without signing in on a public organization, and so may anyone holding access anywhere inside the organization; an agent of an organization the caller cannot see is not found. The token needs ai_org:read.",
+		MarkdownDescription: "An agent's public identity. The agent's handle, name, picture, position and state and the organization it works in — the way a person has a public profile — and nothing of its sessions, spend or configuration. Anyone who can see the organization's top-level group may read it, without signing in on a public organization, and so may anyone holding access anywhere inside the organization; an agent of an organization the caller cannot see is not found.\n\nThe token needs `ai_org:read`.",
 	}
 }
 

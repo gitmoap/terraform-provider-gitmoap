@@ -126,6 +126,8 @@ func RepositoryIssueSettingsDataSourceSchema(ctx context.Context) schema.Schema 
 				MarkdownDescription: "The kind of work item. The type decides where an item may live (a group or a repository), which\ntypes it may have as children, and which fields it accepts.",
 			},
 		},
+		Description:         "Get a repository's effective issue settings, resolved through the group chain. Returns the issue settings that apply to the repository. Each field takes the repository's own value when it overrides its groups, otherwise the value of the nearest group that sets it, otherwise the default; a group that overrides its own parents ends the search there. Anyone who can see the repository's work items may read them — on a public repository, without signing in. The token needs issue_settings:read.",
+		MarkdownDescription: "Get a repository's effective issue settings, resolved through the group chain. Returns the issue settings that apply to the repository. Each field takes the repository's own value when it overrides its groups, otherwise the value of the nearest group that sets it, otherwise the default; a group that overrides its own parents ends the search there. Anyone who can see the repository's work items may read them — on a public repository, without signing in.\n\nThe token needs `issue_settings:read`.",
 	}
 }
 

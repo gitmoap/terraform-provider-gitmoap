@@ -95,6 +95,8 @@ func GroupPipelineVariableResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The variable's value. Absent for a secret, whose value can be written but never read back.",
 			},
 		},
+		Description:         "Sets the variable for the pipelines of every repository beneath the group, unless a nearer group or the repository declares the same name. Mark it secret and the value is stored write-only and never returned. Only the group's Owners may write group variables, since they reach repositories whose Maintainers never see the change. Names the platform reserves are refused, and a group holds a limited number of variables. The token needs pipeline_variable:manage and pipeline_variable:read.",
+		MarkdownDescription: "Sets the variable for the pipelines of every repository beneath the group, unless a nearer group or the repository declares the same name. Mark it secret and the value is stored write-only and never returned. Only the group's Owners may write group variables, since they reach repositories whose Maintainers never see the change. Names the platform reserves are refused, and a group holds a limited number of variables.\n\nThe token needs `pipeline_variable:manage` and `pipeline_variable:read`.",
 	}
 }
 

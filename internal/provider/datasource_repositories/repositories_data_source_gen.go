@@ -194,6 +194,8 @@ func RepositoriesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "List repositories. The repositories directly in one group, newest first. Name the group by group_id or by group_path, exactly one of them. Signed out, only public repositories are listed; signed in, a private repository appears only if you can reach it. Leave forks out with fork=exclude, or list only forks with fork=only. Page with next_token. The token needs repo:read.",
+		MarkdownDescription: "List repositories. The repositories directly in one group, newest first. Name the group by `group_id` or by `group_path`, exactly one of them. Signed out, only public repositories are listed; signed in, a private repository appears only if you can reach it. Leave forks out with `fork=exclude`, or list only forks with `fork=only`. Page with `next_token`.\n\nThe token needs `repo:read`.",
 	}
 }
 

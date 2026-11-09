@@ -228,6 +228,8 @@ func RepositoryProfileDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "How the repository is set up beyond its files.",
 			},
 		},
+		Description:         "Get a repository's profile. What a repository carries — a README, a licence and which one, a changelog, a contributing guide, a code of conduct, a security policy, code owners, a service catalog — and how it is set up: its pipelines, whether its default branch is protected, its wiki and its latest release. One read for a project's overview, and for what to suggest adding next. The token needs repo:read.",
+		MarkdownDescription: "Get a repository's profile. What a repository carries — a README, a licence and which one, a changelog, a contributing guide, a code of conduct, a security policy, code owners, a service catalog — and how it is set up: its pipelines, whether its default branch is protected, its wiki and its latest release. One read for a project's overview, and for what to suggest adding next.\n\nThe token needs `repo:read`.",
 	}
 }
 
