@@ -1,0 +1,4417 @@
+{
+	"data_sources": {
+		"access_permissions": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"path": "/access/permissions"
+			}
+		},
+		"ai_agent": {
+			"params": {
+				"agent_id": "agent_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/ai-agents/{agent_id}"
+			}
+		},
+		"ai_agent_memory": {
+			"params": {
+				"agent_id": "agent_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/ai-agents/{agent_id}/memory",
+				"query": {
+					"revision": "revision"
+				}
+			},
+			"renames": {
+				"history.history_updated_by": "updated_by"
+			}
+		},
+		"ai_agent_profile": {
+			"params": {
+				"agent_id": "agent_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/ai-agents/{agent_id}/profile"
+			}
+		},
+		"ai_gate": {
+			"params": {
+				"gate_id": "gate_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/ai-gates/{gate_id}"
+			}
+		},
+		"ai_models": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"path": "/ai-models"
+			}
+		},
+		"ai_profile_draft": {
+			"params": {
+				"draft_id": "draft_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/ai-profile-drafts/{draft_id}"
+			}
+		},
+		"ai_ritual_presets": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"path": "/ai-ritual-presets"
+			}
+		},
+		"catalog_check_kinds": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/check-kinds"
+			}
+		},
+		"catalog_environment": {
+			"params": {
+				"environment_id": "environment_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/environments/{environment_id}"
+			}
+		},
+		"catalog_environment_deployments": {
+			"params": {
+				"environment_id": "environment_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/environments/{environment_id}/deployments"
+			}
+		},
+		"catalog_environment_variables": {
+			"params": {
+				"environment_id": "environment_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/environments/{environment_id}/variables"
+			}
+		},
+		"catalog_scorecard": {
+			"params": {
+				"scorecard_id": "scorecard_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/scorecards/{scorecard_id}"
+			}
+		},
+		"catalog_scorecard_results": {
+			"params": {
+				"scorecard_id": "scorecard_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/catalog/scorecards/{scorecard_id}/results",
+				"query": {
+					"check_key": "check_key",
+					"service_id": "service_id",
+					"state": "state"
+				}
+			}
+		},
+		"catalog_service": {
+			"params": {
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/services/{service_id}"
+			}
+		},
+		"catalog_service_dependencies": {
+			"params": {
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/services/{service_id}/dependencies"
+			}
+		},
+		"catalog_service_dependents": {
+			"params": {
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/services/{service_id}/dependents"
+			}
+		},
+		"catalog_service_deployments": {
+			"params": {
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/catalog/services/{service_id}/deployments",
+				"query": {
+					"environment_id": "environment_id",
+					"status": "status"
+				}
+			}
+		},
+		"catalog_service_deployments_current": {
+			"params": {
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/services/{service_id}/deployments/current"
+			}
+		},
+		"catalog_service_scorecards": {
+			"params": {
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/services/{service_id}/scorecards"
+			}
+		},
+		"channel": {
+			"params": {
+				"channel_id": "channel_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/channels/{channel_id}"
+			}
+		},
+		"channel_members": {
+			"params": {
+				"channel_id": "channel_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/channels/{channel_id}/members"
+			}
+		},
+		"group": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}"
+			}
+		},
+		"group_access": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "entries",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/access",
+				"query": {
+					"search": "search",
+					"source": "source",
+					"subject_kind": "subject_kind"
+				}
+			},
+			"renames": {
+				"entries.source.source_at": "at"
+			}
+		},
+		"group_ai_agent_by_handle": {
+			"params": {
+				"group_id": "group_id",
+				"handle": "handle"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-agents/by-handle/{handle}"
+			}
+		},
+		"group_ai_org": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org"
+			}
+		},
+		"group_ai_org_agents": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org/agents"
+			}
+		},
+		"group_ai_org_conventions": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org/conventions",
+				"query": {
+					"revision": "revision"
+				}
+			},
+			"renames": {
+				"history.history_updated_by": "updated_by"
+			}
+		},
+		"group_ai_org_gates": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/ai-org/gates",
+				"query": {
+					"session_id": "session_id",
+					"state": "state"
+				}
+			}
+		},
+		"group_ai_org_model_connections": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org/model-connections"
+			}
+		},
+		"group_ai_org_sessions": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/ai-org/sessions",
+				"query": {
+					"agent_id": "agent_id",
+					"ritual_run_id": "ritual_run_id",
+					"squad": "squad",
+					"state": "state"
+				}
+			}
+		},
+		"group_ai_org_squad_memory": {
+			"params": {
+				"group_id": "group_id",
+				"squad_key": "squad_key"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org/squads/{squad_key}/memory",
+				"query": {
+					"revision": "revision"
+				}
+			},
+			"renames": {
+				"history.history_updated_by": "updated_by"
+			}
+		},
+		"group_approval_policy": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/approval-policy"
+			},
+			"renames": {
+				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_defined_at": "defined_at"
+			}
+		},
+		"group_branch_rule": {
+			"params": {
+				"branch_rule_id": "branch_rule_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/branch-rules/{branch_rule_id}"
+			}
+		},
+		"group_branch_rules": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/branch-rules"
+			}
+		},
+		"group_by_path": {
+			"params": {
+				"full_path": "full_path"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/by-path/{full_path}"
+			}
+		},
+		"group_catalog_deployments": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/catalog/deployments",
+				"query": {
+					"environment_id": "environment_id",
+					"search": "search",
+					"tier": "tier"
+				}
+			}
+		},
+		"group_catalog_environments": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/catalog/environments",
+				"query": {
+					"include_archived": "include_archived",
+					"inherited": "inherited",
+					"search": "search",
+					"tier": "tier"
+				}
+			}
+		},
+		"group_catalog_scorecards": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/catalog/scorecards",
+				"query": {
+					"enabled_only": "enabled_only",
+					"include_inherited": "include_inherited"
+				}
+			}
+		},
+		"group_catalog_service_by_slug": {
+			"params": {
+				"group_id": "group_id",
+				"slug": "slug"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/catalog/services/by-slug/{slug}"
+			}
+		},
+		"group_catalog_services": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/catalog/services",
+				"query": {
+					"include_orphaned": "include_orphaned",
+					"kind": "kind",
+					"search": "search",
+					"source": "source"
+				}
+			}
+		},
+		"group_channels": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/channels",
+				"query": {
+					"archived": "archived",
+					"kind": "kind",
+					"name": "name"
+				}
+			}
+		},
+		"group_fork_settings": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/fork-settings"
+			}
+		},
+		"group_issue_blueprint": {
+			"params": {
+				"blueprint_id": "blueprint_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
+			}
+		},
+		"group_issue_blueprints": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/issue-blueprints",
+				"query": {
+					"include": "include"
+				}
+			},
+			"root": "group_issue_blueprints"
+		},
+		"group_issue_settings": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/issue-settings"
+			}
+		},
+		"group_iteration": {
+			"params": {
+				"group_id": "group_id",
+				"iteration_id": "iteration_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/iterations/{iteration_id}"
+			}
+		},
+		"group_iteration_cadence": {
+			"params": {
+				"cadence_id": "cadence_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/iteration-cadences/{cadence_id}"
+			}
+		},
+		"group_iteration_cadences": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/iteration-cadences"
+			},
+			"root": "group_iteration_cadences"
+		},
+		"group_iterations": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/iterations",
+				"query": {
+					"cadence_id": "cadence_id",
+					"state": "state"
+				}
+			},
+			"root": "group_iterations"
+		},
+		"group_labels": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/labels",
+				"query": {
+					"search": "search"
+				}
+			},
+			"root": "group_labels"
+		},
+		"group_member": {
+			"params": {
+				"group_id": "group_id",
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/members/{user_id}"
+			}
+		},
+		"group_members": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/members",
+				"query": {
+					"search": "search"
+				}
+			}
+		},
+		"group_milestone": {
+			"params": {
+				"group_id": "group_id",
+				"milestone_id": "milestone_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/milestones/{milestone_id}"
+			}
+		},
+		"group_milestones": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/milestones",
+				"query": {
+					"search": "search"
+				}
+			},
+			"root": "group_milestones"
+		},
+		"group_mr_settings": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/mr-settings"
+			}
+		},
+		"group_package": {
+			"params": {
+				"format": "format",
+				"group_id": "group_id",
+				"package_name": "package_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/packages/{format}/{package_name}"
+			}
+		},
+		"group_packages": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "cursor"
+				},
+				"path": "/groups/{group_id}/packages",
+				"query": {
+					"format": "format",
+					"search": "search"
+				}
+			}
+		},
+		"group_pipeline_variables": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/pipeline-variables"
+			}
+		},
+		"group_provider": {
+			"params": {
+				"group_id": "group_id",
+				"provider_id": "provider_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/providers/{provider_id}"
+			}
+		},
+		"group_provider_connection": {
+			"params": {
+				"connection_id": "id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/provider-connections/{connection_id}"
+			}
+		},
+		"group_provider_connections": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/provider-connections"
+			}
+		},
+		"group_provider_policy": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/provider-policy"
+			}
+		},
+		"group_providers": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/providers"
+			}
+		},
+		"group_push_rules": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/push-rules"
+			}
+		},
+		"group_roles": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "roles",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/roles"
+			}
+		},
+		"group_scim_tokens": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/scim-tokens"
+			}
+		},
+		"group_service_accounts": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/service-accounts"
+			}
+		},
+		"group_sso_connection": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-connection"
+			}
+		},
+		"group_sso_domains": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-domains"
+			}
+		},
+		"group_sso_invites": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-invites"
+			}
+		},
+		"group_sso_observed_groups": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-observed-groups"
+			}
+		},
+		"group_tag_rule": {
+			"params": {
+				"group_id": "group_id",
+				"tag_rule_id": "tag_rule_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/tag-rules/{tag_rule_id}"
+			}
+		},
+		"group_tag_rules": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/tag-rules"
+			}
+		},
+		"group_teams": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "teams",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/teams",
+				"query": {
+					"search": "search"
+				}
+			}
+		},
+		"group_webhook": {
+			"params": {
+				"group_id": "group_id",
+				"webhook_id": "webhook_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/webhooks/{webhook_id}"
+			}
+		},
+		"group_webhooks": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/webhooks"
+			}
+		},
+		"group_wiki": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/wiki"
+			}
+		},
+		"group_wiki_page": {
+			"params": {
+				"group_id": "group_id",
+				"path": "path"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/wiki/pages/{path}"
+			}
+		},
+		"group_wiki_pages": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/wiki/pages",
+				"query": {
+					"prefix": "prefix"
+				}
+			}
+		},
+		"groups": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups",
+				"query": {
+					"parent_group_id": "parent_group_id",
+					"parent_group_path": "parent_group_path"
+				}
+			}
+		},
+		"issue_criterion_kinds": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"path": "/issue-criterion-kinds"
+			}
+		},
+		"provider": {
+			"params": {
+				"provider_id": "id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/providers/{provider_id}"
+			}
+		},
+		"provider_capabilities": {
+			"params": {
+				"provider_id": "provider_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/providers/{provider_id}/capabilities",
+				"query": {
+					"stage_type": "stage_type",
+					"version": "version"
+				}
+			}
+		},
+		"provider_listing": {
+			"params": {
+				"provider_id": "provider_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/providers/{provider_id}/listing"
+			}
+		},
+		"provider_submission": {
+			"params": {
+				"submission_id": "submission_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/provider-submissions/{submission_id}"
+			},
+			"renames": {
+				"manifest.manifest_capabilities": "capabilities",
+				"mirror_result.mirror_result_capabilities": "capabilities"
+			}
+		},
+		"provider_submissions": {
+			"params": {
+				"provider_id": "provider_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/providers/{provider_id}/submissions"
+			}
+		},
+		"provider_version": {
+			"params": {
+				"provider_id": "provider_id",
+				"version": "version"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/providers/{provider_id}/versions/{version}"
+			}
+		},
+		"provider_versions": {
+			"params": {
+				"provider_id": "provider_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/providers/{provider_id}/versions"
+			}
+		},
+		"providers": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/providers",
+				"query": {
+					"category": "category",
+					"featured": "featured",
+					"owning_group": "owning_group",
+					"q": "q",
+					"sort": "sort",
+					"tier": "tier",
+					"verified_only": "verified_only"
+				}
+			}
+		},
+		"publisher": {
+			"params": {
+				"publisher_id": "publisher_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/publishers/{publisher_id}"
+			}
+		},
+		"publishers": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/publishers",
+				"query": {
+					"verified": "verified"
+				}
+			}
+		},
+		"repositories": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories",
+				"query": {
+					"fork": "fork",
+					"group_id": "group_id",
+					"group_path": "group_path"
+				}
+			}
+		},
+		"repository": {
+			"params": {
+				"repo_id": "repository_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}"
+			}
+		},
+		"repository_access": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "entries",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/access",
+				"query": {
+					"search": "search",
+					"source": "source",
+					"subject_kind": "subject_kind"
+				}
+			},
+			"renames": {
+				"entries.source.source_at": "at"
+			}
+		},
+		"repository_approval_policy": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/approval-policy"
+			},
+			"renames": {
+				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_defined_at": "defined_at"
+			}
+		},
+		"repository_branch": {
+			"params": {
+				"branch_name": "branch_name",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/branches/{branch_name}"
+			}
+		},
+		"repository_branch_rule": {
+			"params": {
+				"branch_rule_id": "branch_rule_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/branch-rules/{branch_rule_id}"
+			}
+		},
+		"repository_branch_rules": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/branch-rules",
+				"query": {
+					"inherited": "inherited"
+				}
+			}
+		},
+		"repository_branches": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/branches",
+				"query": {
+					"search": "search"
+				}
+			}
+		},
+		"repository_by_path": {
+			"params": {
+				"full_path": "full_path"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/by-path/{full_path}"
+			}
+		},
+		"repository_catalog_environments": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/catalog/environments",
+				"query": {
+					"include_archived": "include_archived",
+					"inherited": "inherited",
+					"search": "search",
+					"tier": "tier"
+				}
+			}
+		},
+		"repository_catalog_resolve": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/catalog/resolve",
+				"query": {
+					"path": "path"
+				}
+			}
+		},
+		"repository_catalog_services": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/catalog/services",
+				"query": {
+					"include_orphaned": "include_orphaned",
+					"kind": "kind",
+					"search": "search",
+					"source": "source"
+				}
+			}
+		},
+		"repository_fork": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/fork"
+			}
+		},
+		"repository_fork_settings": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/fork-settings"
+			}
+		},
+		"repository_forks": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/forks",
+				"query": {
+					"scope": "scope",
+					"search": "search",
+					"sort": "sort"
+				}
+			}
+		},
+		"repository_issue_blueprint": {
+			"params": {
+				"blueprint_id": "blueprint_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
+			}
+		},
+		"repository_issue_blueprints": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/issue-blueprints",
+				"query": {
+					"include": "include"
+				}
+			},
+			"root": "repository_issue_blueprints"
+		},
+		"repository_issue_settings": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/issue-settings"
+			}
+		},
+		"repository_labels": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/labels",
+				"query": {
+					"search": "search"
+				}
+			},
+			"root": "repository_labels"
+		},
+		"repository_member": {
+			"params": {
+				"repo_id": "repo_id",
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/members/{user_id}"
+			}
+		},
+		"repository_members": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/members",
+				"query": {
+					"search": "search"
+				}
+			}
+		},
+		"repository_milestone": {
+			"params": {
+				"milestone_id": "milestone_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/milestones/{milestone_id}"
+			}
+		},
+		"repository_milestones": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/milestones",
+				"query": {
+					"search": "search"
+				}
+			},
+			"root": "repository_milestones"
+		},
+		"repository_mr_settings": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/mr-settings"
+			}
+		},
+		"repository_pipeline": {
+			"params": {
+				"pipeline_id": "id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipelines/{pipeline_id}"
+			},
+			"renames": {
+				"diagnostics.warnings.warnings_target": "target"
+			}
+		},
+		"repository_pipeline_component": {
+			"params": {
+				"component_id": "id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipeline-components/{component_id}"
+			}
+		},
+		"repository_pipeline_component_version": {
+			"params": {
+				"component_id": "component_id",
+				"repo_id": "repo_id",
+				"version": "version"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipeline-components/{component_id}/versions/{version}"
+			},
+			"renames": {
+				"body.outputs.outputs_source": "source"
+			}
+		},
+		"repository_pipeline_component_versions": {
+			"params": {
+				"component_id": "component_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/pipeline-components/{component_id}/versions",
+				"query": {
+					"lifecycle_state": "lifecycle_state"
+				}
+			}
+		},
+		"repository_pipeline_components": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/pipeline-components",
+				"query": {
+					"own_scope_only": "own_scope_only",
+					"search": "search"
+				}
+			}
+		},
+		"repository_pipeline_file": {
+			"params": {
+				"pipeline_name": "pipeline_name",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipeline-files/{pipeline_name}",
+				"query": {
+					"commit_sha": "commit_sha",
+					"ref": "ref"
+				}
+			},
+			"renames": {
+				"diagnostics.fix.fix_location": "location",
+				"diagnostics.fix.fix_location.location_end": "end",
+				"diagnostics.fix.fix_location.location_start": "start",
+				"diagnostics.related.related_end": "end",
+				"diagnostics.related.related_start": "start"
+			}
+		},
+		"repository_pipeline_files": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/pipeline-files",
+				"query": {
+					"ref": "ref"
+				}
+			}
+		},
+		"repository_pipeline_triggers": {
+			"params": {
+				"pipeline_id": "pipeline_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipelines/{pipeline_id}/triggers",
+				"query": {
+					"ref_name": "ref_name"
+				}
+			}
+		},
+		"repository_pipeline_variables": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipeline-variables"
+			}
+		},
+		"repository_pipelines": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/pipelines",
+				"query": {
+					"status": "status"
+				}
+			},
+			"renames": {
+				"items.diagnostics.warnings.warnings_target": "target"
+			}
+		},
+		"repository_profile": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/profile",
+				"query": {
+					"ref": "ref"
+				}
+			}
+		},
+		"repository_provider": {
+			"params": {
+				"provider_id": "provider_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/providers/{provider_id}"
+			}
+		},
+		"repository_provider_connection": {
+			"params": {
+				"connection_id": "id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/provider-connections/{connection_id}"
+			}
+		},
+		"repository_provider_connections": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/provider-connections"
+			}
+		},
+		"repository_provider_policy": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/provider-policy"
+			}
+		},
+		"repository_providers": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/providers"
+			}
+		},
+		"repository_push_rules": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/push-rules"
+			}
+		},
+		"repository_release": {
+			"params": {
+				"repo_id": "repo_id",
+				"tag_name": "tag_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/releases/{tag_name}"
+			}
+		},
+		"repository_release_asset": {
+			"params": {
+				"asset_id": "asset_id",
+				"repo_id": "repo_id",
+				"tag_name": "tag_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/releases/{tag_name}/assets/{asset_id}",
+				"query": {
+					"redirect": "redirect"
+				}
+			}
+		},
+		"repository_releases": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/releases",
+				"query": {
+					"include_drafts": "include_drafts"
+				}
+			}
+		},
+		"repository_releases_latest": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/releases/latest"
+			}
+		},
+		"repository_resolved_provider_connections": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/resolved-provider-connections"
+			}
+		},
+		"repository_service_accounts": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/service-accounts"
+			}
+		},
+		"repository_tag": {
+			"params": {
+				"repo_id": "repo_id",
+				"tag_name": "tag_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/tags/{tag_name}"
+			}
+		},
+		"repository_tag_rule": {
+			"params": {
+				"repo_id": "repo_id",
+				"tag_rule_id": "tag_rule_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/tag-rules/{tag_rule_id}"
+			}
+		},
+		"repository_tag_rules": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/tag-rules"
+			}
+		},
+		"repository_tags": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/tags",
+				"query": {
+					"search": "search",
+					"sort": "sort"
+				}
+			}
+		},
+		"repository_webhook": {
+			"params": {
+				"repo_id": "repo_id",
+				"webhook_id": "webhook_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/webhooks/{webhook_id}"
+			}
+		},
+		"repository_webhooks": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/webhooks"
+			}
+		},
+		"repository_wiki": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/wiki"
+			}
+		},
+		"repository_wiki_page": {
+			"params": {
+				"path": "path",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/wiki/pages/{path}"
+			}
+		},
+		"repository_wiki_pages": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/wiki/pages",
+				"query": {
+					"prefix": "prefix"
+				}
+			}
+		},
+		"role": {
+			"params": {
+				"role_id": "role_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/roles/{role_id}"
+			}
+		},
+		"service_account": {
+			"params": {
+				"sa_id": "service_account_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/service-accounts/{sa_id}"
+			}
+		},
+		"service_account_tokens": {
+			"params": {
+				"sa_id": "sa_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/service-accounts/{sa_id}/tokens"
+			}
+		},
+		"team": {
+			"params": {
+				"team_id": "team_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/teams/{team_id}"
+			}
+		},
+		"team_access": {
+			"params": {
+				"team_id": "team_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "grants",
+					"param": "next_token"
+				},
+				"path": "/teams/{team_id}/access"
+			}
+		},
+		"team_members": {
+			"params": {
+				"team_id": "team_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "members",
+					"param": "next_token"
+				},
+				"path": "/teams/{team_id}/members"
+			}
+		},
+		"template": {
+			"params": {
+				"template_key": "template_key",
+				"template_kind": "template_kind"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/templates/{template_kind}/{template_key}"
+			}
+		},
+		"templates": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"path": "/templates",
+				"query": {
+					"kind": "kind"
+				}
+			}
+		},
+		"user": {
+			"params": {
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/users/{user_id}"
+			}
+		},
+		"user_by_email": {
+			"params": {
+				"email": "email"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/users/by-email/{email}"
+			}
+		},
+		"user_by_username": {
+			"params": {
+				"username": "username"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/users/by-username/{username}"
+			}
+		},
+		"user_groups": {
+			"params": {
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/users/{user_id}/groups"
+			}
+		},
+		"user_repositories": {
+			"params": {
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/users/{user_id}/repositories"
+			}
+		},
+		"users": {
+			"params": {},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "cursor"
+				},
+				"path": "/users",
+				"query": {
+					"group_id": "group_id"
+				}
+			}
+		}
+	},
+	"resources": {
+		"ai_agent_memory": {
+			"create": {
+				"body": {
+					"body": "body",
+					"expected_revision": "expected_revision",
+					"note": "note"
+				},
+				"method": "PUT",
+				"path": "/ai-agents/{agent_id}/memory"
+			},
+			"identity": [
+				"agent_id"
+			],
+			"params": {
+				"agent_id": "agent_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/ai-agents/{agent_id}/memory"
+			},
+			"renames": {
+				"history.history_updated_by": "updated_by"
+			},
+			"update": {
+				"body": {
+					"body": "body",
+					"expected_revision": "expected_revision",
+					"note": "note"
+				},
+				"method": "PUT",
+				"path": "/ai-agents/{agent_id}/memory"
+			}
+		},
+		"catalog_environment_variable": {
+			"create": {
+				"body": {
+					"secret": "secret",
+					"value": "value"
+				},
+				"method": "PUT",
+				"path": "/catalog/environments/{environment_id}/variables/{name}"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/catalog/environments/{environment_id}/variables/{name}"
+			},
+			"identity": [
+				"environment_id",
+				"name"
+			],
+			"match": {
+				"name": "name"
+			},
+			"params": {
+				"environment_id": "environment_id",
+				"name": "name"
+			},
+			"read": {
+				"items": "items",
+				"method": "GET",
+				"path": "/catalog/environments/{environment_id}/variables"
+			},
+			"update": {
+				"body": {
+					"secret": "secret",
+					"value": "value"
+				},
+				"method": "PUT",
+				"path": "/catalog/environments/{environment_id}/variables/{name}"
+			}
+		},
+		"catalog_scorecard": {
+			"create": {
+				"body": {
+					"applies_to": "applies_to",
+					"campaign_active": "campaign_active",
+					"campaign_max_items": "campaign_max_items",
+					"checks": "checks",
+					"description": "description",
+					"enabled": "enabled",
+					"levels": "levels",
+					"name": "name",
+					"slug": "slug"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/catalog/scorecards"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/catalog/scorecards/{scorecard_id}"
+			},
+			"identity": [
+				"group_id",
+				"scorecard_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"scorecard_id": "scorecard_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/scorecards/{scorecard_id}"
+			},
+			"update": {
+				"body": {
+					"applies_to": "applies_to",
+					"campaign_active": "campaign_active",
+					"campaign_max_items": "campaign_max_items",
+					"checks": "checks",
+					"description": "description",
+					"enabled": "enabled",
+					"levels": "levels",
+					"name": "name",
+					"slug": "slug",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/catalog/scorecards/{scorecard_id}"
+			}
+		},
+		"catalog_service": {
+			"create": {
+				"body": {
+					"api_specs": "api_specs",
+					"description": "description",
+					"display_name": "display_name",
+					"external": "external",
+					"kind": "kind",
+					"links": "links",
+					"owner_group_id": "owner_group_id",
+					"owner_principal_id": "owner_principal_id",
+					"owner_team_id": "owner_team_id",
+					"provides": "provides",
+					"repo_paths": "repo_paths",
+					"slug": "slug"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/catalog/services"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/catalog/services/{service_id}"
+			},
+			"identity": [
+				"group_id",
+				"service_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"service_id": "service_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/services/{service_id}"
+			},
+			"update": {
+				"body": {
+					"api_specs": "api_specs",
+					"description": "description",
+					"display_name": "display_name",
+					"external": "external",
+					"kind": "kind",
+					"links": "links",
+					"owner_group_id": "owner_group_id",
+					"owner_principal_id": "owner_principal_id",
+					"owner_team_id": "owner_team_id",
+					"provides": "provides",
+					"repo_paths": "repo_paths",
+					"slug": "slug",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/catalog/services/{service_id}"
+			}
+		},
+		"group": {
+			"create": {
+				"body": {
+					"avatar": "avatar",
+					"description": "description",
+					"display_name": "display_name",
+					"group_name": "group_name",
+					"parent_group_id": "parent_group_id",
+					"visibility": "visibility"
+				},
+				"method": "POST",
+				"path": "/groups"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}"
+			},
+			"replace": [
+				"parent_group_id"
+			],
+			"update": {
+				"body": {
+					"avatar": "avatar",
+					"description": "description",
+					"display_name": "display_name",
+					"group_name": "group_name",
+					"visibility": "visibility"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}"
+			}
+		},
+		"group_ai_org_conventions": {
+			"create": {
+				"body": {
+					"body": "body",
+					"expected_revision": "expected_revision",
+					"note": "note"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/ai-org/conventions"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org/conventions"
+			},
+			"renames": {
+				"history.history_updated_by": "updated_by"
+			},
+			"update": {
+				"body": {
+					"body": "body",
+					"expected_revision": "expected_revision",
+					"note": "note"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/ai-org/conventions"
+			}
+		},
+		"group_ai_org_squad_memory": {
+			"create": {
+				"body": {
+					"body": "body",
+					"expected_revision": "expected_revision",
+					"note": "note"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/ai-org/squads/{squad_key}/memory"
+			},
+			"identity": [
+				"group_id",
+				"squad_key"
+			],
+			"params": {
+				"group_id": "group_id",
+				"squad_key": "squad_key"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/ai-org/squads/{squad_key}/memory"
+			},
+			"renames": {
+				"history.history_updated_by": "updated_by"
+			},
+			"update": {
+				"body": {
+					"body": "body",
+					"expected_revision": "expected_revision",
+					"note": "note"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/ai-org/squads/{squad_key}/memory"
+			}
+		},
+		"group_approval_policy": {
+			"create": {
+				"body": {
+					"author_can_approve": "author_can_approve",
+					"committers_can_approve": "committers_can_approve",
+					"enforcement": "enforcement",
+					"last_pusher_can_approve": "last_pusher_can_approve",
+					"reset_on_push": "reset_on_push"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/approval-policy"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/approval-policy"
+			},
+			"renames": {
+				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_defined_at": "defined_at"
+			},
+			"update": {
+				"body": {
+					"author_can_approve": "author_can_approve",
+					"committers_can_approve": "committers_can_approve",
+					"enforcement": "enforcement",
+					"last_pusher_can_approve": "last_pusher_can_approve",
+					"reset_on_push": "reset_on_push"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/approval-policy"
+			}
+		},
+		"group_branch_rule": {
+			"create": {
+				"body": {
+					"allow_force_push": "allow_force_push",
+					"allowed_to_merge": "allowed_to_merge",
+					"allowed_to_push": "allowed_to_push",
+					"branch_pattern": "branch_pattern",
+					"enforcement": "enforcement",
+					"merge_allowlist": "merge_allowlist",
+					"push_allowlist": "push_allowlist",
+					"require_code_owner_approval": "require_code_owner_approval"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/branch-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/branch-rules/{branch_rule_id}"
+			},
+			"identity": [
+				"group_id",
+				"branch_rule_id"
+			],
+			"params": {
+				"branch_rule_id": "branch_rule_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/branch-rules/{branch_rule_id}"
+			},
+			"replace": [
+				"branch_pattern"
+			],
+			"update": {
+				"body": {
+					"allow_force_push": "allow_force_push",
+					"allowed_to_merge": "allowed_to_merge",
+					"allowed_to_push": "allowed_to_push",
+					"enforcement": "enforcement",
+					"merge_allowlist": "merge_allowlist",
+					"push_allowlist": "push_allowlist",
+					"require_code_owner_approval": "require_code_owner_approval"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/branch-rules/{branch_rule_id}"
+			}
+		},
+		"group_catalog_environment": {
+			"create": {
+				"body": {
+					"concurrency": "concurrency",
+					"display_name": "display_name",
+					"protection": "protection",
+					"slug": "slug",
+					"tier": "tier",
+					"url": "url"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/catalog/environments"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/catalog/environments/{environment_id}"
+			},
+			"identity": [
+				"group_id",
+				"environment_id"
+			],
+			"params": {
+				"environment_id": "environment_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/environments/{environment_id}"
+			},
+			"update": {
+				"body": {
+					"archived": "archived",
+					"concurrency": "concurrency",
+					"display_name": "display_name",
+					"protection": "protection",
+					"slug": "slug",
+					"tier": "tier",
+					"url": "url",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/catalog/environments/{environment_id}"
+			}
+		},
+		"group_fork_settings": {
+			"create": {
+				"body": {
+					"allow_maintainer_edits": "allow_maintainer_edits",
+					"closed_proposal_retention_days": "closed_proposal_retention_days",
+					"fork_merge_requests": "fork_merge_requests",
+					"fork_merge_requests_enforced": "fork_merge_requests_enforced",
+					"forking": "forking",
+					"forking_enforced": "forking_enforced",
+					"min_account_age_days": "min_account_age_days",
+					"min_account_age_days_enforced": "min_account_age_days_enforced",
+					"outbound_merge_requests": "outbound_merge_requests",
+					"outbound_merge_requests_enforced": "outbound_merge_requests_enforced",
+					"override_group_settings": "override_group_settings",
+					"proposal_runs": "proposal_runs",
+					"proposal_runs_enforced": "proposal_runs_enforced"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/fork-settings"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/fork-settings"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/fork-settings"
+			},
+			"update": {
+				"body": {
+					"allow_maintainer_edits": "allow_maintainer_edits",
+					"closed_proposal_retention_days": "closed_proposal_retention_days",
+					"fork_merge_requests": "fork_merge_requests",
+					"fork_merge_requests_enforced": "fork_merge_requests_enforced",
+					"forking": "forking",
+					"forking_enforced": "forking_enforced",
+					"min_account_age_days": "min_account_age_days",
+					"min_account_age_days_enforced": "min_account_age_days_enforced",
+					"outbound_merge_requests": "outbound_merge_requests",
+					"outbound_merge_requests_enforced": "outbound_merge_requests_enforced",
+					"override_group_settings": "override_group_settings",
+					"proposal_runs": "proposal_runs",
+					"proposal_runs_enforced": "proposal_runs_enforced"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/fork-settings"
+			}
+		},
+		"group_issue_blueprint": {
+			"create": {
+				"body": {
+					"base_type": "base_type",
+					"blueprint_id": "blueprint_id",
+					"description": "description",
+					"facets": "facets",
+					"name": "name"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/issue-blueprints"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
+			},
+			"identity": [
+				"group_id",
+				"blueprint_id"
+			],
+			"params": {
+				"blueprint_id": "blueprint_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
+			},
+			"replace": [
+				"blueprint_id"
+			],
+			"update": {
+				"body": {
+					"archived": "archived",
+					"base_type": "base_type",
+					"description": "description",
+					"facets": "facets",
+					"name": "name",
+					"version": "version"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
+			}
+		},
+		"group_issue_settings": {
+			"create": {
+				"body": {
+					"anchor_drift_action": "anchor_drift_action",
+					"auto_close_on_verified": "auto_close_on_verified",
+					"auto_reopen_on_orphaned_close": "auto_reopen_on_orphaned_close",
+					"auto_reopen_on_regression": "auto_reopen_on_regression",
+					"binding_change_resets_evidence": "binding_change_resets_evidence",
+					"blocked_by_blocks_close": "blocked_by_blocks_close",
+					"close_on_commit_keyword": "close_on_commit_keyword",
+					"closing_branches": "closing_branches",
+					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
+					"default_issue_type": "default_issue_type",
+					"override_group_settings": "override_group_settings",
+					"public_issue_filing": "public_issue_filing",
+					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
+					"statuses": "statuses",
+					"todo_ignore_paths": "todo_ignore_paths",
+					"todo_policy": "todo_policy",
+					"todo_promote_type": "todo_promote_type"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/issue-settings"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/issue-settings"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/issue-settings"
+			},
+			"update": {
+				"body": {
+					"anchor_drift_action": "anchor_drift_action",
+					"auto_close_on_verified": "auto_close_on_verified",
+					"auto_reopen_on_orphaned_close": "auto_reopen_on_orphaned_close",
+					"auto_reopen_on_regression": "auto_reopen_on_regression",
+					"binding_change_resets_evidence": "binding_change_resets_evidence",
+					"blocked_by_blocks_close": "blocked_by_blocks_close",
+					"close_on_commit_keyword": "close_on_commit_keyword",
+					"closing_branches": "closing_branches",
+					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
+					"default_issue_type": "default_issue_type",
+					"override_group_settings": "override_group_settings",
+					"public_issue_filing": "public_issue_filing",
+					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
+					"statuses": "statuses",
+					"todo_ignore_paths": "todo_ignore_paths",
+					"todo_policy": "todo_policy",
+					"todo_promote_type": "todo_promote_type"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/issue-settings"
+			}
+		},
+		"group_iteration": {
+			"create": {
+				"body": {
+					"description": "description",
+					"due_date": "due_date",
+					"start_date": "start_date",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/iterations"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/iterations/{iteration_id}"
+			},
+			"identity": [
+				"group_id",
+				"iteration_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"iteration_id": "iteration_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/iterations/{iteration_id}"
+			},
+			"update": {
+				"body": {
+					"description": "description",
+					"due_date": "due_date",
+					"start_date": "start_date",
+					"title": "title"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/iterations/{iteration_id}"
+			}
+		},
+		"group_iteration_cadence": {
+			"create": {
+				"body": {
+					"active": "active",
+					"cool_down_weeks": "cool_down_weeks",
+					"duration_weeks": "duration_weeks",
+					"first_start_date": "first_start_date",
+					"iterations_in_advance": "iterations_in_advance",
+					"start_day": "start_day",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/iteration-cadences"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/iteration-cadences/{cadence_id}"
+			},
+			"identity": [
+				"group_id",
+				"cadence_id"
+			],
+			"params": {
+				"cadence_id": "cadence_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/iteration-cadences/{cadence_id}"
+			},
+			"replace": [
+				"cool_down_weeks",
+				"duration_weeks",
+				"first_start_date",
+				"start_day"
+			],
+			"update": {
+				"body": {
+					"active": "active",
+					"iterations_in_advance": "iterations_in_advance",
+					"title": "title"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/iteration-cadences/{cadence_id}"
+			}
+		},
+		"group_label": {
+			"create": {
+				"body": {
+					"color": "color",
+					"description": "description",
+					"key": "key",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/labels"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/labels/{label_key}"
+			},
+			"identity": [
+				"group_id",
+				"key"
+			],
+			"match": {
+				"key": "key"
+			},
+			"params": {
+				"group_id": "group_id",
+				"label_key": "key"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/labels"
+			},
+			"replace": [
+				"key"
+			],
+			"update": {
+				"body": {
+					"color": "color",
+					"description": "description",
+					"title": "title"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/labels/{label_key}"
+			}
+		},
+		"group_member": {
+			"create": {
+				"body": {
+					"access_level": "access_level",
+					"user_id": "user_id"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/members"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/members/{user_id}"
+			},
+			"identity": [
+				"group_id",
+				"user_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/members/{user_id}"
+			},
+			"replace": [
+				"user_id"
+			],
+			"update": {
+				"body": {
+					"access_level": "access_level"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/members/{user_id}"
+			}
+		},
+		"group_milestone": {
+			"create": {
+				"body": {
+					"description": "description",
+					"due_on": "due_on",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/milestones"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/milestones/{milestone_id}"
+			},
+			"identity": [
+				"group_id",
+				"milestone_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"milestone_id": "milestone_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/milestones/{milestone_id}"
+			},
+			"update": {
+				"body": {
+					"closed": "closed",
+					"description": "description",
+					"due_on": "due_on",
+					"title": "title"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/milestones/{milestone_id}"
+			}
+		},
+		"group_mr_settings": {
+			"create": {
+				"body": {
+					"allow_merge_without_pipeline": "allow_merge_without_pipeline",
+					"block_on_rejection": "block_on_rejection",
+					"delete_source_branch_default": "delete_source_branch_default",
+					"merge_method": "merge_method",
+					"override_group_settings": "override_group_settings",
+					"require_issue_criteria_green": "require_issue_criteria_green",
+					"require_linked_issue": "require_linked_issue",
+					"require_pipeline_success": "require_pipeline_success",
+					"squash_option": "squash_option",
+					"stack_auto_retarget": "stack_auto_retarget",
+					"stack_enforce_merge_order": "stack_enforce_merge_order",
+					"stack_restack_strategy": "stack_restack_strategy",
+					"unresolved_threads": "unresolved_threads"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/mr-settings"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/mr-settings"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/mr-settings"
+			},
+			"update": {
+				"body": {
+					"allow_merge_without_pipeline": "allow_merge_without_pipeline",
+					"block_on_rejection": "block_on_rejection",
+					"delete_source_branch_default": "delete_source_branch_default",
+					"merge_method": "merge_method",
+					"override_group_settings": "override_group_settings",
+					"require_issue_criteria_green": "require_issue_criteria_green",
+					"require_linked_issue": "require_linked_issue",
+					"require_pipeline_success": "require_pipeline_success",
+					"squash_option": "squash_option",
+					"stack_auto_retarget": "stack_auto_retarget",
+					"stack_enforce_merge_order": "stack_enforce_merge_order",
+					"stack_restack_strategy": "stack_restack_strategy",
+					"unresolved_threads": "unresolved_threads"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/mr-settings"
+			}
+		},
+		"group_pipeline_variable": {
+			"create": {
+				"body": {
+					"protected": "protected",
+					"secret": "secret",
+					"value": "value"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/pipeline-variables/{name}"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/pipeline-variables/{name}"
+			},
+			"identity": [
+				"group_id",
+				"name"
+			],
+			"match": {
+				"name": "name"
+			},
+			"params": {
+				"group_id": "group_id",
+				"name": "name"
+			},
+			"read": {
+				"items": "variables",
+				"method": "GET",
+				"path": "/groups/{group_id}/pipeline-variables"
+			},
+			"update": {
+				"body": {
+					"protected": "protected",
+					"secret": "secret",
+					"value": "value"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/pipeline-variables/{name}"
+			}
+		},
+		"group_provider_connection": {
+			"create": {
+				"body": {
+					"auth_mode": "auth_mode",
+					"environment_ids": "environment_ids",
+					"name": "name",
+					"protected": "protected",
+					"provider_id": "provider_id"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/provider-connections"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/provider-connections/{connection_id}"
+			},
+			"identity": [
+				"group_id",
+				"id"
+			],
+			"params": {
+				"connection_id": "id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/provider-connections/{connection_id}"
+			},
+			"replace": [
+				"auth_mode",
+				"name",
+				"provider_id"
+			],
+			"update": {
+				"body": {
+					"environment_bound": "environment_bound",
+					"environment_ids": "environment_ids",
+					"protected": "protected"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/provider-connections/{connection_id}"
+			}
+		},
+		"group_provider_policy": {
+			"create": {
+				"body": {
+					"accept_community": "accept_community",
+					"accept_own_private": "accept_own_private",
+					"accept_verified": "accept_verified",
+					"override_parent": "override_parent",
+					"require_changelog_ack": "require_changelog_ack"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/provider-policy"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/provider-policy"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/provider-policy"
+			},
+			"update": {
+				"body": {
+					"accept_community": "accept_community",
+					"accept_own_private": "accept_own_private",
+					"accept_verified": "accept_verified",
+					"override_parent": "override_parent",
+					"require_changelog_ack": "require_changelog_ack"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/provider-policy"
+			}
+		},
+		"group_push_rules": {
+			"create": {
+				"body": {
+					"author_email_regex": "author_email_regex",
+					"commit_message_regex": "commit_message_regex",
+					"enforcement": "enforcement",
+					"max_file_size_mb": "max_file_size_mb",
+					"prohibited_file_names_regex": "prohibited_file_names_regex",
+					"reject_unsigned_commits": "reject_unsigned_commits",
+					"require_closing_issue_reference": "require_closing_issue_reference",
+					"require_issue_reference": "require_issue_reference"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/push-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/push-rules"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/push-rules"
+			},
+			"update": {
+				"body": {
+					"author_email_regex": "author_email_regex",
+					"commit_message_regex": "commit_message_regex",
+					"enforcement": "enforcement",
+					"max_file_size_mb": "max_file_size_mb",
+					"prohibited_file_names_regex": "prohibited_file_names_regex",
+					"reject_unsigned_commits": "reject_unsigned_commits",
+					"require_closing_issue_reference": "require_closing_issue_reference",
+					"require_issue_reference": "require_issue_reference"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/push-rules"
+			}
+		},
+		"group_scim_token": {
+			"create": {
+				"body": {
+					"name": "name"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/scim-tokens"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/scim-tokens/{scim_token_id}"
+			},
+			"identity": [
+				"group_id",
+				"scim_token_id"
+			],
+			"match": {
+				"scim_token_id": "scim_token_id"
+			},
+			"params": {
+				"group_id": "group_id",
+				"scim_token_id": "scim_token_id"
+			},
+			"read": {
+				"items": "tokens",
+				"method": "GET",
+				"path": "/groups/{group_id}/scim-tokens"
+			},
+			"replace": [
+				"name"
+			]
+		},
+		"group_service_account": {
+			"create": {
+				"body": {
+					"access_level": "access_level",
+					"avatar": "avatar",
+					"name": "name"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/service-accounts"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/service-accounts/{sa_id}"
+			},
+			"identity": [
+				"group_id",
+				"service_account_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"sa_id": "service_account_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/service-accounts/{sa_id}"
+			},
+			"update": {
+				"body": {
+					"access_level": "access_level",
+					"avatar": "avatar",
+					"name": "name"
+				},
+				"method": "PATCH",
+				"path": "/service-accounts/{sa_id}"
+			}
+		},
+		"group_sso_connection": {
+			"create": {
+				"body": {
+					"attribute_mapping": "attribute_mapping",
+					"auto_provision": "auto_provision",
+					"enforced": "enforced",
+					"idp_sync_max_age_days": "idp_sync_max_age_days",
+					"oidc": "oidc",
+					"protocol": "protocol",
+					"saml": "saml"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/sso-connection"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/sso-connection"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-connection"
+			},
+			"update": {
+				"body": {
+					"attribute_mapping": "attribute_mapping",
+					"auto_provision": "auto_provision",
+					"enforced": "enforced",
+					"idp_sync_max_age_days": "idp_sync_max_age_days",
+					"oidc": "oidc",
+					"protocol": "protocol",
+					"saml": "saml"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/sso-connection"
+			}
+		},
+		"group_sso_domain": {
+			"create": {
+				"body": {
+					"domain": "domain"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/sso-domains"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/sso-domains/{domain}"
+			},
+			"identity": [
+				"group_id",
+				"domain"
+			],
+			"match": {
+				"domain": "domain"
+			},
+			"params": {
+				"domain": "domain",
+				"group_id": "group_id"
+			},
+			"read": {
+				"items": "domains",
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-domains"
+			},
+			"replace": [
+				"domain"
+			]
+		},
+		"group_sso_invite": {
+			"create": {
+				"body": {
+					"email": "email",
+					"expires_at": "expires_at",
+					"reason": "reason"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/sso-invites"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/sso-invites/{email}"
+			},
+			"identity": [
+				"group_id",
+				"email"
+			],
+			"match": {
+				"email": "email"
+			},
+			"params": {
+				"email": "email",
+				"group_id": "group_id"
+			},
+			"read": {
+				"items": "invites",
+				"method": "GET",
+				"path": "/groups/{group_id}/sso-invites"
+			},
+			"replace": [
+				"email",
+				"expires_at",
+				"reason"
+			]
+		},
+		"group_tag_rule": {
+			"create": {
+				"body": {
+					"allowed_to_create": "allowed_to_create",
+					"enforcement": "enforcement",
+					"tag_pattern": "tag_pattern"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/tag-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/tag-rules/{tag_rule_id}"
+			},
+			"identity": [
+				"group_id",
+				"tag_rule_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"tag_rule_id": "tag_rule_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/tag-rules/{tag_rule_id}"
+			},
+			"replace": [
+				"tag_pattern"
+			],
+			"update": {
+				"body": {
+					"allowed_to_create": "allowed_to_create",
+					"enforcement": "enforcement"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/tag-rules/{tag_rule_id}"
+			}
+		},
+		"group_webhook": {
+			"create": {
+				"body": {
+					"active": "active",
+					"events": "events",
+					"name": "name",
+					"secret": "secret",
+					"url": "url"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/webhooks"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/webhooks/{webhook_id}"
+			},
+			"identity": [
+				"group_id",
+				"webhook_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"webhook_id": "webhook_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/webhooks/{webhook_id}"
+			},
+			"update": {
+				"body": {
+					"active": "active",
+					"events": "events",
+					"name": "name",
+					"secret": "secret",
+					"url": "url"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/webhooks/{webhook_id}"
+			}
+		},
+		"group_wiki": {
+			"create": {
+				"body": {
+					"default_page": "default_page",
+					"enabled": "enabled",
+					"source": "source",
+					"source_path": "source_path"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/wiki"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/wiki"
+			},
+			"update": {
+				"body": {
+					"default_page": "default_page",
+					"enabled": "enabled",
+					"source": "source",
+					"source_path": "source_path"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/wiki"
+			}
+		},
+		"group_wiki_page": {
+			"create": {
+				"body": {
+					"content": "content",
+					"format": "format",
+					"message": "message",
+					"path": "path",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/wiki/pages"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/wiki/pages/{path}"
+			},
+			"identity": [
+				"group_id",
+				"path"
+			],
+			"params": {
+				"group_id": "group_id",
+				"path": "path"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/wiki/pages/{path}"
+			},
+			"replace": [
+				"format",
+				"path"
+			],
+			"update": {
+				"body": {
+					"content": "content",
+					"message": "message",
+					"title": "title"
+				},
+				"method": "PUT",
+				"path": "/groups/{group_id}/wiki/pages/{path}"
+			}
+		},
+		"provider_listing": {
+			"create": {
+				"body": {
+					"categories": "categories",
+					"examples": "examples",
+					"homepage_url": "homepage_url",
+					"keywords": "keywords",
+					"readme": "readme",
+					"repository_url": "repository_url"
+				},
+				"method": "PUT",
+				"path": "/providers/{provider_id}/listing"
+			},
+			"identity": [
+				"provider_id"
+			],
+			"params": {
+				"provider_id": "provider_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/providers/{provider_id}/listing"
+			},
+			"update": {
+				"body": {
+					"categories": "categories",
+					"examples": "examples",
+					"homepage_url": "homepage_url",
+					"keywords": "keywords",
+					"readme": "readme",
+					"repository_url": "repository_url"
+				},
+				"method": "PUT",
+				"path": "/providers/{provider_id}/listing"
+			}
+		},
+		"repository": {
+			"create": {
+				"body": {
+					"avatar": "avatar",
+					"description": "description",
+					"display_name": "display_name",
+					"group_id": "group_id",
+					"repository_name": "repository_name",
+					"visibility": "visibility"
+				},
+				"method": "POST",
+				"path": "/repositories"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}"
+			},
+			"identity": [
+				"repository_id"
+			],
+			"params": {
+				"repo_id": "repository_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}"
+			},
+			"replace": [
+				"group_id"
+			],
+			"update": {
+				"body": {
+					"avatar": "avatar",
+					"catalog_enabled": "catalog_enabled",
+					"description": "description",
+					"display_name": "display_name",
+					"pipelines_enabled": "pipelines_enabled",
+					"repository_name": "repository_name",
+					"visibility": "visibility"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}"
+			}
+		},
+		"repository_approval_policy": {
+			"create": {
+				"body": {
+					"author_can_approve": "author_can_approve",
+					"committers_can_approve": "committers_can_approve",
+					"enforcement": "enforcement",
+					"last_pusher_can_approve": "last_pusher_can_approve",
+					"reset_on_push": "reset_on_push"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/approval-policy"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/approval-policy"
+			},
+			"renames": {
+				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_defined_at": "defined_at"
+			},
+			"update": {
+				"body": {
+					"author_can_approve": "author_can_approve",
+					"committers_can_approve": "committers_can_approve",
+					"enforcement": "enforcement",
+					"last_pusher_can_approve": "last_pusher_can_approve",
+					"reset_on_push": "reset_on_push"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/approval-policy"
+			}
+		},
+		"repository_branch": {
+			"create": {
+				"body": {
+					"branch_name": "branch_name",
+					"from_branch": "from_branch"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/branches"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/branches/{branch_name}"
+			},
+			"identity": [
+				"repo_id",
+				"branch_name"
+			],
+			"params": {
+				"branch_name": "branch_name",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/branches/{branch_name}"
+			},
+			"replace": [
+				"branch_name",
+				"from_branch"
+			]
+		},
+		"repository_branch_rule": {
+			"create": {
+				"body": {
+					"allow_force_push": "allow_force_push",
+					"allowed_to_merge": "allowed_to_merge",
+					"allowed_to_push": "allowed_to_push",
+					"branch_pattern": "branch_pattern",
+					"enforcement": "enforcement",
+					"merge_allowlist": "merge_allowlist",
+					"push_allowlist": "push_allowlist",
+					"require_code_owner_approval": "require_code_owner_approval"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/branch-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/branch-rules/{branch_rule_id}"
+			},
+			"identity": [
+				"repo_id",
+				"branch_rule_id"
+			],
+			"params": {
+				"branch_rule_id": "branch_rule_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/branch-rules/{branch_rule_id}"
+			},
+			"replace": [
+				"branch_pattern"
+			],
+			"update": {
+				"body": {
+					"allow_force_push": "allow_force_push",
+					"allowed_to_merge": "allowed_to_merge",
+					"allowed_to_push": "allowed_to_push",
+					"enforcement": "enforcement",
+					"merge_allowlist": "merge_allowlist",
+					"push_allowlist": "push_allowlist",
+					"require_code_owner_approval": "require_code_owner_approval"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/branch-rules/{branch_rule_id}"
+			}
+		},
+		"repository_catalog_environment": {
+			"create": {
+				"body": {
+					"concurrency": "concurrency",
+					"display_name": "display_name",
+					"protection": "protection",
+					"slug": "slug",
+					"tier": "tier",
+					"url": "url"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/catalog/environments"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/catalog/environments/{environment_id}"
+			},
+			"identity": [
+				"repo_id",
+				"environment_id"
+			],
+			"params": {
+				"environment_id": "environment_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/catalog/environments/{environment_id}"
+			},
+			"update": {
+				"body": {
+					"archived": "archived",
+					"concurrency": "concurrency",
+					"display_name": "display_name",
+					"protection": "protection",
+					"slug": "slug",
+					"tier": "tier",
+					"url": "url",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/catalog/environments/{environment_id}"
+			}
+		},
+		"repository_fork": {
+			"create": {
+				"body": {
+					"auto_sync": "auto_sync",
+					"code_search": "code_search",
+					"tracked_branch": "tracked_branch",
+					"upstream_branch": "upstream_branch"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/fork"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/fork"
+			},
+			"update": {
+				"body": {
+					"auto_sync": "auto_sync",
+					"code_search": "code_search",
+					"tracked_branch": "tracked_branch",
+					"upstream_branch": "upstream_branch"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/fork"
+			}
+		},
+		"repository_fork_settings": {
+			"create": {
+				"body": {
+					"allow_maintainer_edits": "allow_maintainer_edits",
+					"closed_proposal_retention_days": "closed_proposal_retention_days",
+					"fork_merge_requests": "fork_merge_requests",
+					"fork_merge_requests_enforced": "fork_merge_requests_enforced",
+					"forking": "forking",
+					"forking_enforced": "forking_enforced",
+					"min_account_age_days": "min_account_age_days",
+					"min_account_age_days_enforced": "min_account_age_days_enforced",
+					"outbound_merge_requests": "outbound_merge_requests",
+					"outbound_merge_requests_enforced": "outbound_merge_requests_enforced",
+					"override_group_settings": "override_group_settings",
+					"proposal_runs": "proposal_runs",
+					"proposal_runs_enforced": "proposal_runs_enforced"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/fork-settings"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/fork-settings"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/fork-settings"
+			},
+			"update": {
+				"body": {
+					"allow_maintainer_edits": "allow_maintainer_edits",
+					"closed_proposal_retention_days": "closed_proposal_retention_days",
+					"fork_merge_requests": "fork_merge_requests",
+					"fork_merge_requests_enforced": "fork_merge_requests_enforced",
+					"forking": "forking",
+					"forking_enforced": "forking_enforced",
+					"min_account_age_days": "min_account_age_days",
+					"min_account_age_days_enforced": "min_account_age_days_enforced",
+					"outbound_merge_requests": "outbound_merge_requests",
+					"outbound_merge_requests_enforced": "outbound_merge_requests_enforced",
+					"override_group_settings": "override_group_settings",
+					"proposal_runs": "proposal_runs",
+					"proposal_runs_enforced": "proposal_runs_enforced"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/fork-settings"
+			}
+		},
+		"repository_issue_blueprint": {
+			"create": {
+				"body": {
+					"base_type": "base_type",
+					"blueprint_id": "blueprint_id",
+					"description": "description",
+					"facets": "facets",
+					"name": "name"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/issue-blueprints"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
+			},
+			"identity": [
+				"repo_id",
+				"blueprint_id"
+			],
+			"params": {
+				"blueprint_id": "blueprint_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
+			},
+			"replace": [
+				"blueprint_id"
+			],
+			"update": {
+				"body": {
+					"archived": "archived",
+					"base_type": "base_type",
+					"description": "description",
+					"facets": "facets",
+					"name": "name",
+					"version": "version"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
+			}
+		},
+		"repository_issue_settings": {
+			"create": {
+				"body": {
+					"anchor_drift_action": "anchor_drift_action",
+					"auto_close_on_verified": "auto_close_on_verified",
+					"auto_reopen_on_orphaned_close": "auto_reopen_on_orphaned_close",
+					"auto_reopen_on_regression": "auto_reopen_on_regression",
+					"binding_change_resets_evidence": "binding_change_resets_evidence",
+					"blocked_by_blocks_close": "blocked_by_blocks_close",
+					"close_on_commit_keyword": "close_on_commit_keyword",
+					"closing_branches": "closing_branches",
+					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
+					"default_issue_type": "default_issue_type",
+					"override_group_settings": "override_group_settings",
+					"public_issue_filing": "public_issue_filing",
+					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
+					"statuses": "statuses",
+					"todo_ignore_paths": "todo_ignore_paths",
+					"todo_policy": "todo_policy",
+					"todo_promote_type": "todo_promote_type"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/issue-settings"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/issue-settings"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/issue-settings"
+			},
+			"update": {
+				"body": {
+					"anchor_drift_action": "anchor_drift_action",
+					"auto_close_on_verified": "auto_close_on_verified",
+					"auto_reopen_on_orphaned_close": "auto_reopen_on_orphaned_close",
+					"auto_reopen_on_regression": "auto_reopen_on_regression",
+					"binding_change_resets_evidence": "binding_change_resets_evidence",
+					"blocked_by_blocks_close": "blocked_by_blocks_close",
+					"close_on_commit_keyword": "close_on_commit_keyword",
+					"closing_branches": "closing_branches",
+					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
+					"default_issue_type": "default_issue_type",
+					"override_group_settings": "override_group_settings",
+					"public_issue_filing": "public_issue_filing",
+					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
+					"statuses": "statuses",
+					"todo_ignore_paths": "todo_ignore_paths",
+					"todo_policy": "todo_policy",
+					"todo_promote_type": "todo_promote_type"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/issue-settings"
+			}
+		},
+		"repository_label": {
+			"create": {
+				"body": {
+					"color": "color",
+					"description": "description",
+					"key": "key",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/labels"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/labels/{label_key}"
+			},
+			"identity": [
+				"repo_id",
+				"key"
+			],
+			"match": {
+				"key": "key"
+			},
+			"params": {
+				"label_key": "key",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/labels"
+			},
+			"replace": [
+				"key"
+			],
+			"update": {
+				"body": {
+					"color": "color",
+					"description": "description",
+					"title": "title"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/labels/{label_key}"
+			}
+		},
+		"repository_member": {
+			"create": {
+				"body": {
+					"access_level": "access_level",
+					"user_id": "user_id"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/members"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/members/{user_id}"
+			},
+			"identity": [
+				"repo_id",
+				"user_id"
+			],
+			"params": {
+				"repo_id": "repo_id",
+				"user_id": "user_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/members/{user_id}"
+			},
+			"replace": [
+				"user_id"
+			],
+			"update": {
+				"body": {
+					"access_level": "access_level"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/members/{user_id}"
+			}
+		},
+		"repository_milestone": {
+			"create": {
+				"body": {
+					"description": "description",
+					"due_on": "due_on",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/milestones"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/milestones/{milestone_id}"
+			},
+			"identity": [
+				"repo_id",
+				"milestone_id"
+			],
+			"params": {
+				"milestone_id": "milestone_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/milestones/{milestone_id}"
+			},
+			"update": {
+				"body": {
+					"closed": "closed",
+					"description": "description",
+					"due_on": "due_on",
+					"title": "title"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/milestones/{milestone_id}"
+			}
+		},
+		"repository_mr_settings": {
+			"create": {
+				"body": {
+					"allow_merge_without_pipeline": "allow_merge_without_pipeline",
+					"block_on_rejection": "block_on_rejection",
+					"delete_source_branch_default": "delete_source_branch_default",
+					"merge_method": "merge_method",
+					"override_group_settings": "override_group_settings",
+					"require_issue_criteria_green": "require_issue_criteria_green",
+					"require_linked_issue": "require_linked_issue",
+					"require_pipeline_success": "require_pipeline_success",
+					"squash_option": "squash_option",
+					"stack_auto_retarget": "stack_auto_retarget",
+					"stack_enforce_merge_order": "stack_enforce_merge_order",
+					"stack_restack_strategy": "stack_restack_strategy",
+					"unresolved_threads": "unresolved_threads"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/mr-settings"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/mr-settings"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/mr-settings"
+			},
+			"update": {
+				"body": {
+					"allow_merge_without_pipeline": "allow_merge_without_pipeline",
+					"block_on_rejection": "block_on_rejection",
+					"delete_source_branch_default": "delete_source_branch_default",
+					"merge_method": "merge_method",
+					"override_group_settings": "override_group_settings",
+					"require_issue_criteria_green": "require_issue_criteria_green",
+					"require_linked_issue": "require_linked_issue",
+					"require_pipeline_success": "require_pipeline_success",
+					"squash_option": "squash_option",
+					"stack_auto_retarget": "stack_auto_retarget",
+					"stack_enforce_merge_order": "stack_enforce_merge_order",
+					"stack_restack_strategy": "stack_restack_strategy",
+					"unresolved_threads": "unresolved_threads"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/mr-settings"
+			}
+		},
+		"repository_pipeline_variable": {
+			"create": {
+				"body": {
+					"protected": "protected",
+					"secret": "secret",
+					"value": "value"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/pipeline-variables/{name}"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/pipeline-variables/{name}"
+			},
+			"identity": [
+				"repo_id",
+				"name"
+			],
+			"match": {
+				"name": "name"
+			},
+			"params": {
+				"name": "name",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"items": "variables",
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipeline-variables"
+			},
+			"update": {
+				"body": {
+					"protected": "protected",
+					"secret": "secret",
+					"value": "value"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/pipeline-variables/{name}"
+			}
+		},
+		"repository_provider_connection": {
+			"create": {
+				"body": {
+					"auth_mode": "auth_mode",
+					"environment_ids": "environment_ids",
+					"name": "name",
+					"protected": "protected",
+					"provider_id": "provider_id"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/provider-connections"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/provider-connections/{connection_id}"
+			},
+			"identity": [
+				"repo_id",
+				"id"
+			],
+			"params": {
+				"connection_id": "id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/provider-connections/{connection_id}"
+			},
+			"replace": [
+				"auth_mode",
+				"name",
+				"provider_id"
+			],
+			"update": {
+				"body": {
+					"environment_bound": "environment_bound",
+					"environment_ids": "environment_ids",
+					"protected": "protected"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/provider-connections/{connection_id}"
+			}
+		},
+		"repository_push_rules": {
+			"create": {
+				"body": {
+					"author_email_regex": "author_email_regex",
+					"commit_message_regex": "commit_message_regex",
+					"enforcement": "enforcement",
+					"max_file_size_mb": "max_file_size_mb",
+					"prohibited_file_names_regex": "prohibited_file_names_regex",
+					"reject_unsigned_commits": "reject_unsigned_commits",
+					"require_closing_issue_reference": "require_closing_issue_reference",
+					"require_issue_reference": "require_issue_reference"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/push-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/push-rules"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/push-rules"
+			},
+			"update": {
+				"body": {
+					"author_email_regex": "author_email_regex",
+					"commit_message_regex": "commit_message_regex",
+					"enforcement": "enforcement",
+					"max_file_size_mb": "max_file_size_mb",
+					"prohibited_file_names_regex": "prohibited_file_names_regex",
+					"reject_unsigned_commits": "reject_unsigned_commits",
+					"require_closing_issue_reference": "require_closing_issue_reference",
+					"require_issue_reference": "require_issue_reference"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/push-rules"
+			}
+		},
+		"repository_release": {
+			"create": {
+				"body": {
+					"body": "body",
+					"draft": "draft",
+					"name": "name",
+					"prerelease": "prerelease",
+					"tag_name": "tag_name",
+					"target": "target"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/releases"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/releases/{tag_name}"
+			},
+			"identity": [
+				"repo_id",
+				"tag_name"
+			],
+			"params": {
+				"repo_id": "repo_id",
+				"tag_name": "tag_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/releases/{tag_name}"
+			},
+			"replace": [
+				"tag_name",
+				"target"
+			],
+			"update": {
+				"body": {
+					"body": "body",
+					"draft": "draft",
+					"name": "name",
+					"prerelease": "prerelease",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/releases/{tag_name}"
+			}
+		},
+		"repository_release_asset": {
+			"create": {
+				"body": {
+					"content_type": "content_type",
+					"name": "name",
+					"size": "size"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/releases/{tag_name}/assets"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/releases/{tag_name}/assets/{asset_id}"
+			},
+			"identity": [
+				"repo_id",
+				"tag_name",
+				"asset_id"
+			],
+			"params": {
+				"asset_id": "asset_id",
+				"repo_id": "repo_id",
+				"tag_name": "tag_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/releases/{tag_name}/assets/{asset_id}"
+			},
+			"replace": [
+				"content_type",
+				"name",
+				"size"
+			]
+		},
+		"repository_service_account": {
+			"create": {
+				"body": {
+					"access_level": "access_level",
+					"avatar": "avatar",
+					"name": "name"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/service-accounts"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/service-accounts/{sa_id}"
+			},
+			"identity": [
+				"repo_id",
+				"service_account_id"
+			],
+			"params": {
+				"repo_id": "repo_id",
+				"sa_id": "service_account_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/service-accounts/{sa_id}"
+			},
+			"update": {
+				"body": {
+					"access_level": "access_level",
+					"avatar": "avatar",
+					"name": "name"
+				},
+				"method": "PATCH",
+				"path": "/service-accounts/{sa_id}"
+			}
+		},
+		"repository_tag": {
+			"create": {
+				"body": {
+					"message": "message",
+					"tag_name": "tag_name",
+					"target": "target"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/tags"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/tags/{tag_name}"
+			},
+			"identity": [
+				"repo_id",
+				"tag_name"
+			],
+			"params": {
+				"repo_id": "repo_id",
+				"tag_name": "tag_name"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/tags/{tag_name}"
+			},
+			"replace": [
+				"message",
+				"tag_name",
+				"target"
+			]
+		},
+		"repository_tag_rule": {
+			"create": {
+				"body": {
+					"allowed_to_create": "allowed_to_create",
+					"enforcement": "enforcement",
+					"tag_pattern": "tag_pattern"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/tag-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/tag-rules/{tag_rule_id}"
+			},
+			"identity": [
+				"repo_id",
+				"tag_rule_id"
+			],
+			"params": {
+				"repo_id": "repo_id",
+				"tag_rule_id": "tag_rule_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/tag-rules/{tag_rule_id}"
+			},
+			"replace": [
+				"tag_pattern"
+			],
+			"update": {
+				"body": {
+					"allowed_to_create": "allowed_to_create",
+					"enforcement": "enforcement"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/tag-rules/{tag_rule_id}"
+			}
+		},
+		"repository_webhook": {
+			"create": {
+				"body": {
+					"active": "active",
+					"events": "events",
+					"name": "name",
+					"secret": "secret",
+					"url": "url"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/webhooks"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/webhooks/{webhook_id}"
+			},
+			"identity": [
+				"repo_id",
+				"webhook_id"
+			],
+			"params": {
+				"repo_id": "repo_id",
+				"webhook_id": "webhook_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/webhooks/{webhook_id}"
+			},
+			"update": {
+				"body": {
+					"active": "active",
+					"events": "events",
+					"name": "name",
+					"secret": "secret",
+					"url": "url"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/webhooks/{webhook_id}"
+			}
+		},
+		"repository_wiki": {
+			"create": {
+				"body": {
+					"default_page": "default_page",
+					"enabled": "enabled",
+					"source": "source",
+					"source_path": "source_path"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/wiki"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/wiki"
+			},
+			"update": {
+				"body": {
+					"default_page": "default_page",
+					"enabled": "enabled",
+					"source": "source",
+					"source_path": "source_path"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/wiki"
+			}
+		},
+		"repository_wiki_page": {
+			"create": {
+				"body": {
+					"content": "content",
+					"format": "format",
+					"message": "message",
+					"path": "path",
+					"title": "title"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/wiki/pages"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/wiki/pages/{path}"
+			},
+			"identity": [
+				"repo_id",
+				"path"
+			],
+			"params": {
+				"path": "path",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/wiki/pages/{path}"
+			},
+			"replace": [
+				"format",
+				"path"
+			],
+			"update": {
+				"body": {
+					"content": "content",
+					"message": "message",
+					"title": "title"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/wiki/pages/{path}"
+			}
+		},
+		"role": {
+			"create": {
+				"body": {
+					"added": "added",
+					"base_role": "base_role",
+					"description": "description",
+					"name": "name",
+					"removed": "removed",
+					"slug": "slug"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/roles"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/roles/{role_id}"
+			},
+			"identity": [
+				"group_id",
+				"role_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"role_id": "role_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/roles/{role_id}"
+			},
+			"update": {
+				"body": {
+					"added": "added",
+					"base_role": "base_role",
+					"description": "description",
+					"name": "name",
+					"removed": "removed",
+					"slug": "slug"
+				},
+				"method": "PATCH",
+				"path": "/roles/{role_id}"
+			}
+		},
+		"service_account_token": {
+			"create": {
+				"body": {
+					"expires_in_days": "expires_in_days",
+					"name": "name",
+					"resource": "resource",
+					"scopes": "scopes"
+				},
+				"method": "POST",
+				"path": "/service-accounts/{sa_id}/tokens"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/service-accounts/{sa_id}/tokens/{token_id}"
+			},
+			"identity": [
+				"sa_id",
+				"access_token.access_token_id"
+			],
+			"match": {
+				"access_token.access_token_id": "access_token.access_token_id"
+			},
+			"params": {
+				"sa_id": "sa_id",
+				"token_id": "access_token.access_token_id"
+			},
+			"read": {
+				"items": "items",
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/service-accounts/{sa_id}/tokens"
+			},
+			"replace": [
+				"expires_in_days",
+				"name",
+				"resource",
+				"scopes"
+			]
+		},
+		"team": {
+			"create": {
+				"body": {
+					"description": "description",
+					"members": "members",
+					"name": "name",
+					"slug": "slug"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/teams"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/teams/{team_id}"
+			},
+			"identity": [
+				"group_id",
+				"team_id"
+			],
+			"params": {
+				"group_id": "group_id",
+				"team_id": "team_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/teams/{team_id}"
+			},
+			"replace": [
+				"members"
+			],
+			"update": {
+				"body": {
+					"description": "description",
+					"name": "name",
+					"slug": "slug"
+				},
+				"method": "PATCH",
+				"path": "/teams/{team_id}"
+			}
+		},
+		"team_member": {
+			"create": {
+				"body": {
+					"expires_at": "expires_at",
+					"role": "role"
+				},
+				"method": "PUT",
+				"path": "/teams/{team_id}/members/{user_id}"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/teams/{team_id}/members/{user_id}"
+			},
+			"identity": [
+				"team_id",
+				"user_id"
+			],
+			"match": {
+				"user_id": "user_id"
+			},
+			"params": {
+				"team_id": "team_id",
+				"user_id": "user_id"
+			},
+			"read": {
+				"items": "members",
+				"method": "GET",
+				"pages": {
+					"items": "members",
+					"param": "next_token"
+				},
+				"path": "/teams/{team_id}/members"
+			},
+			"update": {
+				"body": {
+					"expires_at": "expires_at",
+					"role": "role"
+				},
+				"method": "PUT",
+				"path": "/teams/{team_id}/members/{user_id}"
+			}
+		}
+	}
+}

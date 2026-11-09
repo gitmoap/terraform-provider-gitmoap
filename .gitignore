@@ -1,0 +1,15 @@
+# Build output
+/terraform-provider-gitmoap
+/dist/
+
+# Terraform, from trying examples locally
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+
+# Python
+__pycache__/
+
+.DS_Store
