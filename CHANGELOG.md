@@ -1,3 +1,15 @@
+## 0.0.2 (November 10, 2026)
+
+DOCUMENTATION:
+
+* An example for every data source, and every resource but the provider connections, whose
+  credentials the provider can't set yet. Each example is complete on its own.
+* Scenarios: resources that belong together, shown on the page of each one they use. A service
+  account whose token goes into a pipeline variable, a catalog service with its environments,
+  organization-wide defaults, a protected repository, a team, sprints, a wiki from Markdown files,
+  webhooks with generated secrets, a release, custom work item types, single sign-on, and access
+  for people.
+
 ## 0.0.1 (November 9, 2026)
 
 The first release, generated from the gitmoap API 0.99.0.

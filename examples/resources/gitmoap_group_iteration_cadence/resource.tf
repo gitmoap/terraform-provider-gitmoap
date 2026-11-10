@@ -1,6 +1,10 @@
+data "gitmoap_group_by_path" "platform" {
+  full_path = "acme/platform"
+}
+
 # Two-week sprints starting on Mondays, keeping the next two created.
 resource "gitmoap_group_iteration_cadence" "sprints" {
-  group_id              = gitmoap_group.platform.group_id
+  group_id              = data.gitmoap_group_by_path.platform.group_id
   title                 = "Sprint"
   first_start_date      = "2027-01-04"
   start_day             = "monday"

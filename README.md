@@ -65,6 +65,8 @@ and tfplugindocs are pinned in `go.mod` and run with `go tool`.
 | --- | --- |
 | `make spec` | Copies `openapi.json` from a gitmoap checkout, `../gitmoap` unless `GITMOAP_REPO` says otherwise |
 | `make generate` | Regenerates the code and the documentation from `openapi.json` |
+| `make docs` | Regenerates only the documentation, after changing an example |
+| `make examples` | Checks every example is valid on its own |
 | `make test` | Unit tests, including a check of every schema |
 | `make testacc` | Acceptance tests, against the real API |
 | `make install` | Installs the provider into `$(go env GOPATH)/bin` |
@@ -81,10 +83,27 @@ provider_installation {
 }
 ```
 
+### Examples
+
+The documentation's examples live in `examples/`:
+
+- `resources/<type>/resource.tf` and `data-sources/<type>/data-source.tf`: each resource's and
+  data source's own example. A data source without one gets a generated example, to edit freely.
+- `scenarios/<name>/`: resources that belong together, like a service account whose token goes
+  into a pipeline variable. `README.md` gives the scenario's title and what it shows, `main.tf` the
+  configuration. Each one appears on the page of every resource and data source it uses.
+
+Every example stands on its own. When one refers to an object it doesn't define, `make docs` adds
+the object's definition from `examples/shared.tf`, and `make examples` checks each example alone,
+against the provider built from here. `TestAccScenarios` applies every scenario for real; a new
+scenario needs an entry in its `scenarioTests`.
+
 ### Acceptance tests
 
 They create and delete real objects, named `tfacc-<random>`, and clean up even when a step fails.
-The tests that change group-wide settings work in a throwaway subgroup of the test group.
+The tests that change group-wide settings, and the scenarios, work in a throwaway subgroup of the
+test group. The release scenario pushes a commit, and runs only where gitmoap's command-line tools
+are installed.
 
 ```sh
 export GITMOAP_TOKEN=gmp_...                  # an Owner of the test group

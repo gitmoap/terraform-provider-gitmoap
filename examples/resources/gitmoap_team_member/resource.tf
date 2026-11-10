@@ -1,3 +1,13 @@
+data "gitmoap_group_by_path" "acme" {
+  full_path = "acme"
+}
+
+resource "gitmoap_team" "reviewers" {
+  group_id = data.gitmoap_group_by_path.acme.group_id
+  name     = "Reviewers"
+  slug     = "reviewers"
+}
+
 data "gitmoap_user_by_username" "ada" {
   username = "ada"
 }

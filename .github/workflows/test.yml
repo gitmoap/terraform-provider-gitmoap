@@ -32,5 +32,7 @@ jobs:
             echo "::error::Run make generate and commit the result."
             exit 1
           fi
+      - name: Examples are valid
+        run: make examples
       - run: go vet ./...
       - run: go test ./...

@@ -1,12 +1,21 @@
+variable "registry_token" {
+  type      = string
+  sensitive = true
+}
+
+data "gitmoap_group_by_path" "platform" {
+  full_path = "acme/platform"
+}
+
 resource "gitmoap_group_pipeline_variable" "region" {
-  group_id = gitmoap_group.platform.group_id
+  group_id = data.gitmoap_group_by_path.platform.group_id
   name     = "DEPLOY_REGION"
   value    = "eu-west-1"
 }
 
 # A secret value is write-only: the API never returns it.
 resource "gitmoap_group_pipeline_variable" "registry_token" {
-  group_id = gitmoap_group.platform.group_id
+  group_id = data.gitmoap_group_by_path.platform.group_id
   name     = "REGISTRY_TOKEN"
   value    = var.registry_token
   secret   = true

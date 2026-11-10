@@ -16,8 +16,12 @@ The token needs `label:manage` and `issue:read`.
 ## Example Usage
 
 ```terraform
+data "gitmoap_group_by_path" "platform" {
+  full_path = "acme/platform"
+}
+
 resource "gitmoap_group_label" "bug" {
-  group_id    = gitmoap_group.platform.group_id
+  group_id    = data.gitmoap_group_by_path.platform.group_id
   key         = "bug"
   color       = "#d73a4a"
   description = "Something isn't working"

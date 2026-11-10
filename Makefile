@@ -1,4 +1,4 @@
-.PHONY: generate docs spec build test testacc install
+.PHONY: generate docs examples spec build test testacc install
 
 # Regenerate everything from openapi.json: the provider code, then its documentation. Overrides
 # and examples are hand-written and kept.
@@ -7,8 +7,14 @@ generate:
 	python3 scripts/generate_provider.py
 	$(MAKE) docs
 
+# Completes the examples and writes the scenario templates, then renders docs/.
 docs:
+	python3 scripts/generate_docs.py
 	go tool tfplugindocs generate --provider-name gitmoap
+
+# Checks every example is valid on its own, against the provider built from here.
+examples:
+	python3 scripts/validate_examples.py
 
 # Take the OpenAPI spec from a gitmoap checkout, by default the one next to this repository.
 GITMOAP_REPO ?= ../gitmoap
