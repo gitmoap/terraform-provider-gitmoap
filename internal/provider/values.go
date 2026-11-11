@@ -462,3 +462,20 @@ func mismatch(path, want string, got any) error {
 	}
 	return fmt.Errorf("%s: expected %s from the API, got %T", path, want, got)
 }
+
+// isEmptyCollection reports whether value is a known, non-null list, set, tuple or map with no
+// elements.
+func isEmptyCollection(value tftypes.Value) bool {
+	if !value.IsKnown() || value.IsNull() {
+		return false
+	}
+	switch {
+	case value.Type().Is(tftypes.List{}), value.Type().Is(tftypes.Set{}), value.Type().Is(tftypes.Tuple{}):
+		var elements []tftypes.Value
+		return value.As(&elements) == nil && len(elements) == 0
+	case value.Type().Is(tftypes.Map{}):
+		var elements map[string]tftypes.Value
+		return value.As(&elements) == nil && len(elements) == 0
+	}
+	return false
+}

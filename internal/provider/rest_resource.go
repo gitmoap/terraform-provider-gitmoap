@@ -363,7 +363,19 @@ func (r *restResource) newCall(name string, op operation, identity, values tftyp
 		for attribute, field := range op.Body {
 			value, _ := attributeAt(values, attribute)
 			if name == "update" && !value.IsKnown() {
+				// An attribute only an update takes is a change to make, not a value to keep:
+				// left out of the configuration, it isn't sent at all. Sent back as it was, it can
+				// contradict a field beside it — a provider connection's environment_bound false
+				// beside its environment_ids is refused.
+				if slices.Contains(r.api.UpdateOnly, attribute) {
+					continue
+				}
 				value, _ = attributeAt(identity, attribute)
+				// Leaving an empty collection out keeps it empty as surely as sending it back,
+				// and an API may refuse the empty form outright, as environment_ids does.
+				if isEmptyCollection(value) {
+					continue
+				}
 			}
 			converted, ok, err := toJSON(value, attribute, r.fields())
 			if err != nil {

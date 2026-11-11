@@ -1,3 +1,12 @@
+## 0.1.1 (November 11, 2026)
+
+BUG FIXES:
+
+* An update no longer sends back an attribute only an update takes, or an empty list, that the
+  configuration leaves out. A provider connection's update sent `environment_bound` false beside
+  `environment_ids` [], which the API refuses, so every change to a connection failed — rotating its
+  write-only credentials included.
+
 ## 0.1.0 (November 11, 2026)
 
 FEATURES:
