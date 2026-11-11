@@ -36,6 +36,7 @@ data "gitmoap_provider_submission" "example" {
 
 - `attest_result` (Attributes) The result of checking a community or private provider's images, by capability. The images stay
 in your registry; nothing is copied or signed. (see [below for nested schema](#nestedatt--attest_result))
+- `auth_schema` (String) JSON: set it with `jsonencode()`.
 - `manifest` (Attributes) One published version of a provider, with the capabilities it offers. (see [below for nested schema](#nestedatt--manifest))
 - `manifest_digest` (String)
 - `mirror_result` (Attributes) The result of copying a verified provider's images into gitmoap's registry, by capability. (see [below for nested schema](#nestedatt--mirror_result))
@@ -109,6 +110,9 @@ input port of the same name: connect it and read it with `{"$from": "<key>"}`, o
 unconnected and write the value yourself.
 - `cache_enabled` (Boolean)
 - `capability_id` (String)
+- `config_schema` (String) The JSON Schema a step's `config` must satisfy to use this capability.
+
+JSON: set it with `jsonencode()`.
 - `default_timeout_seconds` (Number)
 - `description` (String)
 - `image_digest` (String) The exact build of the capability's container image, when the catalog records one. Pinned so

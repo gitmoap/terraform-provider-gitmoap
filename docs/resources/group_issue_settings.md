@@ -26,6 +26,12 @@ resource "gitmoap_group_issue_settings" "platform" {
   default_issue_type      = "task"
   close_on_commit_keyword = true
   todo_policy             = "index"
+
+  # Work items follow their merge requests: in review when one opens, done when it merges, and back
+  # where they were when it's closed without merging.
+  on_mr_opened = { to = "in_review" }
+  on_mr_merged = { to = "done" }
+  on_mr_closed = { value = "restore" }
 }
 ```
 
@@ -34,6 +40,8 @@ resource "gitmoap_group_issue_settings" "platform" {
 A blueprint is a work item type of the organization's own, built on a base type. Each of its
 facets becomes an acceptance criterion on every work item of that type, and a required one has
 to be met before the item closes.
+
+The settings also move work items along with their merge requests.
 
 ```terraform
 data "gitmoap_group_by_path" "acme" {
@@ -64,10 +72,14 @@ resource "gitmoap_group_issue_blueprint" "api_feature" {
   ]
 }
 
-# New work items are stories unless their author picks another type.
+# Work items follow their merge requests: in review when one opens, done when it merges, and back
+# where they were when it's closed without merging.
 resource "gitmoap_group_issue_settings" "acme" {
   group_id           = data.gitmoap_group_by_path.acme.group_id
   default_issue_type = "story"
+  on_mr_opened       = { to = "in_review" }
+  on_mr_merged       = { to = "done" }
+  on_mr_closed       = { value = "restore" }
 }
 ```
 
@@ -161,6 +173,22 @@ resource "gitmoap_group_issue_settings" "acme" {
 - `default_assignee_from_codeowners` (Boolean)
 - `default_issue_type` (String) The kind of work item. The type decides where an item may live (a group or a repository), which
 types it may have as children, and which fields it accepts.
+- `on_branch_created` (Attributes) Where an automation moves a work item when its event happens: nowhere (`disabled`), back to
+where it was (`restore`), or into a status category (`{"to": "in_progress"}`).
+
+Set `value` to `disabled`, `restore`, or set the other fields. (see [below for nested schema](#nestedatt--on_branch_created))
+- `on_mr_closed` (Attributes) Where an automation moves a work item when its event happens: nowhere (`disabled`), back to
+where it was (`restore`), or into a status category (`{"to": "in_progress"}`).
+
+Set `value` to `disabled`, `restore`, or set the other fields. (see [below for nested schema](#nestedatt--on_mr_closed))
+- `on_mr_merged` (Attributes) Where an automation moves a work item when its event happens: nowhere (`disabled`), back to
+where it was (`restore`), or into a status category (`{"to": "in_progress"}`).
+
+Set `value` to `disabled`, `restore`, or set the other fields. (see [below for nested schema](#nestedatt--on_mr_merged))
+- `on_mr_opened` (Attributes) Where an automation moves a work item when its event happens: nowhere (`disabled`), back to
+where it was (`restore`), or into a status category (`{"to": "in_progress"}`).
+
+Set `value` to `disabled`, `restore`, or set the other fields. (see [below for nested schema](#nestedatt--on_mr_opened))
 - `override_group_settings` (Boolean)
 - `public_issue_filing` (Boolean)
 - `require_verified_criteria_to_close` (Boolean)
@@ -169,6 +197,56 @@ types it may have as children, and which fields it accepts.
 - `todo_policy` (String) What a bare `// TODO:` in a push becomes.
 - `todo_promote_type` (String) The kind of work item. The type decides where an item may live (a group or a repository), which
 types it may have as children, and which fields it accepts.
+- `transitions` (Attributes) Which status categories a work item may move to from each category, as a map from a category to
+the categories it may move to. A category not listed may move anywhere. (see [below for nested schema](#nestedatt--transitions))
+
+<a id="nestedatt--on_branch_created"></a>
+### Nested Schema for `on_branch_created`
+
+Optional:
+
+- `to` (String) The fixed category behind a status. A status also has a *name*, which the team owns and may
+rename freely; the category is the part the platform reasons about. A team can call a status
+"Ready for QA" and the platform still knows it is `in_review` — so a board can place it in a
+column, a merge can move it, and a progress rollup can count it as not done.
+- `value` (String) One of `disabled`, `restore`, instead of the other fields.
+
+
+<a id="nestedatt--on_mr_closed"></a>
+### Nested Schema for `on_mr_closed`
+
+Optional:
+
+- `to` (String) The fixed category behind a status. A status also has a *name*, which the team owns and may
+rename freely; the category is the part the platform reasons about. A team can call a status
+"Ready for QA" and the platform still knows it is `in_review` — so a board can place it in a
+column, a merge can move it, and a progress rollup can count it as not done.
+- `value` (String) One of `disabled`, `restore`, instead of the other fields.
+
+
+<a id="nestedatt--on_mr_merged"></a>
+### Nested Schema for `on_mr_merged`
+
+Optional:
+
+- `to` (String) The fixed category behind a status. A status also has a *name*, which the team owns and may
+rename freely; the category is the part the platform reasons about. A team can call a status
+"Ready for QA" and the platform still knows it is `in_review` — so a board can place it in a
+column, a merge can move it, and a progress rollup can count it as not done.
+- `value` (String) One of `disabled`, `restore`, instead of the other fields.
+
+
+<a id="nestedatt--on_mr_opened"></a>
+### Nested Schema for `on_mr_opened`
+
+Optional:
+
+- `to` (String) The fixed category behind a status. A status also has a *name*, which the team owns and may
+rename freely; the category is the part the platform reasons about. A team can call a status
+"Ready for QA" and the platform still knows it is `in_review` — so a board can place it in a
+column, a merge can move it, and a progress rollup can count it as not done.
+- `value` (String) One of `disabled`, `restore`, instead of the other fields.
+
 
 <a id="nestedatt--statuses"></a>
 ### Nested Schema for `statuses`
@@ -185,6 +263,14 @@ column, a merge can move it, and a progress rollup can count it as not done.
 it must be open.
 - `name` (String)
 - `status_id` (String)
+
+
+<a id="nestedatt--transitions"></a>
+### Nested Schema for `transitions`
+
+Optional:
+
+- `table` (String) JSON: set it with `jsonencode()`.
 
 ## Import
 

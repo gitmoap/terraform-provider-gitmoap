@@ -21,6 +21,11 @@ func CatalogCheckKindsDataSourceSchema(ctx context.Context) schema.Schema {
 			"kinds": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"config_schema": schema.StringAttribute{
+							Computed:            true,
+							Description:         "A JSON Schema over the fields — render a form from this.\n\nJSON: set it with `jsonencode()`.",
+							MarkdownDescription: "A JSON Schema over the fields — render a form from this.\n\nJSON: set it with `jsonencode()`.",
+						},
 						"description": schema.StringAttribute{
 							Computed:            true,
 							Description:         "What the check means, and the one thing to do about a failure.",
@@ -31,6 +36,45 @@ func CatalogCheckKindsDataSourceSchema(ctx context.Context) schema.Schema {
 								Attributes: map[string]schema.Attribute{
 									"description": schema.StringAttribute{
 										Computed: true,
+									},
+									"field_type": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"max": schema.Float64Attribute{
+												Computed: true,
+											},
+											"min": schema.Float64Attribute{
+												Computed: true,
+											},
+											"options": schema.ListNestedAttribute{
+												NestedObject: schema.NestedAttributeObject{
+													Attributes: map[string]schema.Attribute{
+														"label": schema.StringAttribute{
+															Computed: true,
+														},
+														"value": schema.StringAttribute{
+															Computed: true,
+														},
+													},
+													CustomType: OptionsType{
+														ObjectType: types.ObjectType{
+															AttrTypes: OptionsValue{}.AttributeTypes(ctx),
+														},
+													},
+												},
+												Computed: true,
+											},
+											"type": schema.StringAttribute{
+												Computed: true,
+											},
+										},
+										CustomType: FieldTypeType{
+											ObjectType: types.ObjectType{
+												AttrTypes: FieldTypeValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "The type of a criterion-kind field, which decides the form control that suits it.\n\n`type` says which applies: `text`; `glob`; `number`, with `max`, `min`; `choice`, with `options`.",
+										MarkdownDescription: "The type of a criterion-kind field, which decides the form control that suits it.\n\n`type` says which applies: `text`; `glob`; `number`, with `max`, `min`; `choice`, with `options`.",
 									},
 									"label": schema.StringAttribute{
 										Computed: true,
@@ -117,6 +161,24 @@ func (t KindsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 
 	attributes := in.Attributes()
 
+	configSchemaAttribute, ok := attributes["config_schema"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`config_schema is missing from object`)
+
+		return nil, diags
+	}
+
+	configSchemaVal, ok := configSchemaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config_schema expected to be basetypes.StringValue, was: %T`, configSchemaAttribute))
+	}
+
 	descriptionAttribute, ok := attributes["description"]
 
 	if !ok {
@@ -248,6 +310,7 @@ func (t KindsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 	}
 
 	return KindsValue{
+		ConfigSchema:  configSchemaVal,
 		Description:   descriptionVal,
 		Fields:        fieldsVal,
 		InvalidatedBy: invalidatedByVal,
@@ -322,6 +385,24 @@ func NewKindsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewKindsValueUnknown(), diags
 	}
 
+	configSchemaAttribute, ok := attributes["config_schema"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`config_schema is missing from object`)
+
+		return NewKindsValueUnknown(), diags
+	}
+
+	configSchemaVal, ok := configSchemaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config_schema expected to be basetypes.StringValue, was: %T`, configSchemaAttribute))
+	}
+
 	descriptionAttribute, ok := attributes["description"]
 
 	if !ok {
@@ -453,6 +534,7 @@ func NewKindsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 	}
 
 	return KindsValue{
+		ConfigSchema:  configSchemaVal,
 		Description:   descriptionVal,
 		Fields:        fieldsVal,
 		InvalidatedBy: invalidatedByVal,
@@ -532,6 +614,7 @@ func (t KindsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = KindsValue{}
 
 type KindsValue struct {
+	ConfigSchema  basetypes.StringValue `tfsdk:"config_schema"`
 	Description   basetypes.StringValue `tfsdk:"description"`
 	Fields        basetypes.ListValue   `tfsdk:"fields"`
 	InvalidatedBy basetypes.ListValue   `tfsdk:"invalidated_by"`
@@ -543,11 +626,12 @@ type KindsValue struct {
 }
 
 func (v KindsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 8)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["config_schema"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["fields"] = basetypes.ListType{
 		ElemType: FieldsValue{}.Type(ctx),
@@ -566,7 +650,15 @@ func (v KindsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 8)
+
+		val, err = v.ConfigSchema.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["config_schema"] = val
 
 		val, err = v.Description.ToTerraformValue(ctx)
 
@@ -696,7 +788,8 @@ func (v KindsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"description": basetypes.StringType{},
+			"config_schema": basetypes.StringType{},
+			"description":   basetypes.StringType{},
 			"fields": basetypes.ListType{
 				ElemType: FieldsValue{}.Type(ctx),
 			},
@@ -726,7 +819,8 @@ func (v KindsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"description": basetypes.StringType{},
+			"config_schema": basetypes.StringType{},
+			"description":   basetypes.StringType{},
 			"fields": basetypes.ListType{
 				ElemType: FieldsValue{}.Type(ctx),
 			},
@@ -743,7 +837,8 @@ func (v KindsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"description": basetypes.StringType{},
+		"config_schema": basetypes.StringType{},
+		"description":   basetypes.StringType{},
 		"fields": basetypes.ListType{
 			ElemType: FieldsValue{}.Type(ctx),
 		},
@@ -769,6 +864,7 @@ func (v KindsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"config_schema":  v.ConfigSchema,
 			"description":    v.Description,
 			"fields":         fields,
 			"invalidated_by": invalidatedByVal,
@@ -794,6 +890,10 @@ func (v KindsValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.ConfigSchema.Equal(other.ConfigSchema) {
+		return false
 	}
 
 	if !v.Description.Equal(other.Description) {
@@ -837,7 +937,8 @@ func (v KindsValue) Type(ctx context.Context) attr.Type {
 
 func (v KindsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"description": basetypes.StringType{},
+		"config_schema": basetypes.StringType{},
+		"description":   basetypes.StringType{},
 		"fields": basetypes.ListType{
 			ElemType: FieldsValue{}.Type(ctx),
 		},
@@ -894,6 +995,24 @@ func (t FieldsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	fieldTypeAttribute, ok := attributes["field_type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`field_type is missing from object`)
+
+		return nil, diags
+	}
+
+	fieldTypeVal, ok := fieldTypeAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`field_type expected to be basetypes.ObjectValue, was: %T`, fieldTypeAttribute))
 	}
 
 	labelAttribute, ok := attributes["label"]
@@ -956,6 +1075,7 @@ func (t FieldsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 
 	return FieldsValue{
 		Description: descriptionVal,
+		FieldType:   fieldTypeVal,
 		Label:       labelVal,
 		Name:        nameVal,
 		Required:    requiredVal,
@@ -1044,6 +1164,24 @@ func NewFieldsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
 	}
 
+	fieldTypeAttribute, ok := attributes["field_type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`field_type is missing from object`)
+
+		return NewFieldsValueUnknown(), diags
+	}
+
+	fieldTypeVal, ok := fieldTypeAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`field_type expected to be basetypes.ObjectValue, was: %T`, fieldTypeAttribute))
+	}
+
 	labelAttribute, ok := attributes["label"]
 
 	if !ok {
@@ -1104,6 +1242,7 @@ func NewFieldsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 
 	return FieldsValue{
 		Description: descriptionVal,
+		FieldType:   fieldTypeVal,
 		Label:       labelVal,
 		Name:        nameVal,
 		Required:    requiredVal,
@@ -1180,6 +1319,7 @@ var _ basetypes.ObjectValuable = FieldsValue{}
 
 type FieldsValue struct {
 	Description basetypes.StringValue `tfsdk:"description"`
+	FieldType   basetypes.ObjectValue `tfsdk:"field_type"`
 	Label       basetypes.StringValue `tfsdk:"label"`
 	Name        basetypes.StringValue `tfsdk:"name"`
 	Required    basetypes.BoolValue   `tfsdk:"required"`
@@ -1187,12 +1327,15 @@ type FieldsValue struct {
 }
 
 func (v FieldsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 4)
+	attrTypes := make(map[string]tftypes.Type, 5)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["field_type"] = basetypes.ObjectType{
+		AttrTypes: FieldTypeValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["label"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["required"] = basetypes.BoolType{}.TerraformType(ctx)
@@ -1201,7 +1344,7 @@ func (v FieldsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 4)
+		vals := make(map[string]tftypes.Value, 5)
 
 		val, err = v.Description.ToTerraformValue(ctx)
 
@@ -1210,6 +1353,14 @@ func (v FieldsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["description"] = val
+
+		val, err = v.FieldType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["field_type"] = val
 
 		val, err = v.Label.ToTerraformValue(ctx)
 
@@ -1264,11 +1415,35 @@ func (v FieldsValue) String() string {
 func (v FieldsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var fieldType basetypes.ObjectValue
+
+	if v.FieldType.IsNull() {
+		fieldType = types.ObjectNull(
+			FieldTypeValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.FieldType.IsUnknown() {
+		fieldType = types.ObjectUnknown(
+			FieldTypeValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.FieldType.IsNull() && !v.FieldType.IsUnknown() {
+		fieldType = types.ObjectValueMust(
+			FieldTypeValue{}.AttributeTypes(ctx),
+			v.FieldType.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"description": basetypes.StringType{},
-		"label":       basetypes.StringType{},
-		"name":        basetypes.StringType{},
-		"required":    basetypes.BoolType{},
+		"field_type": basetypes.ObjectType{
+			AttrTypes: FieldTypeValue{}.AttributeTypes(ctx),
+		},
+		"label":    basetypes.StringType{},
+		"name":     basetypes.StringType{},
+		"required": basetypes.BoolType{},
 	}
 
 	if v.IsNull() {
@@ -1283,6 +1458,7 @@ func (v FieldsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		attributeTypes,
 		map[string]attr.Value{
 			"description": v.Description,
+			"field_type":  fieldType,
 			"label":       v.Label,
 			"name":        v.Name,
 			"required":    v.Required,
@@ -1307,6 +1483,10 @@ func (v FieldsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Description.Equal(other.Description) {
+		return false
+	}
+
+	if !v.FieldType.Equal(other.FieldType) {
 		return false
 	}
 
@@ -1336,8 +1516,914 @@ func (v FieldsValue) Type(ctx context.Context) attr.Type {
 func (v FieldsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"description": basetypes.StringType{},
-		"label":       basetypes.StringType{},
-		"name":        basetypes.StringType{},
-		"required":    basetypes.BoolType{},
+		"field_type": basetypes.ObjectType{
+			AttrTypes: FieldTypeValue{}.AttributeTypes(ctx),
+		},
+		"label":    basetypes.StringType{},
+		"name":     basetypes.StringType{},
+		"required": basetypes.BoolType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = FieldTypeType{}
+
+type FieldTypeType struct {
+	basetypes.ObjectType
+}
+
+func (t FieldTypeType) Equal(o attr.Type) bool {
+	other, ok := o.(FieldTypeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t FieldTypeType) String() string {
+	return "FieldTypeType"
+}
+
+func (t FieldTypeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	maxAttribute, ok := attributes["max"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`max is missing from object`)
+
+		return nil, diags
+	}
+
+	maxVal, ok := maxAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`max expected to be basetypes.Float64Value, was: %T`, maxAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return nil, diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.Float64Value, was: %T`, minAttribute))
+	}
+
+	optionsAttribute, ok := attributes["options"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`options is missing from object`)
+
+		return nil, diags
+	}
+
+	optionsVal, ok := optionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`options expected to be basetypes.ListValue, was: %T`, optionsAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return FieldTypeValue{
+		Max:           maxVal,
+		Min:           minVal,
+		Options:       optionsVal,
+		FieldTypeType: typeVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFieldTypeValueNull() FieldTypeValue {
+	return FieldTypeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewFieldTypeValueUnknown() FieldTypeValue {
+	return FieldTypeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewFieldTypeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (FieldTypeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing FieldTypeValue Attribute Value",
+				"While creating a FieldTypeValue value, a missing attribute value was detected. "+
+					"A FieldTypeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FieldTypeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid FieldTypeValue Attribute Type",
+				"While creating a FieldTypeValue value, an invalid attribute value was detected. "+
+					"A FieldTypeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FieldTypeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("FieldTypeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra FieldTypeValue Attribute Value",
+				"While creating a FieldTypeValue value, an extra attribute value was detected. "+
+					"A FieldTypeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra FieldTypeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewFieldTypeValueUnknown(), diags
+	}
+
+	maxAttribute, ok := attributes["max"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`max is missing from object`)
+
+		return NewFieldTypeValueUnknown(), diags
+	}
+
+	maxVal, ok := maxAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`max expected to be basetypes.Float64Value, was: %T`, maxAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return NewFieldTypeValueUnknown(), diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.Float64Value, was: %T`, minAttribute))
+	}
+
+	optionsAttribute, ok := attributes["options"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`options is missing from object`)
+
+		return NewFieldTypeValueUnknown(), diags
+	}
+
+	optionsVal, ok := optionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`options expected to be basetypes.ListValue, was: %T`, optionsAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewFieldTypeValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewFieldTypeValueUnknown(), diags
+	}
+
+	return FieldTypeValue{
+		Max:           maxVal,
+		Min:           minVal,
+		Options:       optionsVal,
+		FieldTypeType: typeVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFieldTypeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) FieldTypeValue {
+	object, diags := NewFieldTypeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewFieldTypeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t FieldTypeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewFieldTypeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewFieldTypeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewFieldTypeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewFieldTypeValueMust(FieldTypeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t FieldTypeType) ValueType(ctx context.Context) attr.Value {
+	return FieldTypeValue{}
+}
+
+var _ basetypes.ObjectValuable = FieldTypeValue{}
+
+type FieldTypeValue struct {
+	Max           basetypes.Float64Value `tfsdk:"max"`
+	Min           basetypes.Float64Value `tfsdk:"min"`
+	Options       basetypes.ListValue    `tfsdk:"options"`
+	FieldTypeType basetypes.StringValue  `tfsdk:"type"`
+	state         attr.ValueState
+}
+
+func (v FieldTypeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["max"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["min"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["options"] = basetypes.ListType{
+		ElemType: OptionsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Max.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["max"] = val
+
+		val, err = v.Min.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["min"] = val
+
+		val, err = v.Options.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["options"] = val
+
+		val, err = v.FieldTypeType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v FieldTypeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v FieldTypeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v FieldTypeValue) String() string {
+	return "FieldTypeValue"
+}
+
+func (v FieldTypeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	options := types.ListValueMust(
+		OptionsType{
+			basetypes.ObjectType{
+				AttrTypes: OptionsValue{}.AttributeTypes(ctx),
+			},
+		},
+		v.Options.Elements(),
+	)
+
+	if v.Options.IsNull() {
+		options = types.ListNull(
+			OptionsType{
+				basetypes.ObjectType{
+					AttrTypes: OptionsValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
+	if v.Options.IsUnknown() {
+		options = types.ListUnknown(
+			OptionsType{
+				basetypes.ObjectType{
+					AttrTypes: OptionsValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"max": basetypes.Float64Type{},
+		"min": basetypes.Float64Type{},
+		"options": basetypes.ListType{
+			ElemType: OptionsValue{}.Type(ctx),
+		},
+		"type": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"max":     v.Max,
+			"min":     v.Min,
+			"options": options,
+			"type":    v.FieldTypeType,
+		})
+
+	return objVal, diags
+}
+
+func (v FieldTypeValue) Equal(o attr.Value) bool {
+	other, ok := o.(FieldTypeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Max.Equal(other.Max) {
+		return false
+	}
+
+	if !v.Min.Equal(other.Min) {
+		return false
+	}
+
+	if !v.Options.Equal(other.Options) {
+		return false
+	}
+
+	if !v.FieldTypeType.Equal(other.FieldTypeType) {
+		return false
+	}
+
+	return true
+}
+
+func (v FieldTypeValue) Type(ctx context.Context) attr.Type {
+	return FieldTypeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v FieldTypeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"max": basetypes.Float64Type{},
+		"min": basetypes.Float64Type{},
+		"options": basetypes.ListType{
+			ElemType: OptionsValue{}.Type(ctx),
+		},
+		"type": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = OptionsType{}
+
+type OptionsType struct {
+	basetypes.ObjectType
+}
+
+func (t OptionsType) Equal(o attr.Type) bool {
+	other, ok := o.(OptionsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OptionsType) String() string {
+	return "OptionsType"
+}
+
+func (t OptionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	labelAttribute, ok := attributes["label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`label is missing from object`)
+
+		return nil, diags
+	}
+
+	labelVal, ok := labelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`label expected to be basetypes.StringValue, was: %T`, labelAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OptionsValue{
+		Label: labelVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOptionsValueNull() OptionsValue {
+	return OptionsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOptionsValueUnknown() OptionsValue {
+	return OptionsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOptionsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OptionsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OptionsValue Attribute Value",
+				"While creating a OptionsValue value, a missing attribute value was detected. "+
+					"A OptionsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OptionsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OptionsValue Attribute Type",
+				"While creating a OptionsValue value, an invalid attribute value was detected. "+
+					"A OptionsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OptionsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OptionsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OptionsValue Attribute Value",
+				"While creating a OptionsValue value, an extra attribute value was detected. "+
+					"A OptionsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OptionsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOptionsValueUnknown(), diags
+	}
+
+	labelAttribute, ok := attributes["label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`label is missing from object`)
+
+		return NewOptionsValueUnknown(), diags
+	}
+
+	labelVal, ok := labelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`label expected to be basetypes.StringValue, was: %T`, labelAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewOptionsValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOptionsValueUnknown(), diags
+	}
+
+	return OptionsValue{
+		Label: labelVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOptionsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OptionsValue {
+	object, diags := NewOptionsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOptionsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OptionsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOptionsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOptionsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOptionsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOptionsValueMust(OptionsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OptionsType) ValueType(ctx context.Context) attr.Value {
+	return OptionsValue{}
+}
+
+var _ basetypes.ObjectValuable = OptionsValue{}
+
+type OptionsValue struct {
+	Label basetypes.StringValue `tfsdk:"label"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
+}
+
+func (v OptionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["label"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Label.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["label"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OptionsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OptionsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OptionsValue) String() string {
+	return "OptionsValue"
+}
+
+func (v OptionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"label": basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"label": v.Label,
+			"value": v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v OptionsValue) Equal(o attr.Value) bool {
+	other, ok := o.(OptionsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Label.Equal(other.Label) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v OptionsValue) Type(ctx context.Context) attr.Type {
+	return OptionsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OptionsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"label": basetypes.StringType{},
+		"value": basetypes.StringType{},
 	}
 }

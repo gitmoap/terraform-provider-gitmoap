@@ -70,6 +70,10 @@
 			"read": {
 				"method": "GET",
 				"path": "/ai-ritual-presets"
+			},
+			"transforms": {
+				"items.rituals.facilitator": "scalar_or_object",
+				"items.rituals.scope": "scalar_or_object"
 			}
 		},
 		"catalog_check_kinds": {
@@ -77,6 +81,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/catalog/check-kinds"
+			},
+			"transforms": {
+				"kinds.config_schema": "json"
 			}
 		},
 		"catalog_environment": {
@@ -86,6 +93,10 @@
 			"read": {
 				"method": "GET",
 				"path": "/catalog/environments/{environment_id}"
+			},
+			"transforms": {
+				"protection.approvers.anyone": "marker",
+				"protection.approvers.code_owners": "marker"
 			}
 		},
 		"catalog_environment_deployments": {
@@ -113,6 +124,10 @@
 			"read": {
 				"method": "GET",
 				"path": "/catalog/scorecards/{scorecard_id}"
+			},
+			"transforms": {
+				"applies_to.annotations": "json",
+				"checks.config": "json"
 			}
 		},
 		"catalog_scorecard_results": {
@@ -131,6 +146,10 @@
 					"service_id": "service_id",
 					"state": "state"
 				}
+			},
+			"transforms": {
+				"items.detail": "json",
+				"summary.scored.by_level": "json"
 			}
 		},
 		"catalog_service": {
@@ -140,6 +159,12 @@
 			"read": {
 				"method": "GET",
 				"path": "/catalog/services/{service_id}"
+			},
+			"renames": {
+				"lifecycle_stage": "lifecycle"
+			},
+			"transforms": {
+				"annotations": "json"
 			}
 		},
 		"catalog_service_dependencies": {
@@ -244,6 +269,9 @@
 				}
 			},
 			"renames": {
+				"entries.limited_to.limited_to_subject": "subject",
+				"entries.limited_to.limited_to_subject.subject_principal": "principal",
+				"entries.limited_to.limited_to_subject.subject_team": "team",
 				"entries.source.source_at": "at"
 			}
 		},
@@ -361,7 +389,16 @@
 			},
 			"renames": {
 				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_approvers": "approvers",
+				"rules_here.rules_here_approvers.approver_role": "role",
+				"rules_here.rules_here_approvers.approver_role.role_at": "at",
 				"rules_here.rules_here_defined_at": "defined_at"
+			},
+			"transforms": {
+				"rules.approvers.anyone": "marker",
+				"rules.approvers.code_owners": "marker",
+				"rules_here.rules_here_approvers.anyone": "marker",
+				"rules_here.rules_here_approvers.code_owners": "marker"
 			}
 		},
 		"group_branch_rule": {
@@ -450,6 +487,12 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/catalog/services/by-slug/{slug}"
+			},
+			"renames": {
+				"lifecycle_stage": "lifecycle"
+			},
+			"transforms": {
+				"annotations": "json"
 			}
 		},
 		"group_catalog_services": {
@@ -466,9 +509,13 @@
 				"query": {
 					"include_orphaned": "include_orphaned",
 					"kind": "kind",
+					"lifecycle": "lifecycle_stage",
 					"search": "search",
 					"source": "source"
 				}
+			},
+			"renames": {
+				"lifecycle_stage": "lifecycle"
 			}
 		},
 		"group_channels": {
@@ -506,6 +553,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
+			},
+			"renames": {
+				"facets.binding.criterion": "binding"
 			}
 		},
 		"group_issue_blueprints": {
@@ -519,6 +569,9 @@
 					"include": "include"
 				}
 			},
+			"renames": {
+				"group_issue_blueprints.facets.binding.criterion": "binding"
+			},
 			"root": "group_issue_blueprints"
 		},
 		"group_issue_settings": {
@@ -528,6 +581,13 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/issue-settings"
+			},
+			"transforms": {
+				"on_branch_created": "scalar_or_object",
+				"on_mr_closed": "scalar_or_object",
+				"on_mr_merged": "scalar_or_object",
+				"on_mr_opened": "scalar_or_object",
+				"transitions.table": "json"
 			}
 		},
 		"group_iteration": {
@@ -700,6 +760,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/provider-connections/{connection_id}"
+			},
+			"transforms": {
+				"config_overrides": "json"
 			}
 		},
 		"group_provider_connections": {
@@ -713,6 +776,9 @@
 					"param": "next_token"
 				},
 				"path": "/groups/{group_id}/provider-connections"
+			},
+			"transforms": {
+				"items.config_overrides": "json"
 			}
 		},
 		"group_provider_policy": {
@@ -922,6 +988,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/issue-criterion-kinds"
+			},
+			"transforms": {
+				"kinds.config_schema": "json"
 			}
 		},
 		"provider": {
@@ -931,6 +1000,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/providers/{provider_id}"
+			},
+			"transforms": {
+				"auth_schema": "json"
 			}
 		},
 		"provider_capabilities": {
@@ -944,6 +1016,9 @@
 					"stage_type": "stage_type",
 					"version": "version"
 				}
+			},
+			"transforms": {
+				"items.config_schema": "json"
 			}
 		},
 		"provider_listing": {
@@ -953,6 +1028,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/providers/{provider_id}/listing"
+			},
+			"renames": {
+				"provider_info": "provider"
 			}
 		},
 		"provider_submission": {
@@ -966,6 +1044,10 @@
 			"renames": {
 				"manifest.manifest_capabilities": "capabilities",
 				"mirror_result.mirror_result_capabilities": "capabilities"
+			},
+			"transforms": {
+				"auth_schema": "json",
+				"manifest.manifest_capabilities.config_schema": "json"
 			}
 		},
 		"provider_submissions": {
@@ -985,6 +1067,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/providers/{provider_id}/versions/{version}"
+			},
+			"transforms": {
+				"capabilities.config_schema": "json"
 			}
 		},
 		"provider_versions": {
@@ -998,6 +1083,9 @@
 					"param": "next_token"
 				},
 				"path": "/providers/{provider_id}/versions"
+			},
+			"transforms": {
+				"items.capabilities.config_schema": "json"
 			}
 		},
 		"providers": {
@@ -1086,6 +1174,9 @@
 				}
 			},
 			"renames": {
+				"entries.limited_to.limited_to_subject": "subject",
+				"entries.limited_to.limited_to_subject.subject_principal": "principal",
+				"entries.limited_to.limited_to_subject.subject_team": "team",
 				"entries.source.source_at": "at"
 			}
 		},
@@ -1099,7 +1190,16 @@
 			},
 			"renames": {
 				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_approvers": "approvers",
+				"rules_here.rules_here_approvers.approver_role": "role",
+				"rules_here.rules_here_approvers.approver_role.role_at": "at",
 				"rules_here.rules_here_defined_at": "defined_at"
+			},
+			"transforms": {
+				"rules.approvers.anyone": "marker",
+				"rules.approvers.code_owners": "marker",
+				"rules_here.rules_here_approvers.anyone": "marker",
+				"rules_here.rules_here_approvers.code_owners": "marker"
 			}
 		},
 		"repository_branch": {
@@ -1188,6 +1288,10 @@
 				"query": {
 					"path": "path"
 				}
+			},
+			"renames": {
+				"resolved.service.service_owner": "owner",
+				"resolved.service.service_owner.owner_actor": "actor"
 			}
 		},
 		"repository_catalog_services": {
@@ -1204,9 +1308,13 @@
 				"query": {
 					"include_orphaned": "include_orphaned",
 					"kind": "kind",
+					"lifecycle": "lifecycle_stage",
 					"search": "search",
 					"source": "source"
 				}
+			},
+			"renames": {
+				"lifecycle_stage": "lifecycle"
 			}
 		},
 		"repository_fork": {
@@ -1253,6 +1361,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
+			},
+			"renames": {
+				"facets.binding.criterion": "binding"
 			}
 		},
 		"repository_issue_blueprints": {
@@ -1266,6 +1377,9 @@
 					"include": "include"
 				}
 			},
+			"renames": {
+				"repository_issue_blueprints.facets.binding.criterion": "binding"
+			},
 			"root": "repository_issue_blueprints"
 		},
 		"repository_issue_settings": {
@@ -1275,6 +1389,13 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/issue-settings"
+			},
+			"transforms": {
+				"on_branch_created": "scalar_or_object",
+				"on_mr_closed": "scalar_or_object",
+				"on_mr_merged": "scalar_or_object",
+				"on_mr_opened": "scalar_or_object",
+				"transitions.table": "json"
 			}
 		},
 		"repository_labels": {
@@ -1359,6 +1480,14 @@
 			},
 			"renames": {
 				"diagnostics.warnings.warnings_target": "target"
+			},
+			"transforms": {
+				"component_instances.params": "json",
+				"stages.nodes.approval.approvers.anyone": "marker",
+				"stages.nodes.approval.approvers.code_owners": "marker",
+				"stages.nodes.config": "json",
+				"stages.nodes.matrix.dimensions": "json",
+				"trigger_config.events.params.default": "json"
 			}
 		},
 		"repository_pipeline_component": {
@@ -1369,6 +1498,15 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/pipeline-components/{component_id}"
+			},
+			"transforms": {
+				"body.component_instances.params": "json",
+				"body.nodes.node.approval.approvers.anyone": "marker",
+				"body.nodes.node.approval.approvers.code_owners": "marker",
+				"body.nodes.node.config": "json",
+				"body.nodes.node.matrix.dimensions": "json",
+				"body.parameters.allowed_values": "json",
+				"body.parameters.default": "json"
 			}
 		},
 		"repository_pipeline_component_version": {
@@ -1383,6 +1521,15 @@
 			},
 			"renames": {
 				"body.outputs.outputs_source": "source"
+			},
+			"transforms": {
+				"body.component_instances.params": "json",
+				"body.nodes.node.approval.approvers.anyone": "marker",
+				"body.nodes.node.approval.approvers.code_owners": "marker",
+				"body.nodes.node.config": "json",
+				"body.nodes.node.matrix.dimensions": "json",
+				"body.parameters.allowed_values": "json",
+				"body.parameters.default": "json"
 			}
 		},
 		"repository_pipeline_component_versions": {
@@ -1417,6 +1564,15 @@
 					"own_scope_only": "own_scope_only",
 					"search": "search"
 				}
+			},
+			"transforms": {
+				"items.body.component_instances.params": "json",
+				"items.body.nodes.node.approval.approvers.anyone": "marker",
+				"items.body.nodes.node.approval.approvers.code_owners": "marker",
+				"items.body.nodes.node.config": "json",
+				"items.body.nodes.node.matrix.dimensions": "json",
+				"items.body.parameters.allowed_values": "json",
+				"items.body.parameters.default": "json"
 			}
 		},
 		"repository_pipeline_file": {
@@ -1438,6 +1594,14 @@
 				"diagnostics.fix.fix_location.location_start": "start",
 				"diagnostics.related.related_end": "end",
 				"diagnostics.related.related_start": "start"
+			},
+			"transforms": {
+				"definition.component_instances.params": "json",
+				"definition.stages.nodes.approval.approvers.anyone": "marker",
+				"definition.stages.nodes.approval.approvers.code_owners": "marker",
+				"definition.stages.nodes.config": "json",
+				"definition.stages.nodes.matrix.dimensions": "json",
+				"definition.trigger_config.events.params.default": "json"
 			}
 		},
 		"repository_pipeline_files": {
@@ -1495,6 +1659,14 @@
 			},
 			"renames": {
 				"items.diagnostics.warnings.warnings_target": "target"
+			},
+			"transforms": {
+				"items.component_instances.params": "json",
+				"items.stages.nodes.approval.approvers.anyone": "marker",
+				"items.stages.nodes.approval.approvers.code_owners": "marker",
+				"items.stages.nodes.config": "json",
+				"items.stages.nodes.matrix.dimensions": "json",
+				"items.trigger_config.events.params.default": "json"
 			}
 		},
 		"repository_profile": {
@@ -1527,6 +1699,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/provider-connections/{connection_id}"
+			},
+			"transforms": {
+				"config_overrides": "json"
 			}
 		},
 		"repository_provider_connections": {
@@ -1540,6 +1715,9 @@
 					"param": "next_token"
 				},
 				"path": "/repositories/{repo_id}/provider-connections"
+			},
+			"transforms": {
+				"items.config_overrides": "json"
 			}
 		},
 		"repository_provider_policy": {
@@ -1625,6 +1803,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/resolved-provider-connections"
+			},
+			"transforms": {
+				"items.config_overrides": "json"
 			}
 		},
 		"repository_service_accounts": {
@@ -1964,7 +2145,10 @@
 				},
 				"method": "PUT",
 				"path": "/catalog/environments/{environment_id}/variables/{name}"
-			}
+			},
+			"write_only": [
+				"value"
+			]
 		},
 		"catalog_scorecard": {
 			"create": {
@@ -1998,6 +2182,10 @@
 				"method": "GET",
 				"path": "/catalog/scorecards/{scorecard_id}"
 			},
+			"transforms": {
+				"applies_to.annotations": "json",
+				"checks.config": "json"
+			},
 			"update": {
 				"body": {
 					"applies_to": "applies_to",
@@ -2018,11 +2206,13 @@
 		"catalog_service": {
 			"create": {
 				"body": {
+					"annotations": "annotations",
 					"api_specs": "api_specs",
 					"description": "description",
 					"display_name": "display_name",
 					"external": "external",
 					"kind": "kind",
+					"lifecycle_stage": "lifecycle",
 					"links": "links",
 					"owner_group_id": "owner_group_id",
 					"owner_principal_id": "owner_principal_id",
@@ -2050,13 +2240,21 @@
 				"method": "GET",
 				"path": "/catalog/services/{service_id}"
 			},
+			"renames": {
+				"lifecycle_stage": "lifecycle"
+			},
+			"transforms": {
+				"annotations": "json"
+			},
 			"update": {
 				"body": {
+					"annotations": "annotations",
 					"api_specs": "api_specs",
 					"description": "description",
 					"display_name": "display_name",
 					"external": "external",
 					"kind": "kind",
+					"lifecycle_stage": "lifecycle",
 					"links": "links",
 					"owner_group_id": "owner_group_id",
 					"owner_principal_id": "owner_principal_id",
@@ -2110,6 +2308,54 @@
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}"
+			}
+		},
+		"group_access_grant": {
+			"create": {
+				"body": {
+					"expires_at": "expires_at",
+					"reason": "reason",
+					"role": "role",
+					"subject": "subject"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/access/grants"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/access/grants/{grant_id}"
+			},
+			"identity": [
+				"group_id",
+				"grant_id"
+			],
+			"match": {
+				"grant_id": "grant_id"
+			},
+			"params": {
+				"grant_id": "grant_id",
+				"group_id": "group_id"
+			},
+			"read": {
+				"items": "entries",
+				"method": "GET",
+				"pages": {
+					"items": "entries",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/access"
+			},
+			"replace": [
+				"subject"
+			],
+			"update": {
+				"body": {
+					"expires_at": "expires_at",
+					"reason": "reason",
+					"role": "role"
+				},
+				"method": "PATCH",
+				"path": "/access/grants/{grant_id}"
 			}
 		},
 		"group_ai_org_conventions": {
@@ -2204,7 +2450,16 @@
 			},
 			"renames": {
 				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_approvers": "approvers",
+				"rules_here.rules_here_approvers.approver_role": "role",
+				"rules_here.rules_here_approvers.approver_role.role_at": "at",
 				"rules_here.rules_here_defined_at": "defined_at"
+			},
+			"transforms": {
+				"rules.approvers.anyone": "marker",
+				"rules.approvers.code_owners": "marker",
+				"rules_here.rules_here_approvers.anyone": "marker",
+				"rules_here.rules_here_approvers.code_owners": "marker"
 			},
 			"update": {
 				"body": {
@@ -2216,6 +2471,60 @@
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/approval-policy"
+			}
+		},
+		"group_approval_rule": {
+			"create": {
+				"body": {
+					"accept_from": "accept_from",
+					"applies_to_branches": "applies_to_branches",
+					"approvers": "approvers",
+					"enforcement": "enforcement",
+					"name": "name",
+					"required": "required",
+					"strengthens": "strengthens"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/approval-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/approval-rules/{rule_id}"
+			},
+			"identity": [
+				"group_id",
+				"rule_id"
+			],
+			"match": {
+				"rule_id": "rule_id"
+			},
+			"params": {
+				"group_id": "group_id",
+				"rule_id": "rule_id"
+			},
+			"read": {
+				"items": "rules_here",
+				"method": "GET",
+				"path": "/groups/{group_id}/approval-policy"
+			},
+			"replace": [
+				"strengthens"
+			],
+			"transforms": {
+				"approvers.anyone": "marker",
+				"approvers.code_owners": "marker"
+			},
+			"update": {
+				"body": {
+					"accept_from": "accept_from",
+					"applies_to_branches": "applies_to_branches",
+					"approvers": "approvers",
+					"enforcement": "enforcement",
+					"name": "name",
+					"required": "required"
+				},
+				"method": "PATCH",
+				"path": "/approval-rules/{rule_id}"
 			}
 		},
 		"group_branch_rule": {
@@ -2295,6 +2604,10 @@
 				"method": "GET",
 				"path": "/catalog/environments/{environment_id}"
 			},
+			"transforms": {
+				"protection.approvers.anyone": "marker",
+				"protection.approvers.code_owners": "marker"
+			},
 			"update": {
 				"body": {
 					"archived": "archived",
@@ -2308,7 +2621,10 @@
 				},
 				"method": "PATCH",
 				"path": "/catalog/environments/{environment_id}"
-			}
+			},
+			"update_only": [
+				"archived"
+			]
 		},
 		"group_fork_settings": {
 			"create": {
@@ -2392,6 +2708,9 @@
 				"method": "GET",
 				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
 			},
+			"renames": {
+				"facets.binding.criterion": "binding"
+			},
 			"replace": [
 				"blueprint_id"
 			],
@@ -2406,7 +2725,10 @@
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/issue-blueprints/{blueprint_id}"
-			}
+			},
+			"update_only": [
+				"archived"
+			]
 		},
 		"group_issue_settings": {
 			"create": {
@@ -2421,13 +2743,18 @@
 					"closing_branches": "closing_branches",
 					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
 					"default_issue_type": "default_issue_type",
+					"on_branch_created": "on_branch_created",
+					"on_mr_closed": "on_mr_closed",
+					"on_mr_merged": "on_mr_merged",
+					"on_mr_opened": "on_mr_opened",
 					"override_group_settings": "override_group_settings",
 					"public_issue_filing": "public_issue_filing",
 					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
 					"statuses": "statuses",
 					"todo_ignore_paths": "todo_ignore_paths",
 					"todo_policy": "todo_policy",
-					"todo_promote_type": "todo_promote_type"
+					"todo_promote_type": "todo_promote_type",
+					"transitions": "transitions"
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/issue-settings"
@@ -2446,6 +2773,13 @@
 				"method": "GET",
 				"path": "/groups/{group_id}/issue-settings"
 			},
+			"transforms": {
+				"on_branch_created": "scalar_or_object",
+				"on_mr_closed": "scalar_or_object",
+				"on_mr_merged": "scalar_or_object",
+				"on_mr_opened": "scalar_or_object",
+				"transitions.table": "json"
+			},
 			"update": {
 				"body": {
 					"anchor_drift_action": "anchor_drift_action",
@@ -2458,13 +2792,18 @@
 					"closing_branches": "closing_branches",
 					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
 					"default_issue_type": "default_issue_type",
+					"on_branch_created": "on_branch_created",
+					"on_mr_closed": "on_mr_closed",
+					"on_mr_merged": "on_mr_merged",
+					"on_mr_opened": "on_mr_opened",
 					"override_group_settings": "override_group_settings",
 					"public_issue_filing": "public_issue_filing",
 					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
 					"statuses": "statuses",
 					"todo_ignore_paths": "todo_ignore_paths",
 					"todo_policy": "todo_policy",
-					"todo_promote_type": "todo_promote_type"
+					"todo_promote_type": "todo_promote_type",
+					"transitions": "transitions"
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/issue-settings"
@@ -2668,7 +3007,10 @@
 				},
 				"method": "PATCH",
 				"path": "/groups/{group_id}/milestones/{milestone_id}"
-			}
+			},
+			"update_only": [
+				"closed"
+			]
 		},
 		"group_mr_settings": {
 			"create": {
@@ -2762,13 +3104,19 @@
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/pipeline-variables/{name}"
-			}
+			},
+			"write_only": [
+				"value"
+			]
 		},
 		"group_provider_connection": {
 			"create": {
 				"body": {
 					"auth_mode": "auth_mode",
+					"config_overrides": "config_overrides",
+					"credentials": "credentials",
 					"environment_ids": "environment_ids",
+					"federation_target": "federation_target",
 					"name": "name",
 					"protected": "protected",
 					"provider_id": "provider_id"
@@ -2797,15 +3145,28 @@
 				"name",
 				"provider_id"
 			],
+			"transforms": {
+				"config_overrides": "json",
+				"credentials": "json"
+			},
 			"update": {
 				"body": {
+					"config_overrides": "config_overrides",
+					"credentials": "credentials",
 					"environment_bound": "environment_bound",
 					"environment_ids": "environment_ids",
+					"federation_target": "federation_target",
 					"protected": "protected"
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/provider-connections/{connection_id}"
-			}
+			},
+			"update_only": [
+				"environment_bound"
+			],
+			"write_only": [
+				"credentials"
+			]
 		},
 		"group_provider_policy": {
 			"create": {
@@ -2962,6 +3323,7 @@
 				"body": {
 					"attribute_mapping": "attribute_mapping",
 					"auto_provision": "auto_provision",
+					"default_role": "default_role",
 					"enforced": "enforced",
 					"idp_sync_max_age_days": "idp_sync_max_age_days",
 					"oidc": "oidc",
@@ -2989,6 +3351,7 @@
 				"body": {
 					"attribute_mapping": "attribute_mapping",
 					"auto_provision": "auto_provision",
+					"default_role": "default_role",
 					"enforced": "enforced",
 					"idp_sync_max_age_days": "idp_sync_max_age_days",
 					"oidc": "oidc",
@@ -2997,7 +3360,10 @@
 				},
 				"method": "PUT",
 				"path": "/groups/{group_id}/sso-connection"
-			}
+			},
+			"write_only": [
+				"oidc.client_secret"
+			]
 		},
 		"group_sso_domain": {
 			"create": {
@@ -3036,7 +3402,8 @@
 				"body": {
 					"email": "email",
 					"expires_at": "expires_at",
-					"reason": "reason"
+					"reason": "reason",
+					"role": "role"
 				},
 				"method": "POST",
 				"path": "/groups/{group_id}/sso-invites"
@@ -3064,7 +3431,8 @@
 			"replace": [
 				"email",
 				"expires_at",
-				"reason"
+				"reason",
+				"role"
 			]
 		},
 		"group_tag_rule": {
@@ -3143,7 +3511,10 @@
 				},
 				"method": "PATCH",
 				"path": "/groups/{group_id}/webhooks/{webhook_id}"
-			}
+			},
+			"write_only": [
+				"secret"
+			]
 		},
 		"group_wiki": {
 			"create": {
@@ -3242,6 +3613,9 @@
 				"method": "GET",
 				"path": "/providers/{provider_id}/listing"
 			},
+			"renames": {
+				"provider_info": "provider"
+			},
 			"update": {
 				"body": {
 					"categories": "categories",
@@ -3297,6 +3671,58 @@
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}"
+			},
+			"update_only": [
+				"catalog_enabled",
+				"pipelines_enabled"
+			]
+		},
+		"repository_access_grant": {
+			"create": {
+				"body": {
+					"expires_at": "expires_at",
+					"reason": "reason",
+					"role": "role",
+					"subject": "subject"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/access/grants"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/access/grants/{grant_id}"
+			},
+			"identity": [
+				"repo_id",
+				"grant_id"
+			],
+			"match": {
+				"grant_id": "grant_id"
+			},
+			"params": {
+				"grant_id": "grant_id",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"items": "entries",
+				"method": "GET",
+				"pages": {
+					"items": "entries",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/access"
+			},
+			"replace": [
+				"subject"
+			],
+			"update": {
+				"body": {
+					"expires_at": "expires_at",
+					"reason": "reason",
+					"role": "role"
+				},
+				"method": "PATCH",
+				"path": "/access/grants/{grant_id}"
 			}
 		},
 		"repository_approval_policy": {
@@ -3323,7 +3749,16 @@
 			},
 			"renames": {
 				"rules.rules_defined_at": "defined_at",
+				"rules_here.rules_here_approvers": "approvers",
+				"rules_here.rules_here_approvers.approver_role": "role",
+				"rules_here.rules_here_approvers.approver_role.role_at": "at",
 				"rules_here.rules_here_defined_at": "defined_at"
+			},
+			"transforms": {
+				"rules.approvers.anyone": "marker",
+				"rules.approvers.code_owners": "marker",
+				"rules_here.rules_here_approvers.anyone": "marker",
+				"rules_here.rules_here_approvers.code_owners": "marker"
 			},
 			"update": {
 				"body": {
@@ -3335,6 +3770,60 @@
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}/approval-policy"
+			}
+		},
+		"repository_approval_rule": {
+			"create": {
+				"body": {
+					"accept_from": "accept_from",
+					"applies_to_branches": "applies_to_branches",
+					"approvers": "approvers",
+					"enforcement": "enforcement",
+					"name": "name",
+					"required": "required",
+					"strengthens": "strengthens"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/approval-rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/approval-rules/{rule_id}"
+			},
+			"identity": [
+				"repo_id",
+				"rule_id"
+			],
+			"match": {
+				"rule_id": "rule_id"
+			},
+			"params": {
+				"repo_id": "repo_id",
+				"rule_id": "rule_id"
+			},
+			"read": {
+				"items": "rules_here",
+				"method": "GET",
+				"path": "/repositories/{repo_id}/approval-policy"
+			},
+			"replace": [
+				"strengthens"
+			],
+			"transforms": {
+				"approvers.anyone": "marker",
+				"approvers.code_owners": "marker"
+			},
+			"update": {
+				"body": {
+					"accept_from": "accept_from",
+					"applies_to_branches": "applies_to_branches",
+					"approvers": "approvers",
+					"enforcement": "enforcement",
+					"name": "name",
+					"required": "required"
+				},
+				"method": "PATCH",
+				"path": "/approval-rules/{rule_id}"
 			}
 		},
 		"repository_branch": {
@@ -3444,6 +3933,10 @@
 				"method": "GET",
 				"path": "/catalog/environments/{environment_id}"
 			},
+			"transforms": {
+				"protection.approvers.anyone": "marker",
+				"protection.approvers.code_owners": "marker"
+			},
 			"update": {
 				"body": {
 					"archived": "archived",
@@ -3457,7 +3950,10 @@
 				},
 				"method": "PATCH",
 				"path": "/catalog/environments/{environment_id}"
-			}
+			},
+			"update_only": [
+				"archived"
+			]
 		},
 		"repository_fork": {
 			"create": {
@@ -3573,6 +4069,9 @@
 				"method": "GET",
 				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
 			},
+			"renames": {
+				"facets.binding.criterion": "binding"
+			},
 			"replace": [
 				"blueprint_id"
 			],
@@ -3587,7 +4086,10 @@
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}/issue-blueprints/{blueprint_id}"
-			}
+			},
+			"update_only": [
+				"archived"
+			]
 		},
 		"repository_issue_settings": {
 			"create": {
@@ -3602,13 +4104,18 @@
 					"closing_branches": "closing_branches",
 					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
 					"default_issue_type": "default_issue_type",
+					"on_branch_created": "on_branch_created",
+					"on_mr_closed": "on_mr_closed",
+					"on_mr_merged": "on_mr_merged",
+					"on_mr_opened": "on_mr_opened",
 					"override_group_settings": "override_group_settings",
 					"public_issue_filing": "public_issue_filing",
 					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
 					"statuses": "statuses",
 					"todo_ignore_paths": "todo_ignore_paths",
 					"todo_policy": "todo_policy",
-					"todo_promote_type": "todo_promote_type"
+					"todo_promote_type": "todo_promote_type",
+					"transitions": "transitions"
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}/issue-settings"
@@ -3627,6 +4134,13 @@
 				"method": "GET",
 				"path": "/repositories/{repo_id}/issue-settings"
 			},
+			"transforms": {
+				"on_branch_created": "scalar_or_object",
+				"on_mr_closed": "scalar_or_object",
+				"on_mr_merged": "scalar_or_object",
+				"on_mr_opened": "scalar_or_object",
+				"transitions.table": "json"
+			},
 			"update": {
 				"body": {
 					"anchor_drift_action": "anchor_drift_action",
@@ -3639,13 +4153,18 @@
 					"closing_branches": "closing_branches",
 					"default_assignee_from_codeowners": "default_assignee_from_codeowners",
 					"default_issue_type": "default_issue_type",
+					"on_branch_created": "on_branch_created",
+					"on_mr_closed": "on_mr_closed",
+					"on_mr_merged": "on_mr_merged",
+					"on_mr_opened": "on_mr_opened",
 					"override_group_settings": "override_group_settings",
 					"public_issue_filing": "public_issue_filing",
 					"require_verified_criteria_to_close": "require_verified_criteria_to_close",
 					"statuses": "statuses",
 					"todo_ignore_paths": "todo_ignore_paths",
 					"todo_policy": "todo_policy",
-					"todo_promote_type": "todo_promote_type"
+					"todo_promote_type": "todo_promote_type",
+					"transitions": "transitions"
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}/issue-settings"
@@ -3765,7 +4284,10 @@
 				},
 				"method": "PATCH",
 				"path": "/repositories/{repo_id}/milestones/{milestone_id}"
-			}
+			},
+			"update_only": [
+				"closed"
+			]
 		},
 		"repository_mr_settings": {
 			"create": {
@@ -3859,13 +4381,19 @@
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}/pipeline-variables/{name}"
-			}
+			},
+			"write_only": [
+				"value"
+			]
 		},
 		"repository_provider_connection": {
 			"create": {
 				"body": {
 					"auth_mode": "auth_mode",
+					"config_overrides": "config_overrides",
+					"credentials": "credentials",
 					"environment_ids": "environment_ids",
+					"federation_target": "federation_target",
 					"name": "name",
 					"protected": "protected",
 					"provider_id": "provider_id"
@@ -3894,15 +4422,28 @@
 				"name",
 				"provider_id"
 			],
+			"transforms": {
+				"config_overrides": "json",
+				"credentials": "json"
+			},
 			"update": {
 				"body": {
+					"config_overrides": "config_overrides",
+					"credentials": "credentials",
 					"environment_bound": "environment_bound",
 					"environment_ids": "environment_ids",
+					"federation_target": "federation_target",
 					"protected": "protected"
 				},
 				"method": "PUT",
 				"path": "/repositories/{repo_id}/provider-connections/{connection_id}"
-			}
+			},
+			"update_only": [
+				"environment_bound"
+			],
+			"write_only": [
+				"credentials"
+			]
 		},
 		"repository_push_rules": {
 			"create": {
@@ -4171,7 +4712,10 @@
 				},
 				"method": "PATCH",
 				"path": "/repositories/{repo_id}/webhooks/{webhook_id}"
-			}
+			},
+			"write_only": [
+				"secret"
+			]
 		},
 		"repository_wiki": {
 			"create": {

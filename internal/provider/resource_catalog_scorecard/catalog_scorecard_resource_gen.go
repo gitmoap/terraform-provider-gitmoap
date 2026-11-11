@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -24,6 +25,12 @@ func CatalogScorecardResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"applies_to": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
+					"annotations": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "Annotations a service must carry, as key–value pairs. Every entry must match; a service with\nextra annotations still matches.\n\nJSON: set it with `jsonencode()`.",
+						MarkdownDescription: "Annotations a service must carry, as key–value pairs. Every entry must match; a service with\nextra annotations still matches.\n\nJSON: set it with `jsonencode()`.",
+					},
 					"kinds": schema.ListAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
@@ -73,6 +80,12 @@ func CatalogScorecardResourceSchema(ctx context.Context) schema.Schema {
 			"checks": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"config": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "The check's own parameters, such as `{\"days\": 90}` for `released_within`. An unknown\nparameter is refused with a `400` rather than ignored.\n\nJSON: set it with `jsonencode()`.",
+							MarkdownDescription: "The check's own parameters, such as `{\"days\": 90}` for `released_within`. An unknown\nparameter is refused with a `400` rather than ignored.\n\nJSON: set it with `jsonencode()`.",
+						},
 						"creates_work_item": schema.BoolAttribute{
 							Optional:            true,
 							Computed:            true,
@@ -82,6 +95,41 @@ func CatalogScorecardResourceSchema(ctx context.Context) schema.Schema {
 						"key": schema.StringAttribute{
 							Optional: true,
 							Computed: true,
+						},
+						"rule": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"binding": schema.StringAttribute{
+									Optional: true,
+									Computed: true,
+								},
+								"renew_after_days": schema.Int64Attribute{
+									Optional: true,
+									Computed: true,
+									Validators: []validator.Int64{
+										int64validator.AtLeast(0),
+									},
+								},
+								"type": schema.StringAttribute{
+									Optional: true,
+									Computed: true,
+									Validators: []validator.String{
+										stringvalidator.OneOf(
+											"attested",
+											"derived",
+											"evidence",
+										),
+									},
+								},
+							},
+							CustomType: RuleType{
+								ObjectType: types.ObjectType{
+									AttrTypes: RuleValue{}.AttributeTypes(ctx),
+								},
+							},
+							Optional:            true,
+							Computed:            true,
+							Description:         "How a check decides its answer.\n\n`type` says which applies: `derived`; `evidence`, with `binding`; `attested`, with `renew_after_days`.",
+							MarkdownDescription: "How a check decides its answer.\n\n`type` says which applies: `derived`; `evidence`, with `binding`; `attested`, with `renew_after_days`.",
 						},
 					},
 					CustomType: ChecksType{
@@ -177,6 +225,24 @@ func CatalogScorecardResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Defaults to the slug.",
 				MarkdownDescription: "Defaults to the slug.",
 			},
+			"scope": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"group": schema.StringAttribute{
+						Computed: true,
+					},
+					"repo": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+				CustomType: ScopeType{
+					ObjectType: types.ObjectType{
+						AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+				MarkdownDescription: "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+			},
 			"scorecard_id": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The scorecard's id",
@@ -213,6 +279,7 @@ type CatalogScorecardModel struct {
 	GroupId           types.String   `tfsdk:"group_id"`
 	Levels            types.List     `tfsdk:"levels"`
 	Name              types.String   `tfsdk:"name"`
+	Scope             ScopeValue     `tfsdk:"scope"`
 	ScorecardId       types.String   `tfsdk:"scorecard_id"`
 	Slug              types.String   `tfsdk:"slug"`
 	UpdatedAt         types.String   `tfsdk:"updated_at"`
@@ -243,6 +310,24 @@ func (t AppliesToType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	var diags diag.Diagnostics
 
 	attributes := in.Attributes()
+
+	annotationsAttribute, ok := attributes["annotations"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`annotations is missing from object`)
+
+		return nil, diags
+	}
+
+	annotationsVal, ok := annotationsAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`annotations expected to be basetypes.StringValue, was: %T`, annotationsAttribute))
+	}
 
 	kindsAttribute, ok := attributes["kinds"]
 
@@ -285,9 +370,10 @@ func (t AppliesToType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	}
 
 	return AppliesToValue{
-		Kinds:      kindsVal,
-		Lifecycles: lifecyclesVal,
-		state:      attr.ValueStateKnown,
+		Annotations: annotationsVal,
+		Kinds:       kindsVal,
+		Lifecycles:  lifecyclesVal,
+		state:       attr.ValueStateKnown,
 	}, diags
 }
 
@@ -354,6 +440,24 @@ func NewAppliesToValue(attributeTypes map[string]attr.Type, attributes map[strin
 		return NewAppliesToValueUnknown(), diags
 	}
 
+	annotationsAttribute, ok := attributes["annotations"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`annotations is missing from object`)
+
+		return NewAppliesToValueUnknown(), diags
+	}
+
+	annotationsVal, ok := annotationsAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`annotations expected to be basetypes.StringValue, was: %T`, annotationsAttribute))
+	}
+
 	kindsAttribute, ok := attributes["kinds"]
 
 	if !ok {
@@ -395,9 +499,10 @@ func NewAppliesToValue(attributeTypes map[string]attr.Type, attributes map[strin
 	}
 
 	return AppliesToValue{
-		Kinds:      kindsVal,
-		Lifecycles: lifecyclesVal,
-		state:      attr.ValueStateKnown,
+		Annotations: annotationsVal,
+		Kinds:       kindsVal,
+		Lifecycles:  lifecyclesVal,
+		state:       attr.ValueStateKnown,
 	}, diags
 }
 
@@ -469,17 +574,19 @@ func (t AppliesToType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = AppliesToValue{}
 
 type AppliesToValue struct {
-	Kinds      basetypes.ListValue `tfsdk:"kinds"`
-	Lifecycles basetypes.ListValue `tfsdk:"lifecycles"`
-	state      attr.ValueState
+	Annotations basetypes.StringValue `tfsdk:"annotations"`
+	Kinds       basetypes.ListValue   `tfsdk:"kinds"`
+	Lifecycles  basetypes.ListValue   `tfsdk:"lifecycles"`
+	state       attr.ValueState
 }
 
 func (v AppliesToValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["annotations"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["kinds"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -491,7 +598,15 @@ func (v AppliesToValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Annotations.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["annotations"] = val
 
 		val, err = v.Kinds.ToTerraformValue(ctx)
 
@@ -552,6 +667,7 @@ func (v AppliesToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
+			"annotations": basetypes.StringType{},
 			"kinds": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -575,6 +691,7 @@ func (v AppliesToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
+			"annotations": basetypes.StringType{},
 			"kinds": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -585,6 +702,7 @@ func (v AppliesToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	}
 
 	attributeTypes := map[string]attr.Type{
+		"annotations": basetypes.StringType{},
 		"kinds": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -604,8 +722,9 @@ func (v AppliesToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"kinds":      kindsVal,
-			"lifecycles": lifecyclesVal,
+			"annotations": v.Annotations,
+			"kinds":       kindsVal,
+			"lifecycles":  lifecyclesVal,
 		})
 
 	return objVal, diags
@@ -624,6 +743,10 @@ func (v AppliesToValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.Annotations.Equal(other.Annotations) {
+		return false
 	}
 
 	if !v.Kinds.Equal(other.Kinds) {
@@ -647,6 +770,7 @@ func (v AppliesToValue) Type(ctx context.Context) attr.Type {
 
 func (v AppliesToValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"annotations": basetypes.StringType{},
 		"kinds": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -680,6 +804,24 @@ func (t ChecksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	var diags diag.Diagnostics
 
 	attributes := in.Attributes()
+
+	configAttribute, ok := attributes["config"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`config is missing from object`)
+
+		return nil, diags
+	}
+
+	configVal, ok := configAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config expected to be basetypes.StringValue, was: %T`, configAttribute))
+	}
 
 	createsWorkItemAttribute, ok := attributes["creates_work_item"]
 
@@ -717,13 +859,33 @@ func (t ChecksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
 	}
 
+	ruleAttribute, ok := attributes["rule"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rule is missing from object`)
+
+		return nil, diags
+	}
+
+	ruleVal, ok := ruleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rule expected to be basetypes.ObjectValue, was: %T`, ruleAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	return ChecksValue{
+		Config:          configVal,
 		CreatesWorkItem: createsWorkItemVal,
 		Key:             keyVal,
+		Rule:            ruleVal,
 		state:           attr.ValueStateKnown,
 	}, diags
 }
@@ -791,6 +953,24 @@ func NewChecksValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewChecksValueUnknown(), diags
 	}
 
+	configAttribute, ok := attributes["config"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`config is missing from object`)
+
+		return NewChecksValueUnknown(), diags
+	}
+
+	configVal, ok := configAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config expected to be basetypes.StringValue, was: %T`, configAttribute))
+	}
+
 	createsWorkItemAttribute, ok := attributes["creates_work_item"]
 
 	if !ok {
@@ -827,13 +1007,33 @@ func NewChecksValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
 	}
 
+	ruleAttribute, ok := attributes["rule"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rule is missing from object`)
+
+		return NewChecksValueUnknown(), diags
+	}
+
+	ruleVal, ok := ruleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rule expected to be basetypes.ObjectValue, was: %T`, ruleAttribute))
+	}
+
 	if diags.HasError() {
 		return NewChecksValueUnknown(), diags
 	}
 
 	return ChecksValue{
+		Config:          configVal,
 		CreatesWorkItem: createsWorkItemVal,
 		Key:             keyVal,
+		Rule:            ruleVal,
 		state:           attr.ValueStateKnown,
 	}, diags
 }
@@ -906,25 +1106,39 @@ func (t ChecksType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ChecksValue{}
 
 type ChecksValue struct {
+	Config          basetypes.StringValue `tfsdk:"config"`
 	CreatesWorkItem basetypes.BoolValue   `tfsdk:"creates_work_item"`
 	Key             basetypes.StringValue `tfsdk:"key"`
+	Rule            basetypes.ObjectValue `tfsdk:"rule"`
 	state           attr.ValueState
 }
 
 func (v ChecksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["config"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["creates_work_item"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["rule"] = basetypes.ObjectType{
+		AttrTypes: RuleValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Config.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["config"] = val
 
 		val, err = v.CreatesWorkItem.ToTerraformValue(ctx)
 
@@ -941,6 +1155,14 @@ func (v ChecksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["key"] = val
+
+		val, err = v.Rule.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rule"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -971,9 +1193,34 @@ func (v ChecksValue) String() string {
 func (v ChecksValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var rule basetypes.ObjectValue
+
+	if v.Rule.IsNull() {
+		rule = types.ObjectNull(
+			RuleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Rule.IsUnknown() {
+		rule = types.ObjectUnknown(
+			RuleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Rule.IsNull() && !v.Rule.IsUnknown() {
+		rule = types.ObjectValueMust(
+			RuleValue{}.AttributeTypes(ctx),
+			v.Rule.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
+		"config":            basetypes.StringType{},
 		"creates_work_item": basetypes.BoolType{},
 		"key":               basetypes.StringType{},
+		"rule": basetypes.ObjectType{
+			AttrTypes: RuleValue{}.AttributeTypes(ctx),
+		},
 	}
 
 	if v.IsNull() {
@@ -987,8 +1234,10 @@ func (v ChecksValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"config":            v.Config,
 			"creates_work_item": v.CreatesWorkItem,
 			"key":               v.Key,
+			"rule":              rule,
 		})
 
 	return objVal, diags
@@ -1009,11 +1258,19 @@ func (v ChecksValue) Equal(o attr.Value) bool {
 		return true
 	}
 
+	if !v.Config.Equal(other.Config) {
+		return false
+	}
+
 	if !v.CreatesWorkItem.Equal(other.CreatesWorkItem) {
 		return false
 	}
 
 	if !v.Key.Equal(other.Key) {
+		return false
+	}
+
+	if !v.Rule.Equal(other.Rule) {
 		return false
 	}
 
@@ -1030,8 +1287,446 @@ func (v ChecksValue) Type(ctx context.Context) attr.Type {
 
 func (v ChecksValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"config":            basetypes.StringType{},
 		"creates_work_item": basetypes.BoolType{},
 		"key":               basetypes.StringType{},
+		"rule": basetypes.ObjectType{
+			AttrTypes: RuleValue{}.AttributeTypes(ctx),
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = RuleType{}
+
+type RuleType struct {
+	basetypes.ObjectType
+}
+
+func (t RuleType) Equal(o attr.Type) bool {
+	other, ok := o.(RuleType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RuleType) String() string {
+	return "RuleType"
+}
+
+func (t RuleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	bindingAttribute, ok := attributes["binding"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`binding is missing from object`)
+
+		return nil, diags
+	}
+
+	bindingVal, ok := bindingAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`binding expected to be basetypes.StringValue, was: %T`, bindingAttribute))
+	}
+
+	renewAfterDaysAttribute, ok := attributes["renew_after_days"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renew_after_days is missing from object`)
+
+		return nil, diags
+	}
+
+	renewAfterDaysVal, ok := renewAfterDaysAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renew_after_days expected to be basetypes.Int64Value, was: %T`, renewAfterDaysAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RuleValue{
+		Binding:        bindingVal,
+		RenewAfterDays: renewAfterDaysVal,
+		RuleType:       typeVal,
+		state:          attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRuleValueNull() RuleValue {
+	return RuleValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRuleValueUnknown() RuleValue {
+	return RuleValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRuleValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RuleValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RuleValue Attribute Value",
+				"While creating a RuleValue value, a missing attribute value was detected. "+
+					"A RuleValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RuleValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RuleValue Attribute Type",
+				"While creating a RuleValue value, an invalid attribute value was detected. "+
+					"A RuleValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RuleValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RuleValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RuleValue Attribute Value",
+				"While creating a RuleValue value, an extra attribute value was detected. "+
+					"A RuleValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RuleValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRuleValueUnknown(), diags
+	}
+
+	bindingAttribute, ok := attributes["binding"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`binding is missing from object`)
+
+		return NewRuleValueUnknown(), diags
+	}
+
+	bindingVal, ok := bindingAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`binding expected to be basetypes.StringValue, was: %T`, bindingAttribute))
+	}
+
+	renewAfterDaysAttribute, ok := attributes["renew_after_days"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renew_after_days is missing from object`)
+
+		return NewRuleValueUnknown(), diags
+	}
+
+	renewAfterDaysVal, ok := renewAfterDaysAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renew_after_days expected to be basetypes.Int64Value, was: %T`, renewAfterDaysAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewRuleValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRuleValueUnknown(), diags
+	}
+
+	return RuleValue{
+		Binding:        bindingVal,
+		RenewAfterDays: renewAfterDaysVal,
+		RuleType:       typeVal,
+		state:          attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRuleValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RuleValue {
+	object, diags := NewRuleValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRuleValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RuleType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRuleValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRuleValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRuleValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRuleValueMust(RuleValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RuleType) ValueType(ctx context.Context) attr.Value {
+	return RuleValue{}
+}
+
+var _ basetypes.ObjectValuable = RuleValue{}
+
+type RuleValue struct {
+	Binding        basetypes.StringValue `tfsdk:"binding"`
+	RenewAfterDays basetypes.Int64Value  `tfsdk:"renew_after_days"`
+	RuleType       basetypes.StringValue `tfsdk:"type"`
+	state          attr.ValueState
+}
+
+func (v RuleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["binding"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renew_after_days"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Binding.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["binding"] = val
+
+		val, err = v.RenewAfterDays.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renew_after_days"] = val
+
+		val, err = v.RuleType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RuleValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RuleValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RuleValue) String() string {
+	return "RuleValue"
+}
+
+func (v RuleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"binding":          basetypes.StringType{},
+		"renew_after_days": basetypes.Int64Type{},
+		"type":             basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"binding":          v.Binding,
+			"renew_after_days": v.RenewAfterDays,
+			"type":             v.RuleType,
+		})
+
+	return objVal, diags
+}
+
+func (v RuleValue) Equal(o attr.Value) bool {
+	other, ok := o.(RuleValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Binding.Equal(other.Binding) {
+		return false
+	}
+
+	if !v.RenewAfterDays.Equal(other.RenewAfterDays) {
+		return false
+	}
+
+	if !v.RuleType.Equal(other.RuleType) {
+		return false
+	}
+
+	return true
+}
+
+func (v RuleValue) Type(ctx context.Context) attr.Type {
+	return RuleType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RuleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"binding":          basetypes.StringType{},
+		"renew_after_days": basetypes.Int64Type{},
+		"type":             basetypes.StringType{},
 	}
 }
 
@@ -1982,5 +2677,384 @@ func (v LevelsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"required_check_keys": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+	}
+}
+
+var _ basetypes.ObjectTypable = ScopeType{}
+
+type ScopeType struct {
+	basetypes.ObjectType
+}
+
+func (t ScopeType) Equal(o attr.Type) bool {
+	other, ok := o.(ScopeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ScopeType) String() string {
+	return "ScopeType"
+}
+
+func (t ScopeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return nil, diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return nil, diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ScopeValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopeValueNull() ScopeValue {
+	return ScopeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewScopeValueUnknown() ScopeValue {
+	return ScopeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewScopeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ScopeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ScopeValue Attribute Value",
+				"While creating a ScopeValue value, a missing attribute value was detected. "+
+					"A ScopeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ScopeValue Attribute Type",
+				"While creating a ScopeValue value, an invalid attribute value was detected. "+
+					"A ScopeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ScopeValue Attribute Value",
+				"While creating a ScopeValue value, an extra attribute value was detected. "+
+					"A ScopeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ScopeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewScopeValueUnknown(), diags
+	}
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return NewScopeValueUnknown(), diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return NewScopeValueUnknown(), diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return NewScopeValueUnknown(), diags
+	}
+
+	return ScopeValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ScopeValue {
+	object, diags := NewScopeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewScopeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ScopeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewScopeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewScopeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewScopeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewScopeValueMust(ScopeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ScopeType) ValueType(ctx context.Context) attr.Value {
+	return ScopeValue{}
+}
+
+var _ basetypes.ObjectValuable = ScopeValue{}
+
+type ScopeValue struct {
+	Group basetypes.StringValue `tfsdk:"group"`
+	Repo  basetypes.StringValue `tfsdk:"repo"`
+	state attr.ValueState
+}
+
+func (v ScopeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["group"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["repo"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Group.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["group"] = val
+
+		val, err = v.Repo.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["repo"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ScopeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ScopeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ScopeValue) String() string {
+	return "ScopeValue"
+}
+
+func (v ScopeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"group": v.Group,
+			"repo":  v.Repo,
+		})
+
+	return objVal, diags
+}
+
+func (v ScopeValue) Equal(o attr.Value) bool {
+	other, ok := o.(ScopeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Group.Equal(other.Group) {
+		return false
+	}
+
+	if !v.Repo.Equal(other.Repo) {
+		return false
+	}
+
+	return true
+}
+
+func (v ScopeValue) Type(ctx context.Context) attr.Type {
+	return ScopeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ScopeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
 	}
 }

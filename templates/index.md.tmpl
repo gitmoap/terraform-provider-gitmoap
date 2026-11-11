@@ -20,6 +20,27 @@ The provider signs in with a gitmoap access token: a personal token (`gmp_…`) 
 account token (`gms_…`). Set it with `token`, or in the `GITMOAP_TOKEN` environment variable. A
 token carries scopes, and each resource's page lists the ones it needs.
 
+## Secrets
+
+Every secret argument has a write-only twin: `secret_wo` next to a webhook's `secret`, `value_wo`
+next to a variable's `value`, `credentials_wo` next to a provider connection's `credentials`. With
+Terraform 1.11 and later, a write-only argument is sent to gitmoap without being kept in the plan or
+the state. Terraform can't tell when a value it doesn't keep changes: change the matching
+`*_wo_version` to send it again. Feed write-only arguments from an `ephemeral` variable, and the
+secret never touches Terraform's files.
+
+Secrets gitmoap creates, like a service account's token, are kept in the state, sensitive, when
+they have to outlive the run. For a token needed only during a run, say to configure a second
+provider, the `gitmoap_service_account_token` ephemeral resource mints one and revokes it when
+Terraform is done, so it's never stored.
+
+## Fields with several forms
+
+Some fields take one of several forms. Their attribute holds the fields of every form, and you set
+those of the one you mean, as its description says: an approval rule's approver is
+`{ team = "…" }`, `{ person = "…" }`, `{ role = { min = "maintainer", at = { group = "…" } } }`, or
+`{ code_owners = true }`. A few fields hold free-form JSON: set them with `jsonencode()`.
+
 ## Group and repository settings
 
 Settings resources (`*_mr_settings`, `*_issue_settings`, `*_fork_settings`, `*_push_rules`) on a

@@ -105,6 +105,12 @@ def go_resource_api(api: dict) -> str:
         fields.append(f"Replace: {go_strings(api['replace'])}")
     if "renames" in api:
         fields.append(f"Renames: {go_string_map(api['renames'])}")
+    if "transforms" in api:
+        fields.append(f"Transforms: {go_string_map(api['transforms'])}")
+    if "update_only" in api:
+        fields.append(f"UpdateOnly: {go_strings(api['update_only'])}")
+    if "write_only" in api:
+        fields.append(f"WriteOnly: {go_strings(api['write_only'])}")
     return "{\n" + "".join(f"\t\t{field},\n" for field in fields) + "\t}"
 
 
@@ -114,6 +120,8 @@ def go_data_source_api(api: dict) -> str:
         fields.append(f"Root: {json.dumps(api['root'])}")
     if "renames" in api:
         fields.append(f"Renames: {go_string_map(api['renames'])}")
+    if "transforms" in api:
+        fields.append(f"Transforms: {go_string_map(api['transforms'])}")
     return "{\n" + "".join(f"\t\t{field},\n" for field in fields) + "\t}"
 
 

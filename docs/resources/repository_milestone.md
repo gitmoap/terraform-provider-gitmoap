@@ -38,13 +38,13 @@ resource "gitmoap_repository_milestone" "v2" {
 
 ### Optional
 
+- `closed` (Boolean)
 - `description` (String)
 - `due_on` (String) A calendar day, `YYYY-MM-DD`, with no time and no zone — a due date, or the day an iteration starts or ends.
 
 ### Read-Only
 
 - `cancelled` (Number)
-- `closed` (Boolean)
 - `completed` (Number)
 - `created_at` (String)
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))
@@ -80,6 +80,17 @@ types it may have as children, and which fields it accepts.
 Read-Only:
 
 - `iid` (Number)
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--items--issue_ref--scope))
+
+<a id="nestedatt--items--issue_ref--scope"></a>
+### Nested Schema for `items.issue_ref.scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
 
 ## Import
 

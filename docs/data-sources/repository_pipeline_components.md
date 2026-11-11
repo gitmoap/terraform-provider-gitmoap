@@ -57,6 +57,9 @@ client needs to draw and link them, so a page of records names its actors withou
 rather than to it.
 - `latest_version` (String)
 - `name` (String)
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--items--scope))
 - `source_path` (String) Where the component is written in its repository: `.gitmoap/components/<name>.hcl`, or its
 directory. Absent on a component a group owns.
 - `unsatisfied_capabilities` (List of String) Capabilities the latest active version needs that no provider installed here supplies.
@@ -89,6 +92,7 @@ Read-Only:
 - `component_ref` (String)
 - `id` (String)
 - `name` (String)
+- `params` (String) JSON: set it with `jsonencode()`.
 - `stage_map` (Map of String) Binds every slot the referenced component declares to a slot of the **containing** body.
 - `version` (String)
 
@@ -153,10 +157,16 @@ list may only name approvers the environment also names. (see [below for nested 
 - `changes` (List of String) Path globs that decide whether this step runs: when none of them matches a path the push
 changed, the step is skipped. When absent and `service` is set, the service's own path globs
 apply.
+- `config` (String) The step's provider-specific configuration, checked against the capability's
+`config_schema` when the run starts.
+
+JSON: set it with `jsonencode()`.
 - `connection` (String)
 - `cpu` (String)
 - `environment` (String)
 - `id` (String)
+- `matrix` (Attributes) The dimensions a step's matrix expands over. Every combination of their values becomes one copy
+of the step, always in the same order: dimensions sorted by name, values in the order written. (see [below for nested schema](#nestedatt--items--body--nodes--node--matrix))
 - `max_retries` (Number)
 - `memory` (String)
 - `name` (String)
@@ -174,8 +184,54 @@ allows unless `max_wait_seconds` sets a shorter limit. (see [below for nested sc
 
 Read-Only:
 
+- `approvers` (Attributes List) (see [below for nested schema](#nestedatt--items--body--nodes--node--approval--approvers))
 - `required` (Number) Distinct approvals needed, 1–10. On a gated environment the larger of this and the
 environment's own count applies.
+
+<a id="nestedatt--items--body--nodes--node--approval--approvers"></a>
+### Nested Schema for `items.body.nodes.node.approval.approvers`
+
+Read-Only:
+
+- `anyone` (Boolean) Anyone who may approve merge requests in the repository.
+- `code_owners` (Boolean) The owners of the files the merge request changes.
+- `person` (String)
+- `role` (Attributes) Anyone whose role at a group or repository is at least `min`. (see [below for nested schema](#nestedatt--items--body--nodes--node--approval--approvers--role))
+- `team` (String)
+
+<a id="nestedatt--items--body--nodes--node--approval--approvers--role"></a>
+### Nested Schema for `items.body.nodes.node.approval.approvers.role`
+
+Read-Only:
+
+- `at` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--items--body--nodes--node--approval--approvers--role--at))
+- `direct_only` (Boolean) Count only access given on `at` itself — directly or through a team — and not access
+that reaches it from a group above.
+- `min` (String)
+
+<a id="nestedatt--items--body--nodes--node--approval--approvers--role--at"></a>
+### Nested Schema for `items.body.nodes.node.approval.approvers.role.at`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
+
+
+
+
+
+<a id="nestedatt--items--body--nodes--node--matrix"></a>
+### Nested Schema for `items.body.nodes.node.matrix`
+
+Read-Only:
+
+- `dimensions` (String) Each dimension's name and its list of values. The step's `config` reads the current value
+of a dimension with `{"$matrix": "<dimension>"}`.
+
+JSON: set it with `jsonencode()`.
 
 
 <a id="nestedatt--items--body--nodes--node--resource_group"></a>
@@ -233,6 +289,10 @@ Read-Only:
 
 Read-Only:
 
+- `allowed_values` (List of String) The only values this parameter accepts. Absent means any value of its type. On a published
+parameter, adding this list or removing a value from it is a major version change; adding a
+value is a minor one.
+- `default` (String) JSON: set it with `jsonencode()`.
 - `description` (String)
 - `name` (String)
 - `param_type` (String) The JSON shape a parameter's value must have.
@@ -258,6 +318,15 @@ and so which page it links to: a person's profile, a service account's page or a
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+
+<a id="nestedatt--items--scope"></a>
+### Nested Schema for `items.scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
 
 
 <a id="nestedatt--items--versions"></a>

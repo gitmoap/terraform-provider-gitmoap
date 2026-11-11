@@ -42,14 +42,67 @@ Read-Only:
 
 - `budget_micros` (Number) The most one run may spend, in millionths of a dollar; $5 when absent. A run reaching it
 ends early and applies nothing it had not finished.
+- `cadence` (Attributes) When a ritual runs, in the organization's time zone.
+
+`every` says which applies: `day`, with `at`, `days`; `week`, with `at`, `day`; `month`, with `at`, `day`, `week`; `cycle`, with `at`, `boundary`; `release`. (see [below for nested schema](#nestedatt--items--rituals--cadence))
+- `facilitator` (Attributes) Who runs a ritual and writes its outcome.
+
+Set `value` to `platform`, `squad_lead`, or set the other fields. (see [below for nested schema](#nestedatt--items--rituals--facilitator))
 - `key` (String) The key a revision names a ritual by: lowercase letters, digits, `_` and `-`, at most 64 characters.
 - `kind` (String) What a ritual does — each kind fixes its facilitator, the outputs it may produce and what its
 facilitator reads.
 - `name` (String) A ritual's name in the organization's own words, one line of at most 80 characters.
 - `outputs` (List of String) What a run may produce, within what the kind allows; all of it when absent.
 - `participants` (List of String) The positions that contribute before the facilitator writes; the kind's when absent.
+- `people` (Attributes) What people do in a ritual. A ritual never evaluates a person.
+
+`mode` says which applies: `none`; `invited`, with `users`; `approves_outcome`, with `approvers`. (see [below for nested schema](#nestedatt--items--rituals--people))
+- `scope` (Attributes) Whom one ritual is for.
+
+Set `value` to `every_squad`, `organization`, or set the other fields. (see [below for nested schema](#nestedatt--items--rituals--scope))
 - `skip_when` (String) When a run is skipped without calling a model: costs nothing and tells nobody.
 - `timebox` (Attributes) How many turns a run's sessions may take. (see [below for nested schema](#nestedatt--items--rituals--timebox))
+
+<a id="nestedatt--items--rituals--cadence"></a>
+### Nested Schema for `items.rituals.cadence`
+
+Read-Only:
+
+- `at` (String) A time of day on a 24-hour clock, `HH:MM`, read in the organization's time zone.
+- `boundary` (String) A point in a cycle of the organization's iteration cadence.
+- `day` (String) A day of the week.
+- `days` (List of String) The days; empty means Monday to Friday.
+- `every` (String)
+- `week` (String) Which week of the month a monthly ritual falls in.
+
+
+<a id="nestedatt--items--rituals--facilitator"></a>
+### Nested Schema for `items.rituals.facilitator`
+
+Read-Only:
+
+- `position` (String) An agent's job, which decides what it may do and which model tier it uses by default.
+- `value` (String) One of `platform`, `squad_lead`, instead of the other fields.
+
+
+<a id="nestedatt--items--rituals--people"></a>
+### Nested Schema for `items.rituals.people`
+
+Read-Only:
+
+- `approvers` (List of String) Who may approve it; empty means the board.
+- `mode` (String)
+- `users` (List of String) The people invited.
+
+
+<a id="nestedatt--items--rituals--scope"></a>
+### Nested Schema for `items.rituals.scope`
+
+Read-Only:
+
+- `squad` (String)
+- `value` (String) One of `every_squad`, `organization`, instead of the other fields.
+
 
 <a id="nestedatt--items--rituals--timebox"></a>
 ### Nested Schema for `items.rituals.timebox`

@@ -79,6 +79,71 @@ func RepositoryIssueBlueprintDataSourceSchema(ctx context.Context) schema.Schema
 			"facets": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"binding": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"criterion": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"check_key": schema.StringAttribute{
+											Computed: true,
+										},
+										"kind": schema.StringAttribute{
+											Computed: true,
+										},
+										"min_pct": schema.Float64Attribute{
+											Computed: true,
+										},
+										"name": schema.StringAttribute{
+											Computed: true,
+										},
+										"node_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"op": schema.StringAttribute{
+											Computed:            true,
+											Description:         "How a measurement is compared against its threshold.",
+											MarkdownDescription: "How a measurement is compared against its threshold.",
+										},
+										"path_glob": schema.StringAttribute{
+											Computed: true,
+										},
+										"scorecard_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"suite": schema.StringAttribute{
+											Computed: true,
+										},
+										"test_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"threshold": schema.Float64Attribute{
+											Computed: true,
+										},
+										"unit": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+									CustomType: CriterionType{
+										ObjectType: types.ObjectType{
+											AttrTypes: CriterionValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "What a criterion is bound to — the condition the platform checks on its behalf. A criterion with\nno binding is a manual checkbox.\n\n`kind` says which applies: `test`, with `suite`, `test_id`; `metric`, with `name`, `op`, `threshold`, `unit`; `coverage`, with `min_pct`, `path_glob`; `node`, with `node_id`; `scorecard_check`, with `check_key`, `scorecard_id`.",
+									MarkdownDescription: "What a criterion is bound to — the condition the platform checks on its behalf. A criterion with\nno binding is a manual checkbox.\n\n`kind` says which applies: `test`, with `suite`, `test_id`; `metric`, with `name`, `op`, `threshold`, `unit`; `coverage`, with `min_pct`, `path_glob`; `node`, with `node_id`; `scorecard_check`, with `check_key`, `scorecard_id`.",
+								},
+								"mode": schema.StringAttribute{
+									Computed: true,
+								},
+							},
+							CustomType: BindingType{
+								ObjectType: types.ObjectType{
+									AttrTypes: BindingValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "How the criterion a facet adds is bound: `manual` (the default), or `bound` to evidence the\nplatform checks. A blueprint whose base type lives only in a group, such as `epic`, may use only\n`manual`.\n\n`mode` says which applies: `manual`; `bound`, with `binding`.",
+							MarkdownDescription: "How the criterion a facet adds is bound: `manual` (the default), or `bound` to evidence the\nplatform checks. A blueprint whose base type lives only in a group, such as `epic`, may use only\n`manual`.\n\n`mode` says which applies: `manual`; `bound`, with `binding`.",
+						},
 						"category": schema.StringAttribute{
 							Computed: true,
 						},
@@ -726,6 +791,24 @@ func (t FacetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 
 	attributes := in.Attributes()
 
+	bindingAttribute, ok := attributes["binding"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`binding is missing from object`)
+
+		return nil, diags
+	}
+
+	bindingVal, ok := bindingAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`binding expected to be basetypes.ObjectValue, was: %T`, bindingAttribute))
+	}
+
 	categoryAttribute, ok := attributes["category"]
 
 	if !ok {
@@ -821,6 +904,7 @@ func (t FacetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	}
 
 	return FacetsValue{
+		Binding:  bindingVal,
 		Category: categoryVal,
 		Hint:     hintVal,
 		Key:      keyVal,
@@ -893,6 +977,24 @@ func NewFacetsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewFacetsValueUnknown(), diags
 	}
 
+	bindingAttribute, ok := attributes["binding"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`binding is missing from object`)
+
+		return NewFacetsValueUnknown(), diags
+	}
+
+	bindingVal, ok := bindingAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`binding expected to be basetypes.ObjectValue, was: %T`, bindingAttribute))
+	}
+
 	categoryAttribute, ok := attributes["category"]
 
 	if !ok {
@@ -988,6 +1090,7 @@ func NewFacetsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	}
 
 	return FacetsValue{
+		Binding:  bindingVal,
 		Category: categoryVal,
 		Hint:     hintVal,
 		Key:      keyVal,
@@ -1065,6 +1168,7 @@ func (t FacetsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = FacetsValue{}
 
 type FacetsValue struct {
+	Binding  basetypes.ObjectValue `tfsdk:"binding"`
 	Category basetypes.StringValue `tfsdk:"category"`
 	Hint     basetypes.StringValue `tfsdk:"hint"`
 	Key      basetypes.StringValue `tfsdk:"key"`
@@ -1074,11 +1178,14 @@ type FacetsValue struct {
 }
 
 func (v FacetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["binding"] = basetypes.ObjectType{
+		AttrTypes: BindingValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["category"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["hint"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1089,7 +1196,15 @@ func (v FacetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
+
+		val, err = v.Binding.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["binding"] = val
 
 		val, err = v.Category.ToTerraformValue(ctx)
 
@@ -1160,7 +1275,31 @@ func (v FacetsValue) String() string {
 func (v FacetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var binding basetypes.ObjectValue
+
+	if v.Binding.IsNull() {
+		binding = types.ObjectNull(
+			BindingValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Binding.IsUnknown() {
+		binding = types.ObjectUnknown(
+			BindingValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Binding.IsNull() && !v.Binding.IsUnknown() {
+		binding = types.ObjectValueMust(
+			BindingValue{}.AttributeTypes(ctx),
+			v.Binding.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
+		"binding": basetypes.ObjectType{
+			AttrTypes: BindingValue{}.AttributeTypes(ctx),
+		},
 		"category": basetypes.StringType{},
 		"hint":     basetypes.StringType{},
 		"key":      basetypes.StringType{},
@@ -1179,6 +1318,7 @@ func (v FacetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"binding":  binding,
 			"category": v.Category,
 			"hint":     v.Hint,
 			"key":      v.Key,
@@ -1202,6 +1342,10 @@ func (v FacetsValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.Binding.Equal(other.Binding) {
+		return false
 	}
 
 	if !v.Category.Equal(other.Category) {
@@ -1237,10 +1381,1348 @@ func (v FacetsValue) Type(ctx context.Context) attr.Type {
 
 func (v FacetsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"binding": basetypes.ObjectType{
+			AttrTypes: BindingValue{}.AttributeTypes(ctx),
+		},
 		"category": basetypes.StringType{},
 		"hint":     basetypes.StringType{},
 		"key":      basetypes.StringType{},
 		"label":    basetypes.StringType{},
 		"required": basetypes.BoolType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = BindingType{}
+
+type BindingType struct {
+	basetypes.ObjectType
+}
+
+func (t BindingType) Equal(o attr.Type) bool {
+	other, ok := o.(BindingType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BindingType) String() string {
+	return "BindingType"
+}
+
+func (t BindingType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	criterionAttribute, ok := attributes["criterion"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`criterion is missing from object`)
+
+		return nil, diags
+	}
+
+	criterionVal, ok := criterionAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`criterion expected to be basetypes.ObjectValue, was: %T`, criterionAttribute))
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return nil, diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BindingValue{
+		Criterion: criterionVal,
+		Mode:      modeVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBindingValueNull() BindingValue {
+	return BindingValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBindingValueUnknown() BindingValue {
+	return BindingValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBindingValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BindingValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BindingValue Attribute Value",
+				"While creating a BindingValue value, a missing attribute value was detected. "+
+					"A BindingValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BindingValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BindingValue Attribute Type",
+				"While creating a BindingValue value, an invalid attribute value was detected. "+
+					"A BindingValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BindingValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BindingValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BindingValue Attribute Value",
+				"While creating a BindingValue value, an extra attribute value was detected. "+
+					"A BindingValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BindingValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBindingValueUnknown(), diags
+	}
+
+	criterionAttribute, ok := attributes["criterion"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`criterion is missing from object`)
+
+		return NewBindingValueUnknown(), diags
+	}
+
+	criterionVal, ok := criterionAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`criterion expected to be basetypes.ObjectValue, was: %T`, criterionAttribute))
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return NewBindingValueUnknown(), diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewBindingValueUnknown(), diags
+	}
+
+	return BindingValue{
+		Criterion: criterionVal,
+		Mode:      modeVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBindingValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BindingValue {
+	object, diags := NewBindingValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBindingValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BindingType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBindingValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBindingValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBindingValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBindingValueMust(BindingValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BindingType) ValueType(ctx context.Context) attr.Value {
+	return BindingValue{}
+}
+
+var _ basetypes.ObjectValuable = BindingValue{}
+
+type BindingValue struct {
+	Criterion basetypes.ObjectValue `tfsdk:"criterion"`
+	Mode      basetypes.StringValue `tfsdk:"mode"`
+	state     attr.ValueState
+}
+
+func (v BindingValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["criterion"] = basetypes.ObjectType{
+		AttrTypes: CriterionValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Criterion.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["criterion"] = val
+
+		val, err = v.Mode.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mode"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BindingValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BindingValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BindingValue) String() string {
+	return "BindingValue"
+}
+
+func (v BindingValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var criterion basetypes.ObjectValue
+
+	if v.Criterion.IsNull() {
+		criterion = types.ObjectNull(
+			CriterionValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Criterion.IsUnknown() {
+		criterion = types.ObjectUnknown(
+			CriterionValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Criterion.IsNull() && !v.Criterion.IsUnknown() {
+		criterion = types.ObjectValueMust(
+			CriterionValue{}.AttributeTypes(ctx),
+			v.Criterion.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"criterion": basetypes.ObjectType{
+			AttrTypes: CriterionValue{}.AttributeTypes(ctx),
+		},
+		"mode": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"criterion": criterion,
+			"mode":      v.Mode,
+		})
+
+	return objVal, diags
+}
+
+func (v BindingValue) Equal(o attr.Value) bool {
+	other, ok := o.(BindingValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Criterion.Equal(other.Criterion) {
+		return false
+	}
+
+	if !v.Mode.Equal(other.Mode) {
+		return false
+	}
+
+	return true
+}
+
+func (v BindingValue) Type(ctx context.Context) attr.Type {
+	return BindingType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BindingValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"criterion": basetypes.ObjectType{
+			AttrTypes: CriterionValue{}.AttributeTypes(ctx),
+		},
+		"mode": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = CriterionType{}
+
+type CriterionType struct {
+	basetypes.ObjectType
+}
+
+func (t CriterionType) Equal(o attr.Type) bool {
+	other, ok := o.(CriterionType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CriterionType) String() string {
+	return "CriterionType"
+}
+
+func (t CriterionType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	checkKeyAttribute, ok := attributes["check_key"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`check_key is missing from object`)
+
+		return nil, diags
+	}
+
+	checkKeyVal, ok := checkKeyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`check_key expected to be basetypes.StringValue, was: %T`, checkKeyAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	minPctAttribute, ok := attributes["min_pct"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min_pct is missing from object`)
+
+		return nil, diags
+	}
+
+	minPctVal, ok := minPctAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min_pct expected to be basetypes.Float64Value, was: %T`, minPctAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	nodeIdAttribute, ok := attributes["node_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`node_id is missing from object`)
+
+		return nil, diags
+	}
+
+	nodeIdVal, ok := nodeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`node_id expected to be basetypes.StringValue, was: %T`, nodeIdAttribute))
+	}
+
+	opAttribute, ok := attributes["op"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`op is missing from object`)
+
+		return nil, diags
+	}
+
+	opVal, ok := opAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`op expected to be basetypes.StringValue, was: %T`, opAttribute))
+	}
+
+	pathGlobAttribute, ok := attributes["path_glob"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`path_glob is missing from object`)
+
+		return nil, diags
+	}
+
+	pathGlobVal, ok := pathGlobAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`path_glob expected to be basetypes.StringValue, was: %T`, pathGlobAttribute))
+	}
+
+	scorecardIdAttribute, ok := attributes["scorecard_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scorecard_id is missing from object`)
+
+		return nil, diags
+	}
+
+	scorecardIdVal, ok := scorecardIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scorecard_id expected to be basetypes.StringValue, was: %T`, scorecardIdAttribute))
+	}
+
+	suiteAttribute, ok := attributes["suite"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`suite is missing from object`)
+
+		return nil, diags
+	}
+
+	suiteVal, ok := suiteAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`suite expected to be basetypes.StringValue, was: %T`, suiteAttribute))
+	}
+
+	testIdAttribute, ok := attributes["test_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`test_id is missing from object`)
+
+		return nil, diags
+	}
+
+	testIdVal, ok := testIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`test_id expected to be basetypes.StringValue, was: %T`, testIdAttribute))
+	}
+
+	thresholdAttribute, ok := attributes["threshold"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`threshold is missing from object`)
+
+		return nil, diags
+	}
+
+	thresholdVal, ok := thresholdAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`threshold expected to be basetypes.Float64Value, was: %T`, thresholdAttribute))
+	}
+
+	unitAttribute, ok := attributes["unit"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`unit is missing from object`)
+
+		return nil, diags
+	}
+
+	unitVal, ok := unitAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`unit expected to be basetypes.StringValue, was: %T`, unitAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CriterionValue{
+		CheckKey:    checkKeyVal,
+		Kind:        kindVal,
+		MinPct:      minPctVal,
+		Name:        nameVal,
+		NodeId:      nodeIdVal,
+		Op:          opVal,
+		PathGlob:    pathGlobVal,
+		ScorecardId: scorecardIdVal,
+		Suite:       suiteVal,
+		TestId:      testIdVal,
+		Threshold:   thresholdVal,
+		Unit:        unitVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCriterionValueNull() CriterionValue {
+	return CriterionValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCriterionValueUnknown() CriterionValue {
+	return CriterionValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCriterionValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CriterionValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CriterionValue Attribute Value",
+				"While creating a CriterionValue value, a missing attribute value was detected. "+
+					"A CriterionValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CriterionValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CriterionValue Attribute Type",
+				"While creating a CriterionValue value, an invalid attribute value was detected. "+
+					"A CriterionValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CriterionValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CriterionValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CriterionValue Attribute Value",
+				"While creating a CriterionValue value, an extra attribute value was detected. "+
+					"A CriterionValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CriterionValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCriterionValueUnknown(), diags
+	}
+
+	checkKeyAttribute, ok := attributes["check_key"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`check_key is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	checkKeyVal, ok := checkKeyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`check_key expected to be basetypes.StringValue, was: %T`, checkKeyAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	minPctAttribute, ok := attributes["min_pct"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min_pct is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	minPctVal, ok := minPctAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min_pct expected to be basetypes.Float64Value, was: %T`, minPctAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	nodeIdAttribute, ok := attributes["node_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`node_id is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	nodeIdVal, ok := nodeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`node_id expected to be basetypes.StringValue, was: %T`, nodeIdAttribute))
+	}
+
+	opAttribute, ok := attributes["op"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`op is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	opVal, ok := opAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`op expected to be basetypes.StringValue, was: %T`, opAttribute))
+	}
+
+	pathGlobAttribute, ok := attributes["path_glob"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`path_glob is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	pathGlobVal, ok := pathGlobAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`path_glob expected to be basetypes.StringValue, was: %T`, pathGlobAttribute))
+	}
+
+	scorecardIdAttribute, ok := attributes["scorecard_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scorecard_id is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	scorecardIdVal, ok := scorecardIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scorecard_id expected to be basetypes.StringValue, was: %T`, scorecardIdAttribute))
+	}
+
+	suiteAttribute, ok := attributes["suite"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`suite is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	suiteVal, ok := suiteAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`suite expected to be basetypes.StringValue, was: %T`, suiteAttribute))
+	}
+
+	testIdAttribute, ok := attributes["test_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`test_id is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	testIdVal, ok := testIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`test_id expected to be basetypes.StringValue, was: %T`, testIdAttribute))
+	}
+
+	thresholdAttribute, ok := attributes["threshold"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`threshold is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	thresholdVal, ok := thresholdAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`threshold expected to be basetypes.Float64Value, was: %T`, thresholdAttribute))
+	}
+
+	unitAttribute, ok := attributes["unit"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`unit is missing from object`)
+
+		return NewCriterionValueUnknown(), diags
+	}
+
+	unitVal, ok := unitAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`unit expected to be basetypes.StringValue, was: %T`, unitAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCriterionValueUnknown(), diags
+	}
+
+	return CriterionValue{
+		CheckKey:    checkKeyVal,
+		Kind:        kindVal,
+		MinPct:      minPctVal,
+		Name:        nameVal,
+		NodeId:      nodeIdVal,
+		Op:          opVal,
+		PathGlob:    pathGlobVal,
+		ScorecardId: scorecardIdVal,
+		Suite:       suiteVal,
+		TestId:      testIdVal,
+		Threshold:   thresholdVal,
+		Unit:        unitVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCriterionValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CriterionValue {
+	object, diags := NewCriterionValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCriterionValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CriterionType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCriterionValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCriterionValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCriterionValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCriterionValueMust(CriterionValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CriterionType) ValueType(ctx context.Context) attr.Value {
+	return CriterionValue{}
+}
+
+var _ basetypes.ObjectValuable = CriterionValue{}
+
+type CriterionValue struct {
+	CheckKey    basetypes.StringValue  `tfsdk:"check_key"`
+	Kind        basetypes.StringValue  `tfsdk:"kind"`
+	MinPct      basetypes.Float64Value `tfsdk:"min_pct"`
+	Name        basetypes.StringValue  `tfsdk:"name"`
+	NodeId      basetypes.StringValue  `tfsdk:"node_id"`
+	Op          basetypes.StringValue  `tfsdk:"op"`
+	PathGlob    basetypes.StringValue  `tfsdk:"path_glob"`
+	ScorecardId basetypes.StringValue  `tfsdk:"scorecard_id"`
+	Suite       basetypes.StringValue  `tfsdk:"suite"`
+	TestId      basetypes.StringValue  `tfsdk:"test_id"`
+	Threshold   basetypes.Float64Value `tfsdk:"threshold"`
+	Unit        basetypes.StringValue  `tfsdk:"unit"`
+	state       attr.ValueState
+}
+
+func (v CriterionValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 12)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["check_key"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["min_pct"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["node_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["op"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["path_glob"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["scorecard_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["suite"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["test_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["threshold"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["unit"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 12)
+
+		val, err = v.CheckKey.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["check_key"] = val
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.MinPct.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["min_pct"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.NodeId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["node_id"] = val
+
+		val, err = v.Op.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["op"] = val
+
+		val, err = v.PathGlob.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["path_glob"] = val
+
+		val, err = v.ScorecardId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scorecard_id"] = val
+
+		val, err = v.Suite.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["suite"] = val
+
+		val, err = v.TestId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["test_id"] = val
+
+		val, err = v.Threshold.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["threshold"] = val
+
+		val, err = v.Unit.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["unit"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CriterionValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CriterionValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CriterionValue) String() string {
+	return "CriterionValue"
+}
+
+func (v CriterionValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"check_key":    basetypes.StringType{},
+		"kind":         basetypes.StringType{},
+		"min_pct":      basetypes.Float64Type{},
+		"name":         basetypes.StringType{},
+		"node_id":      basetypes.StringType{},
+		"op":           basetypes.StringType{},
+		"path_glob":    basetypes.StringType{},
+		"scorecard_id": basetypes.StringType{},
+		"suite":        basetypes.StringType{},
+		"test_id":      basetypes.StringType{},
+		"threshold":    basetypes.Float64Type{},
+		"unit":         basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"check_key":    v.CheckKey,
+			"kind":         v.Kind,
+			"min_pct":      v.MinPct,
+			"name":         v.Name,
+			"node_id":      v.NodeId,
+			"op":           v.Op,
+			"path_glob":    v.PathGlob,
+			"scorecard_id": v.ScorecardId,
+			"suite":        v.Suite,
+			"test_id":      v.TestId,
+			"threshold":    v.Threshold,
+			"unit":         v.Unit,
+		})
+
+	return objVal, diags
+}
+
+func (v CriterionValue) Equal(o attr.Value) bool {
+	other, ok := o.(CriterionValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.CheckKey.Equal(other.CheckKey) {
+		return false
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.MinPct.Equal(other.MinPct) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.NodeId.Equal(other.NodeId) {
+		return false
+	}
+
+	if !v.Op.Equal(other.Op) {
+		return false
+	}
+
+	if !v.PathGlob.Equal(other.PathGlob) {
+		return false
+	}
+
+	if !v.ScorecardId.Equal(other.ScorecardId) {
+		return false
+	}
+
+	if !v.Suite.Equal(other.Suite) {
+		return false
+	}
+
+	if !v.TestId.Equal(other.TestId) {
+		return false
+	}
+
+	if !v.Threshold.Equal(other.Threshold) {
+		return false
+	}
+
+	if !v.Unit.Equal(other.Unit) {
+		return false
+	}
+
+	return true
+}
+
+func (v CriterionValue) Type(ctx context.Context) attr.Type {
+	return CriterionType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CriterionValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"check_key":    basetypes.StringType{},
+		"kind":         basetypes.StringType{},
+		"min_pct":      basetypes.Float64Type{},
+		"name":         basetypes.StringType{},
+		"node_id":      basetypes.StringType{},
+		"op":           basetypes.StringType{},
+		"path_glob":    basetypes.StringType{},
+		"scorecard_id": basetypes.StringType{},
+		"suite":        basetypes.StringType{},
+		"test_id":      basetypes.StringType{},
+		"threshold":    basetypes.Float64Type{},
+		"unit":         basetypes.StringType{},
 	}
 }

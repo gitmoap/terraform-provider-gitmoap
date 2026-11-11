@@ -65,6 +65,9 @@ entries carry none. (see [below for nested schema](#nestedatt--entries--limited_
 - `role` (Attributes) A role — built in or defined by the organization — with its display name and the built-in rank
 it counts as. (see [below for nested schema](#nestedatt--entries--role))
 - `source` (Attributes) Where an entry on the access page was granted. (see [below for nested schema](#nestedatt--entries--source))
+- `subject` (Attributes) Who holds a grant.
+
+Set one of `principal` or `team`. (see [below for nested schema](#nestedatt--entries--subject))
 
 <a id="nestedatt--entries--granted_by"></a>
 ### Nested Schema for `entries.granted_by`
@@ -97,6 +100,9 @@ it counts as. (see [below for nested schema](#nestedatt--entries--limited_to--ce
 - `created_by` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
 client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--entries--limited_to--created_by))
 - `limit_id` (String)
+- `limited_to_subject` (Attributes) Whom a limit caps, as a response shows it.
+
+Set one of `principal`, `team` or `class`. (see [below for nested schema](#nestedatt--entries--limited_to--limited_to_subject))
 - `reason` (String)
 
 <a id="nestedatt--entries--limited_to--at"></a>
@@ -139,6 +145,41 @@ caller may not see who it was. A closed account whose work stays is `closed-` an
 digits, a shape no open account may take, with an address under `.invalid`.
 
 
+<a id="nestedatt--entries--limited_to--limited_to_subject"></a>
+### Nested Schema for `entries.limited_to.limited_to_subject`
+
+Read-Only:
+
+- `class` (String) A class of principals a limit can cap at once.
+- `subject_principal` (Attributes) A person or a service account, as a grant or an explanation names one. (see [below for nested schema](#nestedatt--entries--limited_to--limited_to_subject--subject_principal))
+- `subject_team` (Attributes) A team, as a grant names one. Someone who is not a member of the organization learns only that
+a team holds the grant: `hidden` is `true` and the name, slug and size are left out. (see [below for nested schema](#nestedatt--entries--limited_to--limited_to_subject--subject_team))
+
+<a id="nestedatt--entries--limited_to--limited_to_subject--subject_principal"></a>
+### Nested Schema for `entries.limited_to.limited_to_subject.subject_principal`
+
+Read-Only:
+
+- `avatar_url` (String)
+- `id` (String)
+- `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
+and so which page it links to: a person's profile, a service account's page or an agent's page.
+- `username` (String)
+
+
+<a id="nestedatt--entries--limited_to--limited_to_subject--subject_team"></a>
+### Nested Schema for `entries.limited_to.limited_to_subject.subject_team`
+
+Read-Only:
+
+- `hidden` (Boolean)
+- `id` (String)
+- `member_count` (Number)
+- `name` (String)
+- `slug` (String)
+
+
+
 
 <a id="nestedatt--entries--role"></a>
 ### Nested Schema for `entries.role`
@@ -167,6 +208,40 @@ Read-Only:
 - `full_path` (String)
 - `id` (String)
 - `type` (String)
+
+
+
+<a id="nestedatt--entries--subject"></a>
+### Nested Schema for `entries.subject`
+
+Read-Only:
+
+- `principal` (Attributes) A person or a service account, as a grant or an explanation names one. (see [below for nested schema](#nestedatt--entries--subject--principal))
+- `team` (Attributes) A team, as a grant names one. Someone who is not a member of the organization learns only that
+a team holds the grant: `hidden` is `true` and the name, slug and size are left out. (see [below for nested schema](#nestedatt--entries--subject--team))
+
+<a id="nestedatt--entries--subject--principal"></a>
+### Nested Schema for `entries.subject.principal`
+
+Read-Only:
+
+- `avatar_url` (String)
+- `id` (String)
+- `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
+and so which page it links to: a person's profile, a service account's page or an agent's page.
+- `username` (String)
+
+
+<a id="nestedatt--entries--subject--team"></a>
+### Nested Schema for `entries.subject.team`
+
+Read-Only:
+
+- `hidden` (Boolean)
+- `id` (String)
+- `member_count` (Number)
+- `name` (String)
+- `slug` (String)
 
 
 

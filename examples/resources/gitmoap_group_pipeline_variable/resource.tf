@@ -1,6 +1,7 @@
 variable "registry_token" {
   type      = string
   sensitive = true
+  ephemeral = true
 }
 
 data "gitmoap_group_by_path" "platform" {
@@ -13,10 +14,11 @@ resource "gitmoap_group_pipeline_variable" "region" {
   value    = "eu-west-1"
 }
 
-# A secret value is write-only: the API never returns it.
+# A secret value is never returned by the API, and value_wo keeps it out of Terraform's state too.
 resource "gitmoap_group_pipeline_variable" "registry_token" {
-  group_id = data.gitmoap_group_by_path.platform.group_id
-  name     = "REGISTRY_TOKEN"
-  value    = var.registry_token
-  secret   = true
+  group_id         = data.gitmoap_group_by_path.platform.group_id
+  name             = "REGISTRY_TOKEN"
+  value_wo         = var.registry_token
+  value_wo_version = 1
+  secret           = true
 }

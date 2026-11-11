@@ -20,37 +20,75 @@ func joinPath(parent, name string) string {
 	return parent + "." + name
 }
 
-// jsonField is the JSON field behind the attribute at path.
-func jsonField(path, name string, renames map[string]string) string {
-	if field, ok := renames[path]; ok {
+// fields says how attributes map to JSON: the field behind each renamed one, and how the values
+// of each one the spec's unions were rewritten for translate (Transforms):
+//
+//   - json: a string of JSON, sent as the JSON it holds.
+//   - marker: a bool, sent as an empty object when it's true.
+//   - scalar_or_object: an object, sent as its value field when that's set.
+type fields struct {
+	renames    map[string]string
+	transforms map[string]string
+}
+
+// field is the JSON field behind the attribute at path.
+func (f fields) field(path, name string) string {
+	if field, ok := f.renames[path]; ok {
 		return field
 	}
 	return name
 }
 
 // toJSON converts a Terraform value to JSON. It leaves out what's null or unknown: ok is false then.
-func toJSON(value tftypes.Value, path string, renames map[string]string) (out any, ok bool, err error) {
+func toJSON(value tftypes.Value, path string, f fields) (out any, ok bool, err error) {
 	if value.Type() == nil || value.IsNull() || !value.IsKnown() {
 		return nil, false, nil
 	}
+	switch f.transforms[path] {
+	case "json":
+		var text string
+		if err := value.As(&text); err != nil {
+			return nil, false, err
+		}
+		parsed, err := parseJSON(text)
+		if err != nil {
+			return nil, false, fmt.Errorf("%s isn't valid JSON: %w", path, err)
+		}
+		return parsed, true, nil
+	case "marker":
+		var flag bool
+		if err := value.As(&flag); err != nil || !flag {
+			return nil, false, err
+		}
+		return map[string]any{}, true, nil
+	}
 	switch typ := value.Type().(type) {
 	case tftypes.Object:
+		attributes := elementsOf[map[string]tftypes.Value](value)
+		if f.transforms[path] == "scalar_or_object" {
+			if scalar, set := attributes["value"]; set && scalar.IsKnown() && !scalar.IsNull() {
+				return toJSON(scalar, joinPath(path, "value"), f)
+			}
+		}
 		object := map[string]any{}
-		for name, attribute := range elementsOf[map[string]tftypes.Value](value) {
+		for name, attribute := range attributes {
 			child := joinPath(path, name)
-			converted, ok, err := toJSON(attribute, child, renames)
+			if name == "value" && f.transforms[path] == "scalar_or_object" {
+				continue
+			}
+			converted, ok, err := toJSON(attribute, child, f)
 			if err != nil {
 				return nil, false, err
 			}
 			if ok {
-				object[jsonField(child, name, renames)] = converted
+				object[f.field(child, name)] = converted
 			}
 		}
 		return object, true, nil
 	case tftypes.List, tftypes.Set, tftypes.Tuple:
 		array := []any{}
 		for _, element := range elementsOf[[]tftypes.Value](value) {
-			converted, ok, err := toJSON(element, path, renames)
+			converted, ok, err := toJSON(element, path, f)
 			if err != nil {
 				return nil, false, err
 			}
@@ -62,7 +100,7 @@ func toJSON(value tftypes.Value, path string, renames map[string]string) (out an
 	case tftypes.Map:
 		object := map[string]any{}
 		for key, element := range elementsOf[map[string]tftypes.Value](value) {
-			converted, ok, err := toJSON(element, path, renames)
+			converted, ok, err := toJSON(element, path, f)
 			if err != nil {
 				return nil, false, err
 			}
@@ -95,9 +133,47 @@ func toJSON(value tftypes.Value, path string, renames map[string]string) (out an
 // fromJSON converts JSON to a Terraform value of type typ. When an object has no field for an
 // attribute, the attribute keeps its value in prior, if prior has one: the API doesn't return
 // everything it's sent, like secrets, or the path parameters it was called with.
-func fromJSON(typ tftypes.Type, raw any, prior tftypes.Value, path string, renames map[string]string) (tftypes.Value, error) {
+func fromJSON(typ tftypes.Type, raw any, prior tftypes.Value, path string, f fields) (tftypes.Value, error) {
 	if raw == nil {
 		return tftypes.NewValue(typ, nil), nil
+	}
+	switch f.transforms[path] {
+	case "json":
+		text, err := canonicalJSON(raw)
+		if err != nil {
+			return tftypes.Value{}, err
+		}
+		// What the configuration wrote stays, if it means the same: jsonencode() and the API may
+		// order fields differently.
+		var written string
+		if prior.Type() != nil && prior.IsKnown() && !prior.IsNull() && prior.As(&written) == nil {
+			if parsed, err := parseJSON(written); err == nil {
+				if same, err := canonicalJSON(parsed); err == nil && same == text {
+					return prior, nil
+				}
+			}
+		}
+		return tftypes.NewValue(typ, text), nil
+	case "marker":
+		return tftypes.NewValue(typ, true), nil
+	case "scalar_or_object":
+		object, isObject := typ.(tftypes.Object)
+		if !isObject {
+			break
+		}
+		translated := map[string]any{}
+		if fieldsOf, ok := raw.(map[string]any); ok {
+			for name, value := range fieldsOf {
+				translated[name] = value
+			}
+			translated["value"] = nil
+		} else {
+			for name := range object.AttributeTypes {
+				translated[name] = nil
+			}
+			translated["value"] = raw
+		}
+		raw = translated
 	}
 	switch typ := typ.(type) {
 	case tftypes.Object:
@@ -109,7 +185,7 @@ func fromJSON(typ tftypes.Type, raw any, prior tftypes.Value, path string, renam
 		attributes := make(map[string]tftypes.Value, len(typ.AttributeTypes))
 		for name, attributeType := range typ.AttributeTypes {
 			child := joinPath(path, name)
-			field, present := object[jsonField(child, name, renames)]
+			field, present := object[f.field(child, name)]
 			priorValue, hasPrior := priorAttributes[name]
 			if !present {
 				if hasPrior {
@@ -119,7 +195,7 @@ func fromJSON(typ tftypes.Type, raw any, prior tftypes.Value, path string, renam
 				}
 				continue
 			}
-			value, err := fromJSON(attributeType, field, priorValue, child, renames)
+			value, err := fromJSON(attributeType, field, priorValue, child, f)
 			if err != nil {
 				return tftypes.Value{}, err
 			}
@@ -145,7 +221,7 @@ func fromJSON(typ tftypes.Type, raw any, prior tftypes.Value, path string, renam
 			if index < len(priorElements) {
 				priorElement = priorElements[index]
 			}
-			value, err := fromJSON(element, item, priorElement, path, renames)
+			value, err := fromJSON(element, item, priorElement, path, f)
 			if err != nil {
 				return tftypes.Value{}, err
 			}
@@ -160,7 +236,7 @@ func fromJSON(typ tftypes.Type, raw any, prior tftypes.Value, path string, renam
 		priorElements := elementsOf[map[string]tftypes.Value](prior)
 		elements := make(map[string]tftypes.Value, len(object))
 		for key, item := range object {
-			value, err := fromJSON(typ.ElementType, item, priorElements[key], path, renames)
+			value, err := fromJSON(typ.ElementType, item, priorElements[key], path, f)
 			if err != nil {
 				return tftypes.Value{}, err
 			}
@@ -263,7 +339,15 @@ func unknownToNull(value tftypes.Value) tftypes.Value {
 
 // withAttribute returns value with its root attribute name set to replacement.
 func withAttribute(value tftypes.Value, name string, replacement tftypes.Value) tftypes.Value {
-	target := tftypes.NewAttributePath().WithAttributeName(name)
+	return withAttributeAt(value, name, replacement)
+}
+
+// withAttributeAt returns value with the attribute at a dotted path set to replacement.
+func withAttributeAt(value tftypes.Value, dotted string, replacement tftypes.Value) tftypes.Value {
+	target := tftypes.NewAttributePath()
+	for name := range strings.SplitSeq(dotted, ".") {
+		target = target.WithAttributeName(name)
+	}
 	out, err := tftypes.Transform(value, func(at *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
 		if at.Equal(target) {
 			return replacement, nil
@@ -294,7 +378,7 @@ func attributeText(value tftypes.Value, path string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("there's no attribute %s", path)
 	}
-	converted, set, err := toJSON(attribute, path, nil)
+	converted, set, err := toJSON(attribute, path, fields{})
 	if err != nil {
 		return "", err
 	}
@@ -333,6 +417,21 @@ func matchesItem(item map[string]any, want map[string]string) bool {
 		}
 	}
 	return true
+}
+
+// parseJSON reads JSON, keeping numbers as written.
+func parseJSON(text string) (any, error) {
+	decoder := json.NewDecoder(strings.NewReader(text))
+	decoder.UseNumber()
+	var parsed any
+	err := decoder.Decode(&parsed)
+	return parsed, err
+}
+
+// canonicalJSON writes JSON with its object fields in order, so equal values compare equal.
+func canonicalJSON(value any) (string, error) {
+	text, err := json.Marshal(value)
+	return string(text), err
 }
 
 func scalarText(raw any) (string, bool) {

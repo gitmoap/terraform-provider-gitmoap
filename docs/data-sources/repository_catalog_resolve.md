@@ -60,10 +60,49 @@ no deployments, so a deployment check is not applicable to it rather than failin
 classifications, use annotations.
 - `lifecycle` (String) Where a service is in its life.
 - `orphaned_at` (String)
+- `owner` (Attributes) Who owns a service: a group, a team, or a person or service account. A service may also have no
+owner, which the `has_owner` scorecard check surfaces.
+
+`kind` says which applies: `group`, with `full_path`, `group_id`; `principal`, with `actor`, `principal_id`; `team`, with `organization`, `slug`, `team_id`. (see [below for nested schema](#nestedatt--resolved--overlapping--owner))
 - `service_id` (String)
 - `slug` (String)
 - `source` (String) How the catalog entry came to exist. Set by the platform, never accepted from a request. Any
 source other than `inferred` means a person has vouched for the entry.
+
+<a id="nestedatt--resolved--overlapping--owner"></a>
+### Nested Schema for `resolved.overlapping.owner`
+
+Read-Only:
+
+- `actor` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
+client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--resolved--overlapping--owner--actor))
+- `full_path` (String)
+- `group_id` (String)
+- `kind` (String)
+- `organization` (String) The full path of the organization's top-level group, such as `acme`.
+- `principal_id` (String)
+- `slug` (String) The team's slug, such as `backend`.
+- `team_id` (String)
+
+<a id="nestedatt--resolved--overlapping--owner--actor"></a>
+### Nested Schema for `resolved.overlapping.owner.actor`
+
+Read-Only:
+
+- `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
+deterministic avatar URL itself.
+- `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
+commits. `unknown` on a deleted actor and empty on a redacted one.
+- `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
+a redacted actor.
+- `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
+and so which page it links to: a person's profile, a service account's page or an agent's page.
+- `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
+always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
+caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
+digits, a shape no open account may take, with an address under `.invalid`.
+
+
 
 
 <a id="nestedatt--resolved--service"></a>
@@ -80,6 +119,43 @@ classifications, use annotations.
 - `lifecycle` (String) Where a service is in its life.
 - `orphaned_at` (String)
 - `service_id` (String)
+- `service_owner` (Attributes) Who owns a service: a group, a team, or a person or service account. A service may also have no
+owner, which the `has_owner` scorecard check surfaces.
+
+`kind` says which applies: `group`, with `full_path`, `group_id`; `principal`, with `actor`, `principal_id`; `team`, with `organization`, `slug`, `team_id`. (see [below for nested schema](#nestedatt--resolved--service--service_owner))
 - `slug` (String)
 - `source` (String) How the catalog entry came to exist. Set by the platform, never accepted from a request. Any
 source other than `inferred` means a person has vouched for the entry.
+
+<a id="nestedatt--resolved--service--service_owner"></a>
+### Nested Schema for `resolved.service.service_owner`
+
+Read-Only:
+
+- `full_path` (String)
+- `group_id` (String)
+- `kind` (String)
+- `organization` (String) The full path of the organization's top-level group, such as `acme`.
+- `owner_actor` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
+client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--resolved--service--service_owner--owner_actor))
+- `principal_id` (String)
+- `slug` (String) The team's slug, such as `backend`.
+- `team_id` (String)
+
+<a id="nestedatt--resolved--service--service_owner--owner_actor"></a>
+### Nested Schema for `resolved.service.service_owner.owner_actor`
+
+Read-Only:
+
+- `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
+deterministic avatar URL itself.
+- `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
+commits. `unknown` on a deleted actor and empty on a redacted one.
+- `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
+a redacted actor.
+- `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
+and so which page it links to: a person's profile, a service account's page or an agent's page.
+- `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
+always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
+caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
+digits, a shape no open account may take, with an address under `.invalid`.

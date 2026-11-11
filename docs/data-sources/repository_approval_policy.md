@@ -82,6 +82,7 @@ Read-Only:
 
 - `accept_from` (String) Which kinds of approval count toward a rule.
 - `applies_to_branches` (String)
+- `approvers` (Attributes List) (see [below for nested schema](#nestedatt--rules--approvers))
 - `created_at` (String)
 - `enforcement` (String) Whether the scopes beneath may replace a rule, or only strengthen it.
 - `name` (String)
@@ -90,6 +91,40 @@ Read-Only:
 - `rules_defined_at` (Attributes) A group or repository, as the access API names one. (see [below for nested schema](#nestedatt--rules--rules_defined_at))
 - `strengthens` (String)
 - `updated_at` (String)
+
+<a id="nestedatt--rules--approvers"></a>
+### Nested Schema for `rules.approvers`
+
+Read-Only:
+
+- `anyone` (Boolean) Anyone who may approve merge requests in the repository.
+- `code_owners` (Boolean) The owners of the files the merge request changes.
+- `person` (String)
+- `role` (Attributes) Anyone whose role at a group or repository is at least `min`. (see [below for nested schema](#nestedatt--rules--approvers--role))
+- `team` (String)
+
+<a id="nestedatt--rules--approvers--role"></a>
+### Nested Schema for `rules.approvers.role`
+
+Read-Only:
+
+- `at` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--rules--approvers--role--at))
+- `direct_only` (Boolean) Count only access given on `at` itself — directly or through a team — and not access
+that reaches it from a group above.
+- `min` (String)
+
+<a id="nestedatt--rules--approvers--role--at"></a>
+### Nested Schema for `rules.approvers.role.at`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
+
+
+
 
 <a id="nestedatt--rules--rules_defined_at"></a>
 ### Nested Schema for `rules.rules_defined_at`
@@ -114,9 +149,44 @@ Read-Only:
 - `name` (String)
 - `required` (Number) Distinct approvals that must count, 1–10.
 - `rule_id` (String)
+- `rules_here_approvers` (Attributes List) (see [below for nested schema](#nestedatt--rules_here--rules_here_approvers))
 - `rules_here_defined_at` (Attributes) A group or repository, as the access API names one. (see [below for nested schema](#nestedatt--rules_here--rules_here_defined_at))
 - `strengthens` (String)
 - `updated_at` (String)
+
+<a id="nestedatt--rules_here--rules_here_approvers"></a>
+### Nested Schema for `rules_here.rules_here_approvers`
+
+Read-Only:
+
+- `anyone` (Boolean) Anyone who may approve merge requests in the repository.
+- `approver_role` (Attributes) Anyone whose role at a group or repository is at least `min`. (see [below for nested schema](#nestedatt--rules_here--rules_here_approvers--approver_role))
+- `code_owners` (Boolean) The owners of the files the merge request changes.
+- `person` (String)
+- `team` (String)
+
+<a id="nestedatt--rules_here--rules_here_approvers--approver_role"></a>
+### Nested Schema for `rules_here.rules_here_approvers.approver_role`
+
+Read-Only:
+
+- `direct_only` (Boolean) Count only access given on `at` itself — directly or through a team — and not access
+that reaches it from a group above.
+- `min` (String)
+- `role_at` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--rules_here--rules_here_approvers--approver_role--role_at))
+
+<a id="nestedatt--rules_here--rules_here_approvers--approver_role--role_at"></a>
+### Nested Schema for `rules_here.rules_here_approvers.approver_role.role_at`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
+
+
+
 
 <a id="nestedatt--rules_here--rules_here_defined_at"></a>
 ### Nested Schema for `rules_here.rules_here_defined_at`

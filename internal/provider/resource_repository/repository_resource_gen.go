@@ -29,6 +29,7 @@ func RepositoryResourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 			"catalog_enabled": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
 				Description:         "Whether the service catalog reads this repository's catalog file. A new fork starts with\nthis off: the file names its upstream's services.",
 				MarkdownDescription: "Whether the service catalog reads this repository's catalog file. A new fork starts with\nthis off: the file names its upstream's services.",
@@ -140,6 +141,7 @@ func RepositoryResourceSchema(ctx context.Context) schema.Schema {
 				Required: true,
 			},
 			"pipelines_enabled": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
 				Description:         "Whether pushes, merge requests and schedules start pipeline runs here. A new fork starts\nwith this off, so it runs nothing until one of its Maintainers turns it on.",
 				MarkdownDescription: "Whether pushes, merge requests and schedules start pipeline runs here. A new fork starts\nwith this off, so it runs nothing until one of its Maintainers turns it on.",

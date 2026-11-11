@@ -18,6 +18,31 @@ import (
 func GroupProviderDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"allowed_versions": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"kind": schema.StringAttribute{
+						Computed: true,
+					},
+					"max": schema.StringAttribute{
+						Computed: true,
+					},
+					"min": schema.StringAttribute{
+						Computed: true,
+					},
+					"versions": schema.ListAttribute{
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+				},
+				CustomType: AllowedVersionsType{
+					ObjectType: types.ObjectType{
+						AttrTypes: AllowedVersionsValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "The set of versions a node may declare for a provider at a scope.\n\n`AnyPublished` (the default when unset) permits every catalogued version —\nthe trust boundary is the catalog. `List`/`Range` let an org curate. The\nversion a node *runs* is always an exact `ProviderVersion`; a `Range` only\ngoverns which exact versions are declarable, so reproducibility holds (no\nfloating run-time versions).\n\n`kind` says which applies: `any_published`; `list`, with `versions`; `range`, with `max`, `min`.",
+				MarkdownDescription: "The set of versions a node may declare for a provider at a scope.\n\n`AnyPublished` (the default when unset) permits every catalogued version —\nthe trust boundary is the catalog. `List`/`Range` let an org curate. The\nversion a node *runs* is always an exact `ProviderVersion`; a `Range` only\ngoverns which exact versions are declarable, so reproducibility holds (no\nfloating run-time versions).\n\n`kind` says which applies: `any_published`; `list`, with `versions`; `range`, with `max`, `min`.",
+			},
 			"default_version": schema.StringAttribute{
 				Computed: true,
 			},
@@ -129,24 +154,543 @@ func GroupProviderDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type GroupProviderModel struct {
-	DefaultVersion       types.String     `tfsdk:"default_version"`
-	Enabled              types.Bool       `tfsdk:"enabled"`
-	GroupId              types.String     `tfsdk:"group_id"`
-	Inherited            types.Bool       `tfsdk:"inherited"`
-	InstalledAt          types.String     `tfsdk:"installed_at"`
-	InstalledBy          InstalledByValue `tfsdk:"installed_by"`
-	LatestLifecycleState types.String     `tfsdk:"latest_lifecycle_state"`
-	LatestVersion        types.String     `tfsdk:"latest_version"`
-	OverrideParent       types.Bool       `tfsdk:"override_parent"`
-	OwningGroupId        types.String     `tfsdk:"owning_group_id"`
-	ProviderId           types.String     `tfsdk:"provider_id"`
-	ProviderTier         types.String     `tfsdk:"provider_tier"`
-	PublisherVerified    types.Bool       `tfsdk:"publisher_verified"`
-	SourceScopeId        types.String     `tfsdk:"source_scope_id"`
-	SourceScopeType      types.String     `tfsdk:"source_scope_type"`
-	TierAccepted         types.Bool       `tfsdk:"tier_accepted"`
-	TrackLatest          types.Bool       `tfsdk:"track_latest"`
-	UpdateAvailable      types.Bool       `tfsdk:"update_available"`
+	AllowedVersions      AllowedVersionsValue `tfsdk:"allowed_versions"`
+	DefaultVersion       types.String         `tfsdk:"default_version"`
+	Enabled              types.Bool           `tfsdk:"enabled"`
+	GroupId              types.String         `tfsdk:"group_id"`
+	Inherited            types.Bool           `tfsdk:"inherited"`
+	InstalledAt          types.String         `tfsdk:"installed_at"`
+	InstalledBy          InstalledByValue     `tfsdk:"installed_by"`
+	LatestLifecycleState types.String         `tfsdk:"latest_lifecycle_state"`
+	LatestVersion        types.String         `tfsdk:"latest_version"`
+	OverrideParent       types.Bool           `tfsdk:"override_parent"`
+	OwningGroupId        types.String         `tfsdk:"owning_group_id"`
+	ProviderId           types.String         `tfsdk:"provider_id"`
+	ProviderTier         types.String         `tfsdk:"provider_tier"`
+	PublisherVerified    types.Bool           `tfsdk:"publisher_verified"`
+	SourceScopeId        types.String         `tfsdk:"source_scope_id"`
+	SourceScopeType      types.String         `tfsdk:"source_scope_type"`
+	TierAccepted         types.Bool           `tfsdk:"tier_accepted"`
+	TrackLatest          types.Bool           `tfsdk:"track_latest"`
+	UpdateAvailable      types.Bool           `tfsdk:"update_available"`
+}
+
+var _ basetypes.ObjectTypable = AllowedVersionsType{}
+
+type AllowedVersionsType struct {
+	basetypes.ObjectType
+}
+
+func (t AllowedVersionsType) Equal(o attr.Type) bool {
+	other, ok := o.(AllowedVersionsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t AllowedVersionsType) String() string {
+	return "AllowedVersionsType"
+}
+
+func (t AllowedVersionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	maxAttribute, ok := attributes["max"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`max is missing from object`)
+
+		return nil, diags
+	}
+
+	maxVal, ok := maxAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`max expected to be basetypes.StringValue, was: %T`, maxAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return nil, diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.StringValue, was: %T`, minAttribute))
+	}
+
+	versionsAttribute, ok := attributes["versions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`versions is missing from object`)
+
+		return nil, diags
+	}
+
+	versionsVal, ok := versionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`versions expected to be basetypes.ListValue, was: %T`, versionsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return AllowedVersionsValue{
+		Kind:     kindVal,
+		Max:      maxVal,
+		Min:      minVal,
+		Versions: versionsVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAllowedVersionsValueNull() AllowedVersionsValue {
+	return AllowedVersionsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewAllowedVersionsValueUnknown() AllowedVersionsValue {
+	return AllowedVersionsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewAllowedVersionsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (AllowedVersionsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing AllowedVersionsValue Attribute Value",
+				"While creating a AllowedVersionsValue value, a missing attribute value was detected. "+
+					"A AllowedVersionsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AllowedVersionsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid AllowedVersionsValue Attribute Type",
+				"While creating a AllowedVersionsValue value, an invalid attribute value was detected. "+
+					"A AllowedVersionsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AllowedVersionsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("AllowedVersionsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra AllowedVersionsValue Attribute Value",
+				"While creating a AllowedVersionsValue value, an extra attribute value was detected. "+
+					"A AllowedVersionsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra AllowedVersionsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewAllowedVersionsValueUnknown(), diags
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewAllowedVersionsValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	maxAttribute, ok := attributes["max"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`max is missing from object`)
+
+		return NewAllowedVersionsValueUnknown(), diags
+	}
+
+	maxVal, ok := maxAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`max expected to be basetypes.StringValue, was: %T`, maxAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return NewAllowedVersionsValueUnknown(), diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.StringValue, was: %T`, minAttribute))
+	}
+
+	versionsAttribute, ok := attributes["versions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`versions is missing from object`)
+
+		return NewAllowedVersionsValueUnknown(), diags
+	}
+
+	versionsVal, ok := versionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`versions expected to be basetypes.ListValue, was: %T`, versionsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewAllowedVersionsValueUnknown(), diags
+	}
+
+	return AllowedVersionsValue{
+		Kind:     kindVal,
+		Max:      maxVal,
+		Min:      minVal,
+		Versions: versionsVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAllowedVersionsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) AllowedVersionsValue {
+	object, diags := NewAllowedVersionsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewAllowedVersionsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t AllowedVersionsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAllowedVersionsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAllowedVersionsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAllowedVersionsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAllowedVersionsValueMust(AllowedVersionsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AllowedVersionsType) ValueType(ctx context.Context) attr.Value {
+	return AllowedVersionsValue{}
+}
+
+var _ basetypes.ObjectValuable = AllowedVersionsValue{}
+
+type AllowedVersionsValue struct {
+	Kind     basetypes.StringValue `tfsdk:"kind"`
+	Max      basetypes.StringValue `tfsdk:"max"`
+	Min      basetypes.StringValue `tfsdk:"min"`
+	Versions basetypes.ListValue   `tfsdk:"versions"`
+	state    attr.ValueState
+}
+
+func (v AllowedVersionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["max"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["min"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["versions"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.Max.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["max"] = val
+
+		val, err = v.Min.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["min"] = val
+
+		val, err = v.Versions.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["versions"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AllowedVersionsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AllowedVersionsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AllowedVersionsValue) String() string {
+	return "AllowedVersionsValue"
+}
+
+func (v AllowedVersionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var versionsVal basetypes.ListValue
+	switch {
+	case v.Versions.IsUnknown():
+		versionsVal = types.ListUnknown(types.StringType)
+	case v.Versions.IsNull():
+		versionsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		versionsVal, d = types.ListValue(types.StringType, v.Versions.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"kind": basetypes.StringType{},
+			"max":  basetypes.StringType{},
+			"min":  basetypes.StringType{},
+			"versions": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"kind": basetypes.StringType{},
+		"max":  basetypes.StringType{},
+		"min":  basetypes.StringType{},
+		"versions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"kind":     v.Kind,
+			"max":      v.Max,
+			"min":      v.Min,
+			"versions": versionsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v AllowedVersionsValue) Equal(o attr.Value) bool {
+	other, ok := o.(AllowedVersionsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.Max.Equal(other.Max) {
+		return false
+	}
+
+	if !v.Min.Equal(other.Min) {
+		return false
+	}
+
+	if !v.Versions.Equal(other.Versions) {
+		return false
+	}
+
+	return true
+}
+
+func (v AllowedVersionsValue) Type(ctx context.Context) attr.Type {
+	return AllowedVersionsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AllowedVersionsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"kind": basetypes.StringType{},
+		"max":  basetypes.StringType{},
+		"min":  basetypes.StringType{},
+		"versions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
 }
 
 var _ basetypes.ObjectTypable = InstalledByType{}

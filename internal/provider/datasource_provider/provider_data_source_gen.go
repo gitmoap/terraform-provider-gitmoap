@@ -4,7 +4,13 @@ package datasource_provider
 
 import (
 	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
@@ -17,6 +23,11 @@ func ProviderDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "How connections to this provider may authenticate (e.g.\n`[static_credentials, oidc_federation]`). A connection using any other mode is refused.",
 				MarkdownDescription: "How connections to this provider may authenticate (e.g.\n`[static_credentials, oidc_federation]`). A connection using any other mode is refused.",
+			},
+			"auth_schema": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The JSON Schema a connection's credentials must satisfy, exactly as the provider's\n`gitmoap-provider.yaml` declares it.\n\nJSON: set it with `jsonencode()`.",
+				MarkdownDescription: "The JSON Schema a connection's credentials must satisfy, exactly as the provider's\n`gitmoap-provider.yaml` declares it.\n\nJSON: set it with `jsonencode()`.",
 			},
 			"categories": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -68,6 +79,24 @@ func ProviderDataSourceSchema(ctx context.Context) schema.Schema {
 			"updated_at": schema.StringAttribute{
 				Computed: true,
 			},
+			"visibility": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"kind": schema.StringAttribute{
+						Computed: true,
+					},
+					"owning_group_id": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+				CustomType: VisibilityType{
+					ObjectType: types.ObjectType{
+						AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.\n\n`kind` says which applies: `public`; `private`, with `owning_group_id`.",
+				MarkdownDescription: "Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.\n\n`kind` says which applies: `public`; `private`, with `owning_group_id`.",
+			},
 		},
 		Description:         "Get one provider's metadata. The provider's name, description, tier, publisher, latest version, and the credentials a connection to it needs. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
 		MarkdownDescription: "Get one provider's metadata. The provider's name, description, tier, publisher, latest version, and the credentials a connection to it needs. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
@@ -75,17 +104,398 @@ func ProviderDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type ProviderModel struct {
-	AuthModes     types.List   `tfsdk:"auth_modes"`
-	Categories    types.List   `tfsdk:"categories"`
-	CreatedAt     types.String `tfsdk:"created_at"`
-	Description   types.String `tfsdk:"description"`
-	FeaturedRank  types.Int64  `tfsdk:"featured_rank"`
-	Id            types.String `tfsdk:"id"`
-	InstallCount  types.Int64  `tfsdk:"install_count"`
-	Keywords      types.List   `tfsdk:"keywords"`
-	LatestVersion types.String `tfsdk:"latest_version"`
-	Name          types.String `tfsdk:"name"`
-	PublisherId   types.String `tfsdk:"publisher_id"`
-	Tier          types.String `tfsdk:"tier"`
-	UpdatedAt     types.String `tfsdk:"updated_at"`
+	AuthModes     types.List      `tfsdk:"auth_modes"`
+	AuthSchema    types.String    `tfsdk:"auth_schema"`
+	Categories    types.List      `tfsdk:"categories"`
+	CreatedAt     types.String    `tfsdk:"created_at"`
+	Description   types.String    `tfsdk:"description"`
+	FeaturedRank  types.Int64     `tfsdk:"featured_rank"`
+	Id            types.String    `tfsdk:"id"`
+	InstallCount  types.Int64     `tfsdk:"install_count"`
+	Keywords      types.List      `tfsdk:"keywords"`
+	LatestVersion types.String    `tfsdk:"latest_version"`
+	Name          types.String    `tfsdk:"name"`
+	PublisherId   types.String    `tfsdk:"publisher_id"`
+	Tier          types.String    `tfsdk:"tier"`
+	UpdatedAt     types.String    `tfsdk:"updated_at"`
+	Visibility    VisibilityValue `tfsdk:"visibility"`
+}
+
+var _ basetypes.ObjectTypable = VisibilityType{}
+
+type VisibilityType struct {
+	basetypes.ObjectType
+}
+
+func (t VisibilityType) Equal(o attr.Type) bool {
+	other, ok := o.(VisibilityType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t VisibilityType) String() string {
+	return "VisibilityType"
+}
+
+func (t VisibilityType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	owningGroupIdAttribute, ok := attributes["owning_group_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owning_group_id is missing from object`)
+
+		return nil, diags
+	}
+
+	owningGroupIdVal, ok := owningGroupIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owning_group_id expected to be basetypes.StringValue, was: %T`, owningGroupIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return VisibilityValue{
+		Kind:          kindVal,
+		OwningGroupId: owningGroupIdVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewVisibilityValueNull() VisibilityValue {
+	return VisibilityValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewVisibilityValueUnknown() VisibilityValue {
+	return VisibilityValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewVisibilityValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (VisibilityValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing VisibilityValue Attribute Value",
+				"While creating a VisibilityValue value, a missing attribute value was detected. "+
+					"A VisibilityValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("VisibilityValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid VisibilityValue Attribute Type",
+				"While creating a VisibilityValue value, an invalid attribute value was detected. "+
+					"A VisibilityValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("VisibilityValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("VisibilityValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra VisibilityValue Attribute Value",
+				"While creating a VisibilityValue value, an extra attribute value was detected. "+
+					"A VisibilityValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra VisibilityValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	owningGroupIdAttribute, ok := attributes["owning_group_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owning_group_id is missing from object`)
+
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	owningGroupIdVal, ok := owningGroupIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owning_group_id expected to be basetypes.StringValue, was: %T`, owningGroupIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	return VisibilityValue{
+		Kind:          kindVal,
+		OwningGroupId: owningGroupIdVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewVisibilityValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) VisibilityValue {
+	object, diags := NewVisibilityValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewVisibilityValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t VisibilityType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewVisibilityValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewVisibilityValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewVisibilityValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewVisibilityValueMust(VisibilityValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t VisibilityType) ValueType(ctx context.Context) attr.Value {
+	return VisibilityValue{}
+}
+
+var _ basetypes.ObjectValuable = VisibilityValue{}
+
+type VisibilityValue struct {
+	Kind          basetypes.StringValue `tfsdk:"kind"`
+	OwningGroupId basetypes.StringValue `tfsdk:"owning_group_id"`
+	state         attr.ValueState
+}
+
+func (v VisibilityValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["owning_group_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.OwningGroupId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["owning_group_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v VisibilityValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v VisibilityValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v VisibilityValue) String() string {
+	return "VisibilityValue"
+}
+
+func (v VisibilityValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"kind":            basetypes.StringType{},
+		"owning_group_id": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"kind":            v.Kind,
+			"owning_group_id": v.OwningGroupId,
+		})
+
+	return objVal, diags
+}
+
+func (v VisibilityValue) Equal(o attr.Value) bool {
+	other, ok := o.(VisibilityValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.OwningGroupId.Equal(other.OwningGroupId) {
+		return false
+	}
+
+	return true
+}
+
+func (v VisibilityValue) Type(ctx context.Context) attr.Type {
+	return VisibilityType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v VisibilityValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"kind":            basetypes.StringType{},
+		"owning_group_id": basetypes.StringType{},
+	}
 }

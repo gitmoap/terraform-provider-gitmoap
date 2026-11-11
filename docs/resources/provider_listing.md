@@ -50,6 +50,7 @@ resource "gitmoap_provider_listing" "deploy" {
 
 - `install_count` (Number)
 - `namespace_verified` (Boolean)
+- `provider_info` (Attributes) One provider as it appears in the marketplace grid. The README, examples and changelog are not included — they load with the provider's detail page. (see [below for nested schema](#nestedatt--provider_info))
 - `publisher` (Attributes) Who publishes a provider, and whether they are verified. Shown for providers gitmoap does not
 build itself. (see [below for nested schema](#nestedatt--publisher))
 - `versions` (Attributes List) (see [below for nested schema](#nestedatt--versions))
@@ -64,6 +65,47 @@ published version of the provider (validated at write time).
 - `description` (String) One- or two-sentence summary (<= 500 chars).
 - `snippet` (String) A pipeline YAML/JSON fragment (<= 8 KB).
 - `title` (String) Short heading (<= 120 chars).
+
+
+<a id="nestedatt--provider_info"></a>
+### Nested Schema for `provider_info`
+
+Read-Only:
+
+- `categories` (List of String)
+- `created_at` (String)
+- `description` (String)
+- `featured_rank` (Number) Where gitmoap features the provider: lower numbers are placed higher. Absent when it is not
+featured.
+- `id` (String)
+- `install_count` (Number) How many organizations have installed the provider. Absent for providers gitmoap builds
+itself.
+- `keywords` (List of String)
+- `latest_version` (String)
+- `lifecycle_state` (String) Lifecycle state of a published `ProviderVersionManifest`. `Active` is the
+default; `Deprecated` still runs but the trigger-time validator surfaces a
+warning; `Sunset` runs only inside its grace window, after which a trigger
+referencing it fails validation.
+- `name` (String)
+- `namespace_verified` (Boolean) Whether the provider's publisher has verified its namespace. `false` for providers gitmoap
+builds itself, which have no publisher.
+- `publisher_id` (String)
+- `signed` (Boolean) Whether the latest version's images are signed by gitmoap, as platform and verified
+providers' are.
+- `tier` (String) How a pipeline provider is distributed and how much it is vouched for.
+- `updated_at` (String)
+- `visibility` (Attributes) Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.
+
+`kind` says which applies: `public`; `private`, with `owning_group_id`. (see [below for nested schema](#nestedatt--provider_info--visibility))
+
+<a id="nestedatt--provider_info--visibility"></a>
+### Nested Schema for `provider_info.visibility`
+
+Read-Only:
+
+- `kind` (String)
+- `owning_group_id` (String)
+
 
 
 <a id="nestedatt--publisher"></a>

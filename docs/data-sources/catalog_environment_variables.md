@@ -54,7 +54,7 @@ client needs to draw and link them, so a page of records names its actors withou
 - `name` (String)
 - `secret` (Boolean)
 - `updated_at` (String)
-- `value` (String) The variable's value. Absent for a secret, whose value can be written but never read back.
+- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back.
 
 <a id="nestedatt--items--created_by"></a>
 ### Nested Schema for `items.created_by`

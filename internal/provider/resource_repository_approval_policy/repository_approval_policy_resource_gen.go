@@ -158,6 +158,72 @@ func RepositoryApprovalPolicyResourceSchema(ctx context.Context) schema.Schema {
 						"applies_to_branches": schema.StringAttribute{
 							Computed: true,
 						},
+						"approvers": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"anyone": schema.BoolAttribute{
+										Computed:            true,
+										Description:         "Anyone who may approve merge requests in the repository.",
+										MarkdownDescription: "Anyone who may approve merge requests in the repository.",
+									},
+									"code_owners": schema.BoolAttribute{
+										Computed:            true,
+										Description:         "The owners of the files the merge request changes.",
+										MarkdownDescription: "The owners of the files the merge request changes.",
+									},
+									"person": schema.StringAttribute{
+										Computed: true,
+									},
+									"role": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"at": schema.SingleNestedAttribute{
+												Attributes: map[string]schema.Attribute{
+													"group": schema.StringAttribute{
+														Computed: true,
+													},
+													"repo": schema.StringAttribute{
+														Computed: true,
+													},
+												},
+												CustomType: AtType{
+													ObjectType: types.ObjectType{
+														AttrTypes: AtValue{}.AttributeTypes(ctx),
+													},
+												},
+												Computed:            true,
+												Description:         "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+												MarkdownDescription: "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+											},
+											"direct_only": schema.BoolAttribute{
+												Computed:            true,
+												Description:         "Count only access given on `at` itself — directly or through a team — and not access\nthat reaches it from a group above.",
+												MarkdownDescription: "Count only access given on `at` itself — directly or through a team — and not access\nthat reaches it from a group above.",
+											},
+											"min": schema.StringAttribute{
+												Computed: true,
+											},
+										},
+										CustomType: RoleType{
+											ObjectType: types.ObjectType{
+												AttrTypes: RoleValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "Anyone whose role at a group or repository is at least `min`.",
+										MarkdownDescription: "Anyone whose role at a group or repository is at least `min`.",
+									},
+									"team": schema.StringAttribute{
+										Computed: true,
+									},
+								},
+								CustomType: ApproversType{
+									ObjectType: types.ObjectType{
+										AttrTypes: ApproversValue{}.AttributeTypes(ctx),
+									},
+								},
+							},
+							Computed: true,
+						},
 						"created_at": schema.StringAttribute{
 							Computed: true,
 						},
@@ -243,6 +309,72 @@ func RepositoryApprovalPolicyResourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "Distinct approvals that must count, 1–10.",
 						},
 						"rule_id": schema.StringAttribute{
+							Computed: true,
+						},
+						"rules_here_approvers": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"anyone": schema.BoolAttribute{
+										Computed:            true,
+										Description:         "Anyone who may approve merge requests in the repository.",
+										MarkdownDescription: "Anyone who may approve merge requests in the repository.",
+									},
+									"approver_role": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"direct_only": schema.BoolAttribute{
+												Computed:            true,
+												Description:         "Count only access given on `at` itself — directly or through a team — and not access\nthat reaches it from a group above.",
+												MarkdownDescription: "Count only access given on `at` itself — directly or through a team — and not access\nthat reaches it from a group above.",
+											},
+											"min": schema.StringAttribute{
+												Computed: true,
+											},
+											"role_at": schema.SingleNestedAttribute{
+												Attributes: map[string]schema.Attribute{
+													"group": schema.StringAttribute{
+														Computed: true,
+													},
+													"repo": schema.StringAttribute{
+														Computed: true,
+													},
+												},
+												CustomType: RoleAtType{
+													ObjectType: types.ObjectType{
+														AttrTypes: RoleAtValue{}.AttributeTypes(ctx),
+													},
+												},
+												Computed:            true,
+												Description:         "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+												MarkdownDescription: "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+											},
+										},
+										CustomType: ApproverRoleType{
+											ObjectType: types.ObjectType{
+												AttrTypes: ApproverRoleValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "Anyone whose role at a group or repository is at least `min`.",
+										MarkdownDescription: "Anyone whose role at a group or repository is at least `min`.",
+									},
+									"code_owners": schema.BoolAttribute{
+										Computed:            true,
+										Description:         "The owners of the files the merge request changes.",
+										MarkdownDescription: "The owners of the files the merge request changes.",
+									},
+									"person": schema.StringAttribute{
+										Computed: true,
+									},
+									"team": schema.StringAttribute{
+										Computed: true,
+									},
+								},
+								CustomType: RulesHereApproversType{
+									ObjectType: types.ObjectType{
+										AttrTypes: RulesHereApproversValue{}.AttributeTypes(ctx),
+									},
+								},
+							},
 							Computed: true,
 						},
 						"rules_here_defined_at": schema.SingleNestedAttribute{
@@ -1967,6 +2099,24 @@ func (t RulesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`applies_to_branches expected to be basetypes.StringValue, was: %T`, appliesToBranchesAttribute))
 	}
 
+	approversAttribute, ok := attributes["approvers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approvers is missing from object`)
+
+		return nil, diags
+	}
+
+	approversVal, ok := approversAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approvers expected to be basetypes.ListValue, was: %T`, approversAttribute))
+	}
+
 	createdAtAttribute, ok := attributes["created_at"]
 
 	if !ok {
@@ -2118,6 +2268,7 @@ func (t RulesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 	return RulesValue{
 		AcceptFrom:        acceptFromVal,
 		AppliesToBranches: appliesToBranchesVal,
+		Approvers:         approversVal,
 		CreatedAt:         createdAtVal,
 		Enforcement:       enforcementVal,
 		Name:              nameVal,
@@ -2229,6 +2380,24 @@ func NewRulesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`applies_to_branches expected to be basetypes.StringValue, was: %T`, appliesToBranchesAttribute))
 	}
 
+	approversAttribute, ok := attributes["approvers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approvers is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	approversVal, ok := approversAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approvers expected to be basetypes.ListValue, was: %T`, approversAttribute))
+	}
+
 	createdAtAttribute, ok := attributes["created_at"]
 
 	if !ok {
@@ -2380,6 +2549,7 @@ func NewRulesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 	return RulesValue{
 		AcceptFrom:        acceptFromVal,
 		AppliesToBranches: appliesToBranchesVal,
+		Approvers:         approversVal,
 		CreatedAt:         createdAtVal,
 		Enforcement:       enforcementVal,
 		Name:              nameVal,
@@ -2462,6 +2632,7 @@ var _ basetypes.ObjectValuable = RulesValue{}
 type RulesValue struct {
 	AcceptFrom        basetypes.StringValue `tfsdk:"accept_from"`
 	AppliesToBranches basetypes.StringValue `tfsdk:"applies_to_branches"`
+	Approvers         basetypes.ListValue   `tfsdk:"approvers"`
 	CreatedAt         basetypes.StringValue `tfsdk:"created_at"`
 	Enforcement       basetypes.StringValue `tfsdk:"enforcement"`
 	Name              basetypes.StringValue `tfsdk:"name"`
@@ -2474,13 +2645,16 @@ type RulesValue struct {
 }
 
 func (v RulesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 10)
+	attrTypes := make(map[string]tftypes.Type, 11)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["accept_from"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["applies_to_branches"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["approvers"] = basetypes.ListType{
+		ElemType: ApproversValue{}.Type(ctx),
+	}.TerraformType(ctx)
 	attrTypes["created_at"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["enforcement"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
@@ -2496,7 +2670,7 @@ func (v RulesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 10)
+		vals := make(map[string]tftypes.Value, 11)
 
 		val, err = v.AcceptFrom.ToTerraformValue(ctx)
 
@@ -2513,6 +2687,14 @@ func (v RulesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["applies_to_branches"] = val
+
+		val, err = v.Approvers.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["approvers"] = val
 
 		val, err = v.CreatedAt.ToTerraformValue(ctx)
 
@@ -2607,6 +2789,35 @@ func (v RulesValue) String() string {
 func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	approvers := types.ListValueMust(
+		ApproversType{
+			basetypes.ObjectType{
+				AttrTypes: ApproversValue{}.AttributeTypes(ctx),
+			},
+		},
+		v.Approvers.Elements(),
+	)
+
+	if v.Approvers.IsNull() {
+		approvers = types.ListNull(
+			ApproversType{
+				basetypes.ObjectType{
+					AttrTypes: ApproversValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
+	if v.Approvers.IsUnknown() {
+		approvers = types.ListUnknown(
+			ApproversType{
+				basetypes.ObjectType{
+					AttrTypes: ApproversValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
 	var rulesDefinedAt basetypes.ObjectValue
 
 	if v.RulesDefinedAt.IsNull() {
@@ -2631,11 +2842,14 @@ func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	attributeTypes := map[string]attr.Type{
 		"accept_from":         basetypes.StringType{},
 		"applies_to_branches": basetypes.StringType{},
-		"created_at":          basetypes.StringType{},
-		"enforcement":         basetypes.StringType{},
-		"name":                basetypes.StringType{},
-		"required":            basetypes.Int64Type{},
-		"rule_id":             basetypes.StringType{},
+		"approvers": basetypes.ListType{
+			ElemType: ApproversValue{}.Type(ctx),
+		},
+		"created_at":  basetypes.StringType{},
+		"enforcement": basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"required":    basetypes.Int64Type{},
+		"rule_id":     basetypes.StringType{},
 		"rules_defined_at": basetypes.ObjectType{
 			AttrTypes: RulesDefinedAtValue{}.AttributeTypes(ctx),
 		},
@@ -2656,6 +2870,7 @@ func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		map[string]attr.Value{
 			"accept_from":         v.AcceptFrom,
 			"applies_to_branches": v.AppliesToBranches,
+			"approvers":           approvers,
 			"created_at":          v.CreatedAt,
 			"enforcement":         v.Enforcement,
 			"name":                v.Name,
@@ -2689,6 +2904,10 @@ func (v RulesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.AppliesToBranches.Equal(other.AppliesToBranches) {
+		return false
+	}
+
+	if !v.Approvers.Equal(other.Approvers) {
 		return false
 	}
 
@@ -2739,16 +2958,1430 @@ func (v RulesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"accept_from":         basetypes.StringType{},
 		"applies_to_branches": basetypes.StringType{},
-		"created_at":          basetypes.StringType{},
-		"enforcement":         basetypes.StringType{},
-		"name":                basetypes.StringType{},
-		"required":            basetypes.Int64Type{},
-		"rule_id":             basetypes.StringType{},
+		"approvers": basetypes.ListType{
+			ElemType: ApproversValue{}.Type(ctx),
+		},
+		"created_at":  basetypes.StringType{},
+		"enforcement": basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"required":    basetypes.Int64Type{},
+		"rule_id":     basetypes.StringType{},
 		"rules_defined_at": basetypes.ObjectType{
 			AttrTypes: RulesDefinedAtValue{}.AttributeTypes(ctx),
 		},
 		"strengthens": basetypes.StringType{},
 		"updated_at":  basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ApproversType{}
+
+type ApproversType struct {
+	basetypes.ObjectType
+}
+
+func (t ApproversType) Equal(o attr.Type) bool {
+	other, ok := o.(ApproversType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ApproversType) String() string {
+	return "ApproversType"
+}
+
+func (t ApproversType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	anyoneAttribute, ok := attributes["anyone"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`anyone is missing from object`)
+
+		return nil, diags
+	}
+
+	anyoneVal, ok := anyoneAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`anyone expected to be basetypes.BoolValue, was: %T`, anyoneAttribute))
+	}
+
+	codeOwnersAttribute, ok := attributes["code_owners"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`code_owners is missing from object`)
+
+		return nil, diags
+	}
+
+	codeOwnersVal, ok := codeOwnersAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`code_owners expected to be basetypes.BoolValue, was: %T`, codeOwnersAttribute))
+	}
+
+	personAttribute, ok := attributes["person"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`person is missing from object`)
+
+		return nil, diags
+	}
+
+	personVal, ok := personAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`person expected to be basetypes.StringValue, was: %T`, personAttribute))
+	}
+
+	roleAttribute, ok := attributes["role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role is missing from object`)
+
+		return nil, diags
+	}
+
+	roleVal, ok := roleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role expected to be basetypes.ObjectValue, was: %T`, roleAttribute))
+	}
+
+	teamAttribute, ok := attributes["team"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`team is missing from object`)
+
+		return nil, diags
+	}
+
+	teamVal, ok := teamAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`team expected to be basetypes.StringValue, was: %T`, teamAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ApproversValue{
+		Anyone:     anyoneVal,
+		CodeOwners: codeOwnersVal,
+		Person:     personVal,
+		Role:       roleVal,
+		Team:       teamVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewApproversValueNull() ApproversValue {
+	return ApproversValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewApproversValueUnknown() ApproversValue {
+	return ApproversValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewApproversValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ApproversValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ApproversValue Attribute Value",
+				"While creating a ApproversValue value, a missing attribute value was detected. "+
+					"A ApproversValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ApproversValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ApproversValue Attribute Type",
+				"While creating a ApproversValue value, an invalid attribute value was detected. "+
+					"A ApproversValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ApproversValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ApproversValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ApproversValue Attribute Value",
+				"While creating a ApproversValue value, an extra attribute value was detected. "+
+					"A ApproversValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ApproversValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewApproversValueUnknown(), diags
+	}
+
+	anyoneAttribute, ok := attributes["anyone"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`anyone is missing from object`)
+
+		return NewApproversValueUnknown(), diags
+	}
+
+	anyoneVal, ok := anyoneAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`anyone expected to be basetypes.BoolValue, was: %T`, anyoneAttribute))
+	}
+
+	codeOwnersAttribute, ok := attributes["code_owners"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`code_owners is missing from object`)
+
+		return NewApproversValueUnknown(), diags
+	}
+
+	codeOwnersVal, ok := codeOwnersAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`code_owners expected to be basetypes.BoolValue, was: %T`, codeOwnersAttribute))
+	}
+
+	personAttribute, ok := attributes["person"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`person is missing from object`)
+
+		return NewApproversValueUnknown(), diags
+	}
+
+	personVal, ok := personAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`person expected to be basetypes.StringValue, was: %T`, personAttribute))
+	}
+
+	roleAttribute, ok := attributes["role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role is missing from object`)
+
+		return NewApproversValueUnknown(), diags
+	}
+
+	roleVal, ok := roleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role expected to be basetypes.ObjectValue, was: %T`, roleAttribute))
+	}
+
+	teamAttribute, ok := attributes["team"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`team is missing from object`)
+
+		return NewApproversValueUnknown(), diags
+	}
+
+	teamVal, ok := teamAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`team expected to be basetypes.StringValue, was: %T`, teamAttribute))
+	}
+
+	if diags.HasError() {
+		return NewApproversValueUnknown(), diags
+	}
+
+	return ApproversValue{
+		Anyone:     anyoneVal,
+		CodeOwners: codeOwnersVal,
+		Person:     personVal,
+		Role:       roleVal,
+		Team:       teamVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewApproversValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ApproversValue {
+	object, diags := NewApproversValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewApproversValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ApproversType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewApproversValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewApproversValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewApproversValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewApproversValueMust(ApproversValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ApproversType) ValueType(ctx context.Context) attr.Value {
+	return ApproversValue{}
+}
+
+var _ basetypes.ObjectValuable = ApproversValue{}
+
+type ApproversValue struct {
+	Anyone     basetypes.BoolValue   `tfsdk:"anyone"`
+	CodeOwners basetypes.BoolValue   `tfsdk:"code_owners"`
+	Person     basetypes.StringValue `tfsdk:"person"`
+	Role       basetypes.ObjectValue `tfsdk:"role"`
+	Team       basetypes.StringValue `tfsdk:"team"`
+	state      attr.ValueState
+}
+
+func (v ApproversValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["anyone"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["code_owners"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["person"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["role"] = basetypes.ObjectType{
+		AttrTypes: RoleValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["team"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.Anyone.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["anyone"] = val
+
+		val, err = v.CodeOwners.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["code_owners"] = val
+
+		val, err = v.Person.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["person"] = val
+
+		val, err = v.Role.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["role"] = val
+
+		val, err = v.Team.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["team"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ApproversValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ApproversValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ApproversValue) String() string {
+	return "ApproversValue"
+}
+
+func (v ApproversValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var role basetypes.ObjectValue
+
+	if v.Role.IsNull() {
+		role = types.ObjectNull(
+			RoleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Role.IsUnknown() {
+		role = types.ObjectUnknown(
+			RoleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Role.IsNull() && !v.Role.IsUnknown() {
+		role = types.ObjectValueMust(
+			RoleValue{}.AttributeTypes(ctx),
+			v.Role.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"anyone":      basetypes.BoolType{},
+		"code_owners": basetypes.BoolType{},
+		"person":      basetypes.StringType{},
+		"role": basetypes.ObjectType{
+			AttrTypes: RoleValue{}.AttributeTypes(ctx),
+		},
+		"team": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"anyone":      v.Anyone,
+			"code_owners": v.CodeOwners,
+			"person":      v.Person,
+			"role":        role,
+			"team":        v.Team,
+		})
+
+	return objVal, diags
+}
+
+func (v ApproversValue) Equal(o attr.Value) bool {
+	other, ok := o.(ApproversValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Anyone.Equal(other.Anyone) {
+		return false
+	}
+
+	if !v.CodeOwners.Equal(other.CodeOwners) {
+		return false
+	}
+
+	if !v.Person.Equal(other.Person) {
+		return false
+	}
+
+	if !v.Role.Equal(other.Role) {
+		return false
+	}
+
+	if !v.Team.Equal(other.Team) {
+		return false
+	}
+
+	return true
+}
+
+func (v ApproversValue) Type(ctx context.Context) attr.Type {
+	return ApproversType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ApproversValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"anyone":      basetypes.BoolType{},
+		"code_owners": basetypes.BoolType{},
+		"person":      basetypes.StringType{},
+		"role": basetypes.ObjectType{
+			AttrTypes: RoleValue{}.AttributeTypes(ctx),
+		},
+		"team": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = RoleType{}
+
+type RoleType struct {
+	basetypes.ObjectType
+}
+
+func (t RoleType) Equal(o attr.Type) bool {
+	other, ok := o.(RoleType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RoleType) String() string {
+	return "RoleType"
+}
+
+func (t RoleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	atAttribute, ok := attributes["at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`at is missing from object`)
+
+		return nil, diags
+	}
+
+	atVal, ok := atAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`at expected to be basetypes.ObjectValue, was: %T`, atAttribute))
+	}
+
+	directOnlyAttribute, ok := attributes["direct_only"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`direct_only is missing from object`)
+
+		return nil, diags
+	}
+
+	directOnlyVal, ok := directOnlyAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`direct_only expected to be basetypes.BoolValue, was: %T`, directOnlyAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return nil, diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.StringValue, was: %T`, minAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RoleValue{
+		At:         atVal,
+		DirectOnly: directOnlyVal,
+		Min:        minVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRoleValueNull() RoleValue {
+	return RoleValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRoleValueUnknown() RoleValue {
+	return RoleValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRoleValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RoleValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RoleValue Attribute Value",
+				"While creating a RoleValue value, a missing attribute value was detected. "+
+					"A RoleValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RoleValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RoleValue Attribute Type",
+				"While creating a RoleValue value, an invalid attribute value was detected. "+
+					"A RoleValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RoleValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RoleValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RoleValue Attribute Value",
+				"While creating a RoleValue value, an extra attribute value was detected. "+
+					"A RoleValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RoleValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRoleValueUnknown(), diags
+	}
+
+	atAttribute, ok := attributes["at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`at is missing from object`)
+
+		return NewRoleValueUnknown(), diags
+	}
+
+	atVal, ok := atAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`at expected to be basetypes.ObjectValue, was: %T`, atAttribute))
+	}
+
+	directOnlyAttribute, ok := attributes["direct_only"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`direct_only is missing from object`)
+
+		return NewRoleValueUnknown(), diags
+	}
+
+	directOnlyVal, ok := directOnlyAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`direct_only expected to be basetypes.BoolValue, was: %T`, directOnlyAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return NewRoleValueUnknown(), diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.StringValue, was: %T`, minAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRoleValueUnknown(), diags
+	}
+
+	return RoleValue{
+		At:         atVal,
+		DirectOnly: directOnlyVal,
+		Min:        minVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRoleValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RoleValue {
+	object, diags := NewRoleValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRoleValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RoleType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRoleValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRoleValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRoleValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRoleValueMust(RoleValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RoleType) ValueType(ctx context.Context) attr.Value {
+	return RoleValue{}
+}
+
+var _ basetypes.ObjectValuable = RoleValue{}
+
+type RoleValue struct {
+	At         basetypes.ObjectValue `tfsdk:"at"`
+	DirectOnly basetypes.BoolValue   `tfsdk:"direct_only"`
+	Min        basetypes.StringValue `tfsdk:"min"`
+	state      attr.ValueState
+}
+
+func (v RoleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["at"] = basetypes.ObjectType{
+		AttrTypes: AtValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["direct_only"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["min"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.At.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["at"] = val
+
+		val, err = v.DirectOnly.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["direct_only"] = val
+
+		val, err = v.Min.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["min"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RoleValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RoleValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RoleValue) String() string {
+	return "RoleValue"
+}
+
+func (v RoleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var at basetypes.ObjectValue
+
+	if v.At.IsNull() {
+		at = types.ObjectNull(
+			AtValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.At.IsUnknown() {
+		at = types.ObjectUnknown(
+			AtValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.At.IsNull() && !v.At.IsUnknown() {
+		at = types.ObjectValueMust(
+			AtValue{}.AttributeTypes(ctx),
+			v.At.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"at": basetypes.ObjectType{
+			AttrTypes: AtValue{}.AttributeTypes(ctx),
+		},
+		"direct_only": basetypes.BoolType{},
+		"min":         basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"at":          at,
+			"direct_only": v.DirectOnly,
+			"min":         v.Min,
+		})
+
+	return objVal, diags
+}
+
+func (v RoleValue) Equal(o attr.Value) bool {
+	other, ok := o.(RoleValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.At.Equal(other.At) {
+		return false
+	}
+
+	if !v.DirectOnly.Equal(other.DirectOnly) {
+		return false
+	}
+
+	if !v.Min.Equal(other.Min) {
+		return false
+	}
+
+	return true
+}
+
+func (v RoleValue) Type(ctx context.Context) attr.Type {
+	return RoleType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RoleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"at": basetypes.ObjectType{
+			AttrTypes: AtValue{}.AttributeTypes(ctx),
+		},
+		"direct_only": basetypes.BoolType{},
+		"min":         basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = AtType{}
+
+type AtType struct {
+	basetypes.ObjectType
+}
+
+func (t AtType) Equal(o attr.Type) bool {
+	other, ok := o.(AtType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t AtType) String() string {
+	return "AtType"
+}
+
+func (t AtType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return nil, diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return nil, diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return AtValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAtValueNull() AtValue {
+	return AtValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewAtValueUnknown() AtValue {
+	return AtValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewAtValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (AtValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing AtValue Attribute Value",
+				"While creating a AtValue value, a missing attribute value was detected. "+
+					"A AtValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AtValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid AtValue Attribute Type",
+				"While creating a AtValue value, an invalid attribute value was detected. "+
+					"A AtValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AtValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("AtValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra AtValue Attribute Value",
+				"While creating a AtValue value, an extra attribute value was detected. "+
+					"A AtValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra AtValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewAtValueUnknown(), diags
+	}
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return NewAtValueUnknown(), diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return NewAtValueUnknown(), diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return NewAtValueUnknown(), diags
+	}
+
+	return AtValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAtValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) AtValue {
+	object, diags := NewAtValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewAtValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t AtType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAtValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAtValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAtValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAtValueMust(AtValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AtType) ValueType(ctx context.Context) attr.Value {
+	return AtValue{}
+}
+
+var _ basetypes.ObjectValuable = AtValue{}
+
+type AtValue struct {
+	Group basetypes.StringValue `tfsdk:"group"`
+	Repo  basetypes.StringValue `tfsdk:"repo"`
+	state attr.ValueState
+}
+
+func (v AtValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["group"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["repo"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Group.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["group"] = val
+
+		val, err = v.Repo.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["repo"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AtValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AtValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AtValue) String() string {
+	return "AtValue"
+}
+
+func (v AtValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"group": v.Group,
+			"repo":  v.Repo,
+		})
+
+	return objVal, diags
+}
+
+func (v AtValue) Equal(o attr.Value) bool {
+	other, ok := o.(AtValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Group.Equal(other.Group) {
+		return false
+	}
+
+	if !v.Repo.Equal(other.Repo) {
+		return false
+	}
+
+	return true
+}
+
+func (v AtValue) Type(ctx context.Context) attr.Type {
+	return AtType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AtValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
 	}
 }
 
@@ -3337,6 +4970,24 @@ func (t RulesHereType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`rule_id expected to be basetypes.StringValue, was: %T`, ruleIdAttribute))
 	}
 
+	rulesHereApproversAttribute, ok := attributes["rules_here_approvers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rules_here_approvers is missing from object`)
+
+		return nil, diags
+	}
+
+	rulesHereApproversVal, ok := rulesHereApproversAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rules_here_approvers expected to be basetypes.ListValue, was: %T`, rulesHereApproversAttribute))
+	}
+
 	rulesHereDefinedAtAttribute, ok := attributes["rules_here_defined_at"]
 
 	if !ok {
@@ -3403,6 +5054,7 @@ func (t RulesHereType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		Name:               nameVal,
 		Required:           requiredVal,
 		RuleId:             ruleIdVal,
+		RulesHereApprovers: rulesHereApproversVal,
 		RulesHereDefinedAt: rulesHereDefinedAtVal,
 		Strengthens:        strengthensVal,
 		UpdatedAt:          updatedAtVal,
@@ -3599,6 +5251,24 @@ func NewRulesHereValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`rule_id expected to be basetypes.StringValue, was: %T`, ruleIdAttribute))
 	}
 
+	rulesHereApproversAttribute, ok := attributes["rules_here_approvers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rules_here_approvers is missing from object`)
+
+		return NewRulesHereValueUnknown(), diags
+	}
+
+	rulesHereApproversVal, ok := rulesHereApproversAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rules_here_approvers expected to be basetypes.ListValue, was: %T`, rulesHereApproversAttribute))
+	}
+
 	rulesHereDefinedAtAttribute, ok := attributes["rules_here_defined_at"]
 
 	if !ok {
@@ -3665,6 +5335,7 @@ func NewRulesHereValue(attributeTypes map[string]attr.Type, attributes map[strin
 		Name:               nameVal,
 		Required:           requiredVal,
 		RuleId:             ruleIdVal,
+		RulesHereApprovers: rulesHereApproversVal,
 		RulesHereDefinedAt: rulesHereDefinedAtVal,
 		Strengthens:        strengthensVal,
 		UpdatedAt:          updatedAtVal,
@@ -3747,6 +5418,7 @@ type RulesHereValue struct {
 	Name               basetypes.StringValue `tfsdk:"name"`
 	Required           basetypes.Int64Value  `tfsdk:"required"`
 	RuleId             basetypes.StringValue `tfsdk:"rule_id"`
+	RulesHereApprovers basetypes.ListValue   `tfsdk:"rules_here_approvers"`
 	RulesHereDefinedAt basetypes.ObjectValue `tfsdk:"rules_here_defined_at"`
 	Strengthens        basetypes.StringValue `tfsdk:"strengthens"`
 	UpdatedAt          basetypes.StringValue `tfsdk:"updated_at"`
@@ -3754,7 +5426,7 @@ type RulesHereValue struct {
 }
 
 func (v RulesHereValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 10)
+	attrTypes := make(map[string]tftypes.Type, 11)
 
 	var val tftypes.Value
 	var err error
@@ -3766,6 +5438,9 @@ func (v RulesHereValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["required"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["rule_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["rules_here_approvers"] = basetypes.ListType{
+		ElemType: RulesHereApproversValue{}.Type(ctx),
+	}.TerraformType(ctx)
 	attrTypes["rules_here_defined_at"] = basetypes.ObjectType{
 		AttrTypes: RulesHereDefinedAtValue{}.AttributeTypes(ctx),
 	}.TerraformType(ctx)
@@ -3776,7 +5451,7 @@ func (v RulesHereValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 10)
+		vals := make(map[string]tftypes.Value, 11)
 
 		val, err = v.AcceptFrom.ToTerraformValue(ctx)
 
@@ -3834,6 +5509,14 @@ func (v RulesHereValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 		vals["rule_id"] = val
 
+		val, err = v.RulesHereApprovers.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rules_here_approvers"] = val
+
 		val, err = v.RulesHereDefinedAt.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -3887,6 +5570,35 @@ func (v RulesHereValue) String() string {
 func (v RulesHereValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	rulesHereApprovers := types.ListValueMust(
+		RulesHereApproversType{
+			basetypes.ObjectType{
+				AttrTypes: RulesHereApproversValue{}.AttributeTypes(ctx),
+			},
+		},
+		v.RulesHereApprovers.Elements(),
+	)
+
+	if v.RulesHereApprovers.IsNull() {
+		rulesHereApprovers = types.ListNull(
+			RulesHereApproversType{
+				basetypes.ObjectType{
+					AttrTypes: RulesHereApproversValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
+	if v.RulesHereApprovers.IsUnknown() {
+		rulesHereApprovers = types.ListUnknown(
+			RulesHereApproversType{
+				basetypes.ObjectType{
+					AttrTypes: RulesHereApproversValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
 	var rulesHereDefinedAt basetypes.ObjectValue
 
 	if v.RulesHereDefinedAt.IsNull() {
@@ -3916,6 +5628,9 @@ func (v RulesHereValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		"name":                basetypes.StringType{},
 		"required":            basetypes.Int64Type{},
 		"rule_id":             basetypes.StringType{},
+		"rules_here_approvers": basetypes.ListType{
+			ElemType: RulesHereApproversValue{}.Type(ctx),
+		},
 		"rules_here_defined_at": basetypes.ObjectType{
 			AttrTypes: RulesHereDefinedAtValue{}.AttributeTypes(ctx),
 		},
@@ -3941,6 +5656,7 @@ func (v RulesHereValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 			"name":                  v.Name,
 			"required":              v.Required,
 			"rule_id":               v.RuleId,
+			"rules_here_approvers":  rulesHereApprovers,
 			"rules_here_defined_at": rulesHereDefinedAt,
 			"strengthens":           v.Strengthens,
 			"updated_at":            v.UpdatedAt,
@@ -3992,6 +5708,10 @@ func (v RulesHereValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.RulesHereApprovers.Equal(other.RulesHereApprovers) {
+		return false
+	}
+
 	if !v.RulesHereDefinedAt.Equal(other.RulesHereDefinedAt) {
 		return false
 	}
@@ -4024,11 +5744,1425 @@ func (v RulesHereValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"name":                basetypes.StringType{},
 		"required":            basetypes.Int64Type{},
 		"rule_id":             basetypes.StringType{},
+		"rules_here_approvers": basetypes.ListType{
+			ElemType: RulesHereApproversValue{}.Type(ctx),
+		},
 		"rules_here_defined_at": basetypes.ObjectType{
 			AttrTypes: RulesHereDefinedAtValue{}.AttributeTypes(ctx),
 		},
 		"strengthens": basetypes.StringType{},
 		"updated_at":  basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = RulesHereApproversType{}
+
+type RulesHereApproversType struct {
+	basetypes.ObjectType
+}
+
+func (t RulesHereApproversType) Equal(o attr.Type) bool {
+	other, ok := o.(RulesHereApproversType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RulesHereApproversType) String() string {
+	return "RulesHereApproversType"
+}
+
+func (t RulesHereApproversType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	anyoneAttribute, ok := attributes["anyone"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`anyone is missing from object`)
+
+		return nil, diags
+	}
+
+	anyoneVal, ok := anyoneAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`anyone expected to be basetypes.BoolValue, was: %T`, anyoneAttribute))
+	}
+
+	approverRoleAttribute, ok := attributes["approver_role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approver_role is missing from object`)
+
+		return nil, diags
+	}
+
+	approverRoleVal, ok := approverRoleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approver_role expected to be basetypes.ObjectValue, was: %T`, approverRoleAttribute))
+	}
+
+	codeOwnersAttribute, ok := attributes["code_owners"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`code_owners is missing from object`)
+
+		return nil, diags
+	}
+
+	codeOwnersVal, ok := codeOwnersAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`code_owners expected to be basetypes.BoolValue, was: %T`, codeOwnersAttribute))
+	}
+
+	personAttribute, ok := attributes["person"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`person is missing from object`)
+
+		return nil, diags
+	}
+
+	personVal, ok := personAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`person expected to be basetypes.StringValue, was: %T`, personAttribute))
+	}
+
+	teamAttribute, ok := attributes["team"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`team is missing from object`)
+
+		return nil, diags
+	}
+
+	teamVal, ok := teamAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`team expected to be basetypes.StringValue, was: %T`, teamAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RulesHereApproversValue{
+		Anyone:       anyoneVal,
+		ApproverRole: approverRoleVal,
+		CodeOwners:   codeOwnersVal,
+		Person:       personVal,
+		Team:         teamVal,
+		state:        attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRulesHereApproversValueNull() RulesHereApproversValue {
+	return RulesHereApproversValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRulesHereApproversValueUnknown() RulesHereApproversValue {
+	return RulesHereApproversValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRulesHereApproversValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RulesHereApproversValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RulesHereApproversValue Attribute Value",
+				"While creating a RulesHereApproversValue value, a missing attribute value was detected. "+
+					"A RulesHereApproversValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RulesHereApproversValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RulesHereApproversValue Attribute Type",
+				"While creating a RulesHereApproversValue value, an invalid attribute value was detected. "+
+					"A RulesHereApproversValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RulesHereApproversValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RulesHereApproversValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RulesHereApproversValue Attribute Value",
+				"While creating a RulesHereApproversValue value, an extra attribute value was detected. "+
+					"A RulesHereApproversValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RulesHereApproversValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	anyoneAttribute, ok := attributes["anyone"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`anyone is missing from object`)
+
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	anyoneVal, ok := anyoneAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`anyone expected to be basetypes.BoolValue, was: %T`, anyoneAttribute))
+	}
+
+	approverRoleAttribute, ok := attributes["approver_role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approver_role is missing from object`)
+
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	approverRoleVal, ok := approverRoleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approver_role expected to be basetypes.ObjectValue, was: %T`, approverRoleAttribute))
+	}
+
+	codeOwnersAttribute, ok := attributes["code_owners"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`code_owners is missing from object`)
+
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	codeOwnersVal, ok := codeOwnersAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`code_owners expected to be basetypes.BoolValue, was: %T`, codeOwnersAttribute))
+	}
+
+	personAttribute, ok := attributes["person"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`person is missing from object`)
+
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	personVal, ok := personAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`person expected to be basetypes.StringValue, was: %T`, personAttribute))
+	}
+
+	teamAttribute, ok := attributes["team"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`team is missing from object`)
+
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	teamVal, ok := teamAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`team expected to be basetypes.StringValue, was: %T`, teamAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRulesHereApproversValueUnknown(), diags
+	}
+
+	return RulesHereApproversValue{
+		Anyone:       anyoneVal,
+		ApproverRole: approverRoleVal,
+		CodeOwners:   codeOwnersVal,
+		Person:       personVal,
+		Team:         teamVal,
+		state:        attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRulesHereApproversValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RulesHereApproversValue {
+	object, diags := NewRulesHereApproversValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRulesHereApproversValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RulesHereApproversType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRulesHereApproversValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRulesHereApproversValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRulesHereApproversValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRulesHereApproversValueMust(RulesHereApproversValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RulesHereApproversType) ValueType(ctx context.Context) attr.Value {
+	return RulesHereApproversValue{}
+}
+
+var _ basetypes.ObjectValuable = RulesHereApproversValue{}
+
+type RulesHereApproversValue struct {
+	Anyone       basetypes.BoolValue   `tfsdk:"anyone"`
+	ApproverRole basetypes.ObjectValue `tfsdk:"approver_role"`
+	CodeOwners   basetypes.BoolValue   `tfsdk:"code_owners"`
+	Person       basetypes.StringValue `tfsdk:"person"`
+	Team         basetypes.StringValue `tfsdk:"team"`
+	state        attr.ValueState
+}
+
+func (v RulesHereApproversValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["anyone"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["approver_role"] = basetypes.ObjectType{
+		AttrTypes: ApproverRoleValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["code_owners"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["person"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["team"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.Anyone.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["anyone"] = val
+
+		val, err = v.ApproverRole.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["approver_role"] = val
+
+		val, err = v.CodeOwners.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["code_owners"] = val
+
+		val, err = v.Person.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["person"] = val
+
+		val, err = v.Team.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["team"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RulesHereApproversValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RulesHereApproversValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RulesHereApproversValue) String() string {
+	return "RulesHereApproversValue"
+}
+
+func (v RulesHereApproversValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var approverRole basetypes.ObjectValue
+
+	if v.ApproverRole.IsNull() {
+		approverRole = types.ObjectNull(
+			ApproverRoleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.ApproverRole.IsUnknown() {
+		approverRole = types.ObjectUnknown(
+			ApproverRoleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.ApproverRole.IsNull() && !v.ApproverRole.IsUnknown() {
+		approverRole = types.ObjectValueMust(
+			ApproverRoleValue{}.AttributeTypes(ctx),
+			v.ApproverRole.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"anyone": basetypes.BoolType{},
+		"approver_role": basetypes.ObjectType{
+			AttrTypes: ApproverRoleValue{}.AttributeTypes(ctx),
+		},
+		"code_owners": basetypes.BoolType{},
+		"person":      basetypes.StringType{},
+		"team":        basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"anyone":        v.Anyone,
+			"approver_role": approverRole,
+			"code_owners":   v.CodeOwners,
+			"person":        v.Person,
+			"team":          v.Team,
+		})
+
+	return objVal, diags
+}
+
+func (v RulesHereApproversValue) Equal(o attr.Value) bool {
+	other, ok := o.(RulesHereApproversValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Anyone.Equal(other.Anyone) {
+		return false
+	}
+
+	if !v.ApproverRole.Equal(other.ApproverRole) {
+		return false
+	}
+
+	if !v.CodeOwners.Equal(other.CodeOwners) {
+		return false
+	}
+
+	if !v.Person.Equal(other.Person) {
+		return false
+	}
+
+	if !v.Team.Equal(other.Team) {
+		return false
+	}
+
+	return true
+}
+
+func (v RulesHereApproversValue) Type(ctx context.Context) attr.Type {
+	return RulesHereApproversType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RulesHereApproversValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"anyone": basetypes.BoolType{},
+		"approver_role": basetypes.ObjectType{
+			AttrTypes: ApproverRoleValue{}.AttributeTypes(ctx),
+		},
+		"code_owners": basetypes.BoolType{},
+		"person":      basetypes.StringType{},
+		"team":        basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ApproverRoleType{}
+
+type ApproverRoleType struct {
+	basetypes.ObjectType
+}
+
+func (t ApproverRoleType) Equal(o attr.Type) bool {
+	other, ok := o.(ApproverRoleType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ApproverRoleType) String() string {
+	return "ApproverRoleType"
+}
+
+func (t ApproverRoleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	directOnlyAttribute, ok := attributes["direct_only"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`direct_only is missing from object`)
+
+		return nil, diags
+	}
+
+	directOnlyVal, ok := directOnlyAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`direct_only expected to be basetypes.BoolValue, was: %T`, directOnlyAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return nil, diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.StringValue, was: %T`, minAttribute))
+	}
+
+	roleAtAttribute, ok := attributes["role_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_at is missing from object`)
+
+		return nil, diags
+	}
+
+	roleAtVal, ok := roleAtAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_at expected to be basetypes.ObjectValue, was: %T`, roleAtAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ApproverRoleValue{
+		DirectOnly: directOnlyVal,
+		Min:        minVal,
+		RoleAt:     roleAtVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewApproverRoleValueNull() ApproverRoleValue {
+	return ApproverRoleValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewApproverRoleValueUnknown() ApproverRoleValue {
+	return ApproverRoleValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewApproverRoleValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ApproverRoleValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ApproverRoleValue Attribute Value",
+				"While creating a ApproverRoleValue value, a missing attribute value was detected. "+
+					"A ApproverRoleValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ApproverRoleValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ApproverRoleValue Attribute Type",
+				"While creating a ApproverRoleValue value, an invalid attribute value was detected. "+
+					"A ApproverRoleValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ApproverRoleValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ApproverRoleValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ApproverRoleValue Attribute Value",
+				"While creating a ApproverRoleValue value, an extra attribute value was detected. "+
+					"A ApproverRoleValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ApproverRoleValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewApproverRoleValueUnknown(), diags
+	}
+
+	directOnlyAttribute, ok := attributes["direct_only"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`direct_only is missing from object`)
+
+		return NewApproverRoleValueUnknown(), diags
+	}
+
+	directOnlyVal, ok := directOnlyAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`direct_only expected to be basetypes.BoolValue, was: %T`, directOnlyAttribute))
+	}
+
+	minAttribute, ok := attributes["min"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`min is missing from object`)
+
+		return NewApproverRoleValueUnknown(), diags
+	}
+
+	minVal, ok := minAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`min expected to be basetypes.StringValue, was: %T`, minAttribute))
+	}
+
+	roleAtAttribute, ok := attributes["role_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_at is missing from object`)
+
+		return NewApproverRoleValueUnknown(), diags
+	}
+
+	roleAtVal, ok := roleAtAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_at expected to be basetypes.ObjectValue, was: %T`, roleAtAttribute))
+	}
+
+	if diags.HasError() {
+		return NewApproverRoleValueUnknown(), diags
+	}
+
+	return ApproverRoleValue{
+		DirectOnly: directOnlyVal,
+		Min:        minVal,
+		RoleAt:     roleAtVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewApproverRoleValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ApproverRoleValue {
+	object, diags := NewApproverRoleValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewApproverRoleValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ApproverRoleType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewApproverRoleValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewApproverRoleValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewApproverRoleValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewApproverRoleValueMust(ApproverRoleValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ApproverRoleType) ValueType(ctx context.Context) attr.Value {
+	return ApproverRoleValue{}
+}
+
+var _ basetypes.ObjectValuable = ApproverRoleValue{}
+
+type ApproverRoleValue struct {
+	DirectOnly basetypes.BoolValue   `tfsdk:"direct_only"`
+	Min        basetypes.StringValue `tfsdk:"min"`
+	RoleAt     basetypes.ObjectValue `tfsdk:"role_at"`
+	state      attr.ValueState
+}
+
+func (v ApproverRoleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["direct_only"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["min"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["role_at"] = basetypes.ObjectType{
+		AttrTypes: RoleAtValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.DirectOnly.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["direct_only"] = val
+
+		val, err = v.Min.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["min"] = val
+
+		val, err = v.RoleAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["role_at"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ApproverRoleValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ApproverRoleValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ApproverRoleValue) String() string {
+	return "ApproverRoleValue"
+}
+
+func (v ApproverRoleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var roleAt basetypes.ObjectValue
+
+	if v.RoleAt.IsNull() {
+		roleAt = types.ObjectNull(
+			RoleAtValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.RoleAt.IsUnknown() {
+		roleAt = types.ObjectUnknown(
+			RoleAtValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.RoleAt.IsNull() && !v.RoleAt.IsUnknown() {
+		roleAt = types.ObjectValueMust(
+			RoleAtValue{}.AttributeTypes(ctx),
+			v.RoleAt.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"direct_only": basetypes.BoolType{},
+		"min":         basetypes.StringType{},
+		"role_at": basetypes.ObjectType{
+			AttrTypes: RoleAtValue{}.AttributeTypes(ctx),
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"direct_only": v.DirectOnly,
+			"min":         v.Min,
+			"role_at":     roleAt,
+		})
+
+	return objVal, diags
+}
+
+func (v ApproverRoleValue) Equal(o attr.Value) bool {
+	other, ok := o.(ApproverRoleValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.DirectOnly.Equal(other.DirectOnly) {
+		return false
+	}
+
+	if !v.Min.Equal(other.Min) {
+		return false
+	}
+
+	if !v.RoleAt.Equal(other.RoleAt) {
+		return false
+	}
+
+	return true
+}
+
+func (v ApproverRoleValue) Type(ctx context.Context) attr.Type {
+	return ApproverRoleType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ApproverRoleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"direct_only": basetypes.BoolType{},
+		"min":         basetypes.StringType{},
+		"role_at": basetypes.ObjectType{
+			AttrTypes: RoleAtValue{}.AttributeTypes(ctx),
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = RoleAtType{}
+
+type RoleAtType struct {
+	basetypes.ObjectType
+}
+
+func (t RoleAtType) Equal(o attr.Type) bool {
+	other, ok := o.(RoleAtType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RoleAtType) String() string {
+	return "RoleAtType"
+}
+
+func (t RoleAtType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return nil, diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return nil, diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RoleAtValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRoleAtValueNull() RoleAtValue {
+	return RoleAtValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRoleAtValueUnknown() RoleAtValue {
+	return RoleAtValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRoleAtValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RoleAtValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RoleAtValue Attribute Value",
+				"While creating a RoleAtValue value, a missing attribute value was detected. "+
+					"A RoleAtValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RoleAtValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RoleAtValue Attribute Type",
+				"While creating a RoleAtValue value, an invalid attribute value was detected. "+
+					"A RoleAtValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RoleAtValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RoleAtValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RoleAtValue Attribute Value",
+				"While creating a RoleAtValue value, an extra attribute value was detected. "+
+					"A RoleAtValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RoleAtValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRoleAtValueUnknown(), diags
+	}
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return NewRoleAtValueUnknown(), diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return NewRoleAtValueUnknown(), diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRoleAtValueUnknown(), diags
+	}
+
+	return RoleAtValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRoleAtValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RoleAtValue {
+	object, diags := NewRoleAtValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRoleAtValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RoleAtType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRoleAtValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRoleAtValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRoleAtValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRoleAtValueMust(RoleAtValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RoleAtType) ValueType(ctx context.Context) attr.Value {
+	return RoleAtValue{}
+}
+
+var _ basetypes.ObjectValuable = RoleAtValue{}
+
+type RoleAtValue struct {
+	Group basetypes.StringValue `tfsdk:"group"`
+	Repo  basetypes.StringValue `tfsdk:"repo"`
+	state attr.ValueState
+}
+
+func (v RoleAtValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["group"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["repo"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Group.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["group"] = val
+
+		val, err = v.Repo.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["repo"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RoleAtValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RoleAtValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RoleAtValue) String() string {
+	return "RoleAtValue"
+}
+
+func (v RoleAtValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"group": v.Group,
+			"repo":  v.Repo,
+		})
+
+	return objVal, diags
+}
+
+func (v RoleAtValue) Equal(o attr.Value) bool {
+	other, ok := o.(RoleAtValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Group.Equal(other.Group) {
+		return false
+	}
+
+	if !v.Repo.Equal(other.Repo) {
+		return false
+	}
+
+	return true
+}
+
+func (v RoleAtValue) Type(ctx context.Context) attr.Type {
+	return RoleAtType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RoleAtValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
 	}
 }
 

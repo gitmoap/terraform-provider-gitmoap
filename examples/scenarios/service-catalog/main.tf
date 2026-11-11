@@ -14,11 +14,12 @@ resource "gitmoap_repository" "services" {
 }
 
 resource "gitmoap_catalog_service" "payments" {
-  group_id     = local.group_id
-  slug         = "payments"
-  display_name = "Payments"
-  kind         = "service"
-  description  = "Takes card payments"
+  group_id        = local.group_id
+  slug            = "payments"
+  display_name    = "Payments"
+  kind            = "service"
+  description     = "Takes card payments"
+  lifecycle_stage = "production"
 
   repo_paths = [{
     repository_id = gitmoap_repository.services.repository_id
@@ -44,9 +45,16 @@ resource "gitmoap_group_catalog_environment" "production" {
   display_name = "Production"
   tier         = "production"
 
-  # Deploys come from main, one at a time.
+  # Deploys come from main, one at a time, once a Maintainer other than whoever started them
+  # approves.
   protection = {
-    allowed_refs = ["main"]
+    allowed_refs          = ["main"]
+    requires_approval     = true
+    required              = 1
+    prevent_self_approval = true
+    approvers = [
+      { role = { min = "maintainer", at = { group = local.group_id } } },
+    ]
   }
 
   concurrency = {

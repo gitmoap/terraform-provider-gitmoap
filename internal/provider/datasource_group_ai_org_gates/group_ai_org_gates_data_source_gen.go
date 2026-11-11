@@ -200,6 +200,149 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Where a gate stands: waiting for a decision, approved or denied, spent by the action it\napproved, lapsed undecided, withdrawn with its session, or — for a gate set to notify — a record\nthat the agent went ahead and people were told.",
 							MarkdownDescription: "Where a gate stands: waiting for a decision, approved or denied, spent by the action it\napproved, lapsed undecided, withdrawn with its session, or — for a gate set to notify — a record\nthat the agent went ahead and people were told.",
 						},
+						"subject": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"action": schema.StringAttribute{
+									Computed: true,
+								},
+								"address": schema.StringAttribute{
+									Computed:            true,
+									Description:         "What it is about.",
+									MarkdownDescription: "What it is about.",
+								},
+								"body_digest": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The SHA-256 of the title and description, which the approval binds.",
+									MarkdownDescription: "The SHA-256 of the title and description, which the approval binds.",
+								},
+								"branch": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The branch.",
+									MarkdownDescription: "The branch.",
+								},
+								"dependencies": schema.ListAttribute{
+									ElementType:         types.StringType,
+									Computed:            true,
+									Description:         "The dependencies added, each as `manifest:name`.",
+									MarkdownDescription: "The dependencies added, each as `manifest:name`.",
+								},
+								"environments": schema.ListAttribute{
+									ElementType:         types.StringType,
+									Computed:            true,
+									Description:         "The environments, each as `environment:tier`.",
+									MarkdownDescription: "The environments, each as `environment:tier`.",
+								},
+								"from_sha": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The commit it moves from.",
+									MarkdownDescription: "The commit it moves from.",
+								},
+								"issue_uid": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The work item.",
+									MarkdownDescription: "The work item.",
+								},
+								"merge_request_iid": schema.Int64Attribute{
+									Computed:            true,
+									Description:         "The merge request's number in the repository.",
+									MarkdownDescription: "The merge request's number in the repository.",
+								},
+								"method": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The request's method.",
+									MarkdownDescription: "The request's method.",
+								},
+								"outcome_digest": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The SHA-256 of the outcome, which the approval binds.",
+									MarkdownDescription: "The SHA-256 of the outcome, which the approval binds.",
+								},
+								"path": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The request's path.",
+									MarkdownDescription: "The request's path.",
+								},
+								"paths": schema.ListAttribute{
+									ElementType:         types.StringType,
+									Computed:            true,
+									Description:         "The privileged paths the change touches.",
+									MarkdownDescription: "The privileged paths the change touches.",
+								},
+								"repository_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The repository.",
+									MarkdownDescription: "The repository.",
+								},
+								"run_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The run.",
+									MarkdownDescription: "The run.",
+								},
+								"scope_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The repository or group it would be filed in.",
+									MarkdownDescription: "The repository or group it would be filed in.",
+								},
+								"session_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The session.",
+									MarkdownDescription: "The session.",
+								},
+								"sha": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The commit it deploys.",
+									MarkdownDescription: "The commit it deploys.",
+								},
+								"source_branch": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The branch it opens from.",
+									MarkdownDescription: "The branch it opens from.",
+								},
+								"source_sha": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The source head the approval is for.",
+									MarkdownDescription: "The source head the approval is for.",
+								},
+								"step": schema.Int64Attribute{
+									Computed:            true,
+									Description:         "Which multiple of the alert it reached.",
+									MarkdownDescription: "Which multiple of the alert it reached.",
+								},
+								"summary": schema.StringAttribute{
+									Computed:            true,
+									Description:         "One line for the person deciding.",
+									MarkdownDescription: "One line for the person deciding.",
+								},
+								"tag": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The tag.",
+									MarkdownDescription: "The tag.",
+								},
+								"target_branch": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The branch it merges into.",
+									MarkdownDescription: "The branch it merges into.",
+								},
+								"target_sha": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The target's head the approval is for.",
+									MarkdownDescription: "The target's head the approval is for.",
+								},
+								"to": schema.StringAttribute{
+									Computed:            true,
+									Description:         "What it moves to: a pushed tip, or a web commit's tree.",
+									MarkdownDescription: "What it moves to: a pushed tip, or a web commit's tree.",
+								},
+							},
+							CustomType: SubjectType{
+								ObjectType: types.ObjectType{
+									AttrTypes: SubjectValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "The exact action a gate waits on, as it is stored and served. `action` says which, and decides\nthe other fields. Every action also carries `summary`, one line for the person deciding, and\n`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a\nline saying how many more there were.\n\n`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`.",
+							MarkdownDescription: "The exact action a gate waits on, as it is stored and served. `action` says which, and decides\nthe other fields. Every action also carries `summary`, one line for the person deciding, and\n`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a\nline saying how many more there were.\n\n`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`.",
+						},
 					},
 					CustomType: ItemsType{
 						ObjectType: types.ObjectType{
@@ -560,6 +703,24 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`state expected to be basetypes.StringValue, was: %T`, stateAttribute))
 	}
 
+	subjectAttribute, ok := attributes["subject"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`subject is missing from object`)
+
+		return nil, diags
+	}
+
+	subjectVal, ok := subjectAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`subject expected to be basetypes.ObjectValue, was: %T`, subjectAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -581,6 +742,7 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		RootGroupId:  rootGroupIdVal,
 		SessionId:    sessionIdVal,
 		State:        stateVal,
+		Subject:      subjectVal,
 		state:        attr.ValueStateKnown,
 	}, diags
 }
@@ -936,6 +1098,24 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`state expected to be basetypes.StringValue, was: %T`, stateAttribute))
 	}
 
+	subjectAttribute, ok := attributes["subject"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`subject is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	subjectVal, ok := subjectAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`subject expected to be basetypes.ObjectValue, was: %T`, subjectAttribute))
+	}
+
 	if diags.HasError() {
 		return NewItemsValueUnknown(), diags
 	}
@@ -957,6 +1137,7 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		RootGroupId:  rootGroupIdVal,
 		SessionId:    sessionIdVal,
 		State:        stateVal,
+		Subject:      subjectVal,
 		state:        attr.ValueStateKnown,
 	}, diags
 }
@@ -1045,11 +1226,12 @@ type ItemsValue struct {
 	RootGroupId  basetypes.StringValue `tfsdk:"root_group_id"`
 	SessionId    basetypes.StringValue `tfsdk:"session_id"`
 	State        basetypes.StringValue `tfsdk:"state"`
+	Subject      basetypes.ObjectValue `tfsdk:"subject"`
 	state        attr.ValueState
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 16)
+	attrTypes := make(map[string]tftypes.Type, 17)
 
 	var val tftypes.Value
 	var err error
@@ -1076,12 +1258,15 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["root_group_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["session_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["state"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["subject"] = basetypes.ObjectType{
+		AttrTypes: SubjectValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 16)
+		vals := make(map[string]tftypes.Value, 17)
 
 		val, err = v.Agent.ToTerraformValue(ctx)
 
@@ -1211,6 +1396,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 		vals["state"] = val
 
+		val, err = v.Subject.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["subject"] = val
+
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
@@ -1311,6 +1504,27 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		)
 	}
 
+	var subject basetypes.ObjectValue
+
+	if v.Subject.IsNull() {
+		subject = types.ObjectNull(
+			SubjectValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Subject.IsUnknown() {
+		subject = types.ObjectUnknown(
+			SubjectValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Subject.IsNull() && !v.Subject.IsUnknown() {
+		subject = types.ObjectValueMust(
+			SubjectValue{}.AttributeTypes(ctx),
+			v.Subject.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"agent": basetypes.ObjectType{
 			AttrTypes: AgentValue{}.AttributeTypes(ctx),
@@ -1334,6 +1548,9 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"root_group_id": basetypes.StringType{},
 		"session_id":    basetypes.StringType{},
 		"state":         basetypes.StringType{},
+		"subject": basetypes.ObjectType{
+			AttrTypes: SubjectValue{}.AttributeTypes(ctx),
+		},
 	}
 
 	if v.IsNull() {
@@ -1363,6 +1580,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"root_group_id": v.RootGroupId,
 			"session_id":    v.SessionId,
 			"state":         v.State,
+			"subject":       subject,
 		})
 
 	return objVal, diags
@@ -1447,6 +1665,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Subject.Equal(other.Subject) {
+		return false
+	}
+
 	return true
 }
 
@@ -1482,6 +1704,9 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"root_group_id": basetypes.StringType{},
 		"session_id":    basetypes.StringType{},
 		"state":         basetypes.StringType{},
+		"subject": basetypes.ObjectType{
+			AttrTypes: SubjectValue{}.AttributeTypes(ctx),
+		},
 	}
 }
 
@@ -3114,5 +3339,1869 @@ func (v DecidedByValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"id":         basetypes.StringType{},
 		"kind":       basetypes.StringType{},
 		"username":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = SubjectType{}
+
+type SubjectType struct {
+	basetypes.ObjectType
+}
+
+func (t SubjectType) Equal(o attr.Type) bool {
+	other, ok := o.(SubjectType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SubjectType) String() string {
+	return "SubjectType"
+}
+
+func (t SubjectType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	actionAttribute, ok := attributes["action"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`action is missing from object`)
+
+		return nil, diags
+	}
+
+	actionVal, ok := actionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
+	}
+
+	addressAttribute, ok := attributes["address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`address is missing from object`)
+
+		return nil, diags
+	}
+
+	addressVal, ok := addressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`address expected to be basetypes.StringValue, was: %T`, addressAttribute))
+	}
+
+	bodyDigestAttribute, ok := attributes["body_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`body_digest is missing from object`)
+
+		return nil, diags
+	}
+
+	bodyDigestVal, ok := bodyDigestAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`body_digest expected to be basetypes.StringValue, was: %T`, bodyDigestAttribute))
+	}
+
+	branchAttribute, ok := attributes["branch"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`branch is missing from object`)
+
+		return nil, diags
+	}
+
+	branchVal, ok := branchAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`branch expected to be basetypes.StringValue, was: %T`, branchAttribute))
+	}
+
+	dependenciesAttribute, ok := attributes["dependencies"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`dependencies is missing from object`)
+
+		return nil, diags
+	}
+
+	dependenciesVal, ok := dependenciesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`dependencies expected to be basetypes.ListValue, was: %T`, dependenciesAttribute))
+	}
+
+	environmentsAttribute, ok := attributes["environments"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`environments is missing from object`)
+
+		return nil, diags
+	}
+
+	environmentsVal, ok := environmentsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`environments expected to be basetypes.ListValue, was: %T`, environmentsAttribute))
+	}
+
+	fromShaAttribute, ok := attributes["from_sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from_sha is missing from object`)
+
+		return nil, diags
+	}
+
+	fromShaVal, ok := fromShaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from_sha expected to be basetypes.StringValue, was: %T`, fromShaAttribute))
+	}
+
+	issueUidAttribute, ok := attributes["issue_uid"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`issue_uid is missing from object`)
+
+		return nil, diags
+	}
+
+	issueUidVal, ok := issueUidAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`issue_uid expected to be basetypes.StringValue, was: %T`, issueUidAttribute))
+	}
+
+	mergeRequestIidAttribute, ok := attributes["merge_request_iid"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`merge_request_iid is missing from object`)
+
+		return nil, diags
+	}
+
+	mergeRequestIidVal, ok := mergeRequestIidAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`merge_request_iid expected to be basetypes.Int64Value, was: %T`, mergeRequestIidAttribute))
+	}
+
+	methodAttribute, ok := attributes["method"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`method is missing from object`)
+
+		return nil, diags
+	}
+
+	methodVal, ok := methodAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`method expected to be basetypes.StringValue, was: %T`, methodAttribute))
+	}
+
+	outcomeDigestAttribute, ok := attributes["outcome_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`outcome_digest is missing from object`)
+
+		return nil, diags
+	}
+
+	outcomeDigestVal, ok := outcomeDigestAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`outcome_digest expected to be basetypes.StringValue, was: %T`, outcomeDigestAttribute))
+	}
+
+	pathAttribute, ok := attributes["path"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`path is missing from object`)
+
+		return nil, diags
+	}
+
+	pathVal, ok := pathAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`path expected to be basetypes.StringValue, was: %T`, pathAttribute))
+	}
+
+	pathsAttribute, ok := attributes["paths"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`paths is missing from object`)
+
+		return nil, diags
+	}
+
+	pathsVal, ok := pathsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`paths expected to be basetypes.ListValue, was: %T`, pathsAttribute))
+	}
+
+	repositoryIdAttribute, ok := attributes["repository_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repository_id is missing from object`)
+
+		return nil, diags
+	}
+
+	repositoryIdVal, ok := repositoryIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repository_id expected to be basetypes.StringValue, was: %T`, repositoryIdAttribute))
+	}
+
+	runIdAttribute, ok := attributes["run_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`run_id is missing from object`)
+
+		return nil, diags
+	}
+
+	runIdVal, ok := runIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`run_id expected to be basetypes.StringValue, was: %T`, runIdAttribute))
+	}
+
+	scopeIdAttribute, ok := attributes["scope_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_id is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeIdVal, ok := scopeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_id expected to be basetypes.StringValue, was: %T`, scopeIdAttribute))
+	}
+
+	sessionIdAttribute, ok := attributes["session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`session_id is missing from object`)
+
+		return nil, diags
+	}
+
+	sessionIdVal, ok := sessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`session_id expected to be basetypes.StringValue, was: %T`, sessionIdAttribute))
+	}
+
+	shaAttribute, ok := attributes["sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`sha is missing from object`)
+
+		return nil, diags
+	}
+
+	shaVal, ok := shaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`sha expected to be basetypes.StringValue, was: %T`, shaAttribute))
+	}
+
+	sourceBranchAttribute, ok := attributes["source_branch"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_branch is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceBranchVal, ok := sourceBranchAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_branch expected to be basetypes.StringValue, was: %T`, sourceBranchAttribute))
+	}
+
+	sourceShaAttribute, ok := attributes["source_sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_sha is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceShaVal, ok := sourceShaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_sha expected to be basetypes.StringValue, was: %T`, sourceShaAttribute))
+	}
+
+	stepAttribute, ok := attributes["step"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`step is missing from object`)
+
+		return nil, diags
+	}
+
+	stepVal, ok := stepAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`step expected to be basetypes.Int64Value, was: %T`, stepAttribute))
+	}
+
+	summaryAttribute, ok := attributes["summary"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`summary is missing from object`)
+
+		return nil, diags
+	}
+
+	summaryVal, ok := summaryAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`summary expected to be basetypes.StringValue, was: %T`, summaryAttribute))
+	}
+
+	tagAttribute, ok := attributes["tag"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tag is missing from object`)
+
+		return nil, diags
+	}
+
+	tagVal, ok := tagAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tag expected to be basetypes.StringValue, was: %T`, tagAttribute))
+	}
+
+	targetBranchAttribute, ok := attributes["target_branch"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`target_branch is missing from object`)
+
+		return nil, diags
+	}
+
+	targetBranchVal, ok := targetBranchAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`target_branch expected to be basetypes.StringValue, was: %T`, targetBranchAttribute))
+	}
+
+	targetShaAttribute, ok := attributes["target_sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`target_sha is missing from object`)
+
+		return nil, diags
+	}
+
+	targetShaVal, ok := targetShaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`target_sha expected to be basetypes.StringValue, was: %T`, targetShaAttribute))
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SubjectValue{
+		Action:          actionVal,
+		Address:         addressVal,
+		BodyDigest:      bodyDigestVal,
+		Branch:          branchVal,
+		Dependencies:    dependenciesVal,
+		Environments:    environmentsVal,
+		FromSha:         fromShaVal,
+		IssueUid:        issueUidVal,
+		MergeRequestIid: mergeRequestIidVal,
+		Method:          methodVal,
+		OutcomeDigest:   outcomeDigestVal,
+		Path:            pathVal,
+		Paths:           pathsVal,
+		RepositoryId:    repositoryIdVal,
+		RunId:           runIdVal,
+		ScopeId:         scopeIdVal,
+		SessionId:       sessionIdVal,
+		Sha:             shaVal,
+		SourceBranch:    sourceBranchVal,
+		SourceSha:       sourceShaVal,
+		Step:            stepVal,
+		Summary:         summaryVal,
+		Tag:             tagVal,
+		TargetBranch:    targetBranchVal,
+		TargetSha:       targetShaVal,
+		To:              toVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSubjectValueNull() SubjectValue {
+	return SubjectValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSubjectValueUnknown() SubjectValue {
+	return SubjectValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSubjectValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SubjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SubjectValue Attribute Value",
+				"While creating a SubjectValue value, a missing attribute value was detected. "+
+					"A SubjectValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SubjectValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SubjectValue Attribute Type",
+				"While creating a SubjectValue value, an invalid attribute value was detected. "+
+					"A SubjectValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SubjectValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SubjectValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SubjectValue Attribute Value",
+				"While creating a SubjectValue value, an extra attribute value was detected. "+
+					"A SubjectValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SubjectValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSubjectValueUnknown(), diags
+	}
+
+	actionAttribute, ok := attributes["action"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`action is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	actionVal, ok := actionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
+	}
+
+	addressAttribute, ok := attributes["address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`address is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	addressVal, ok := addressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`address expected to be basetypes.StringValue, was: %T`, addressAttribute))
+	}
+
+	bodyDigestAttribute, ok := attributes["body_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`body_digest is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	bodyDigestVal, ok := bodyDigestAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`body_digest expected to be basetypes.StringValue, was: %T`, bodyDigestAttribute))
+	}
+
+	branchAttribute, ok := attributes["branch"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`branch is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	branchVal, ok := branchAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`branch expected to be basetypes.StringValue, was: %T`, branchAttribute))
+	}
+
+	dependenciesAttribute, ok := attributes["dependencies"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`dependencies is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	dependenciesVal, ok := dependenciesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`dependencies expected to be basetypes.ListValue, was: %T`, dependenciesAttribute))
+	}
+
+	environmentsAttribute, ok := attributes["environments"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`environments is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	environmentsVal, ok := environmentsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`environments expected to be basetypes.ListValue, was: %T`, environmentsAttribute))
+	}
+
+	fromShaAttribute, ok := attributes["from_sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from_sha is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	fromShaVal, ok := fromShaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from_sha expected to be basetypes.StringValue, was: %T`, fromShaAttribute))
+	}
+
+	issueUidAttribute, ok := attributes["issue_uid"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`issue_uid is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	issueUidVal, ok := issueUidAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`issue_uid expected to be basetypes.StringValue, was: %T`, issueUidAttribute))
+	}
+
+	mergeRequestIidAttribute, ok := attributes["merge_request_iid"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`merge_request_iid is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	mergeRequestIidVal, ok := mergeRequestIidAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`merge_request_iid expected to be basetypes.Int64Value, was: %T`, mergeRequestIidAttribute))
+	}
+
+	methodAttribute, ok := attributes["method"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`method is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	methodVal, ok := methodAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`method expected to be basetypes.StringValue, was: %T`, methodAttribute))
+	}
+
+	outcomeDigestAttribute, ok := attributes["outcome_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`outcome_digest is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	outcomeDigestVal, ok := outcomeDigestAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`outcome_digest expected to be basetypes.StringValue, was: %T`, outcomeDigestAttribute))
+	}
+
+	pathAttribute, ok := attributes["path"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`path is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	pathVal, ok := pathAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`path expected to be basetypes.StringValue, was: %T`, pathAttribute))
+	}
+
+	pathsAttribute, ok := attributes["paths"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`paths is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	pathsVal, ok := pathsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`paths expected to be basetypes.ListValue, was: %T`, pathsAttribute))
+	}
+
+	repositoryIdAttribute, ok := attributes["repository_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repository_id is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	repositoryIdVal, ok := repositoryIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repository_id expected to be basetypes.StringValue, was: %T`, repositoryIdAttribute))
+	}
+
+	runIdAttribute, ok := attributes["run_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`run_id is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	runIdVal, ok := runIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`run_id expected to be basetypes.StringValue, was: %T`, runIdAttribute))
+	}
+
+	scopeIdAttribute, ok := attributes["scope_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_id is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	scopeIdVal, ok := scopeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_id expected to be basetypes.StringValue, was: %T`, scopeIdAttribute))
+	}
+
+	sessionIdAttribute, ok := attributes["session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`session_id is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	sessionIdVal, ok := sessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`session_id expected to be basetypes.StringValue, was: %T`, sessionIdAttribute))
+	}
+
+	shaAttribute, ok := attributes["sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`sha is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	shaVal, ok := shaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`sha expected to be basetypes.StringValue, was: %T`, shaAttribute))
+	}
+
+	sourceBranchAttribute, ok := attributes["source_branch"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_branch is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	sourceBranchVal, ok := sourceBranchAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_branch expected to be basetypes.StringValue, was: %T`, sourceBranchAttribute))
+	}
+
+	sourceShaAttribute, ok := attributes["source_sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_sha is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	sourceShaVal, ok := sourceShaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_sha expected to be basetypes.StringValue, was: %T`, sourceShaAttribute))
+	}
+
+	stepAttribute, ok := attributes["step"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`step is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	stepVal, ok := stepAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`step expected to be basetypes.Int64Value, was: %T`, stepAttribute))
+	}
+
+	summaryAttribute, ok := attributes["summary"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`summary is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	summaryVal, ok := summaryAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`summary expected to be basetypes.StringValue, was: %T`, summaryAttribute))
+	}
+
+	tagAttribute, ok := attributes["tag"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tag is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	tagVal, ok := tagAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tag expected to be basetypes.StringValue, was: %T`, tagAttribute))
+	}
+
+	targetBranchAttribute, ok := attributes["target_branch"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`target_branch is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	targetBranchVal, ok := targetBranchAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`target_branch expected to be basetypes.StringValue, was: %T`, targetBranchAttribute))
+	}
+
+	targetShaAttribute, ok := attributes["target_sha"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`target_sha is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	targetShaVal, ok := targetShaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`target_sha expected to be basetypes.StringValue, was: %T`, targetShaAttribute))
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewSubjectValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSubjectValueUnknown(), diags
+	}
+
+	return SubjectValue{
+		Action:          actionVal,
+		Address:         addressVal,
+		BodyDigest:      bodyDigestVal,
+		Branch:          branchVal,
+		Dependencies:    dependenciesVal,
+		Environments:    environmentsVal,
+		FromSha:         fromShaVal,
+		IssueUid:        issueUidVal,
+		MergeRequestIid: mergeRequestIidVal,
+		Method:          methodVal,
+		OutcomeDigest:   outcomeDigestVal,
+		Path:            pathVal,
+		Paths:           pathsVal,
+		RepositoryId:    repositoryIdVal,
+		RunId:           runIdVal,
+		ScopeId:         scopeIdVal,
+		SessionId:       sessionIdVal,
+		Sha:             shaVal,
+		SourceBranch:    sourceBranchVal,
+		SourceSha:       sourceShaVal,
+		Step:            stepVal,
+		Summary:         summaryVal,
+		Tag:             tagVal,
+		TargetBranch:    targetBranchVal,
+		TargetSha:       targetShaVal,
+		To:              toVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSubjectValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SubjectValue {
+	object, diags := NewSubjectValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSubjectValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SubjectType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSubjectValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSubjectValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSubjectValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSubjectValueMust(SubjectValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SubjectType) ValueType(ctx context.Context) attr.Value {
+	return SubjectValue{}
+}
+
+var _ basetypes.ObjectValuable = SubjectValue{}
+
+type SubjectValue struct {
+	Action          basetypes.StringValue `tfsdk:"action"`
+	Address         basetypes.StringValue `tfsdk:"address"`
+	BodyDigest      basetypes.StringValue `tfsdk:"body_digest"`
+	Branch          basetypes.StringValue `tfsdk:"branch"`
+	Dependencies    basetypes.ListValue   `tfsdk:"dependencies"`
+	Environments    basetypes.ListValue   `tfsdk:"environments"`
+	FromSha         basetypes.StringValue `tfsdk:"from_sha"`
+	IssueUid        basetypes.StringValue `tfsdk:"issue_uid"`
+	MergeRequestIid basetypes.Int64Value  `tfsdk:"merge_request_iid"`
+	Method          basetypes.StringValue `tfsdk:"method"`
+	OutcomeDigest   basetypes.StringValue `tfsdk:"outcome_digest"`
+	Path            basetypes.StringValue `tfsdk:"path"`
+	Paths           basetypes.ListValue   `tfsdk:"paths"`
+	RepositoryId    basetypes.StringValue `tfsdk:"repository_id"`
+	RunId           basetypes.StringValue `tfsdk:"run_id"`
+	ScopeId         basetypes.StringValue `tfsdk:"scope_id"`
+	SessionId       basetypes.StringValue `tfsdk:"session_id"`
+	Sha             basetypes.StringValue `tfsdk:"sha"`
+	SourceBranch    basetypes.StringValue `tfsdk:"source_branch"`
+	SourceSha       basetypes.StringValue `tfsdk:"source_sha"`
+	Step            basetypes.Int64Value  `tfsdk:"step"`
+	Summary         basetypes.StringValue `tfsdk:"summary"`
+	Tag             basetypes.StringValue `tfsdk:"tag"`
+	TargetBranch    basetypes.StringValue `tfsdk:"target_branch"`
+	TargetSha       basetypes.StringValue `tfsdk:"target_sha"`
+	To              basetypes.StringValue `tfsdk:"to"`
+	state           attr.ValueState
+}
+
+func (v SubjectValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 26)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["action"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["address"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["body_digest"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["branch"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["dependencies"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["environments"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["from_sha"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["issue_uid"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["merge_request_iid"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["method"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["outcome_digest"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["path"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["paths"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["repository_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["run_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["scope_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["session_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["sha"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["source_branch"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["source_sha"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["step"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["summary"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["tag"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["target_branch"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["target_sha"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 26)
+
+		val, err = v.Action.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["action"] = val
+
+		val, err = v.Address.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["address"] = val
+
+		val, err = v.BodyDigest.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["body_digest"] = val
+
+		val, err = v.Branch.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["branch"] = val
+
+		val, err = v.Dependencies.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["dependencies"] = val
+
+		val, err = v.Environments.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["environments"] = val
+
+		val, err = v.FromSha.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["from_sha"] = val
+
+		val, err = v.IssueUid.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["issue_uid"] = val
+
+		val, err = v.MergeRequestIid.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["merge_request_iid"] = val
+
+		val, err = v.Method.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["method"] = val
+
+		val, err = v.OutcomeDigest.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["outcome_digest"] = val
+
+		val, err = v.Path.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["path"] = val
+
+		val, err = v.Paths.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["paths"] = val
+
+		val, err = v.RepositoryId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["repository_id"] = val
+
+		val, err = v.RunId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["run_id"] = val
+
+		val, err = v.ScopeId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope_id"] = val
+
+		val, err = v.SessionId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["session_id"] = val
+
+		val, err = v.Sha.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["sha"] = val
+
+		val, err = v.SourceBranch.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_branch"] = val
+
+		val, err = v.SourceSha.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_sha"] = val
+
+		val, err = v.Step.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["step"] = val
+
+		val, err = v.Summary.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["summary"] = val
+
+		val, err = v.Tag.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["tag"] = val
+
+		val, err = v.TargetBranch.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["target_branch"] = val
+
+		val, err = v.TargetSha.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["target_sha"] = val
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SubjectValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SubjectValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SubjectValue) String() string {
+	return "SubjectValue"
+}
+
+func (v SubjectValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var dependenciesVal basetypes.ListValue
+	switch {
+	case v.Dependencies.IsUnknown():
+		dependenciesVal = types.ListUnknown(types.StringType)
+	case v.Dependencies.IsNull():
+		dependenciesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		dependenciesVal, d = types.ListValue(types.StringType, v.Dependencies.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"action":      basetypes.StringType{},
+			"address":     basetypes.StringType{},
+			"body_digest": basetypes.StringType{},
+			"branch":      basetypes.StringType{},
+			"dependencies": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"environments": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"from_sha":          basetypes.StringType{},
+			"issue_uid":         basetypes.StringType{},
+			"merge_request_iid": basetypes.Int64Type{},
+			"method":            basetypes.StringType{},
+			"outcome_digest":    basetypes.StringType{},
+			"path":              basetypes.StringType{},
+			"paths": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"repository_id": basetypes.StringType{},
+			"run_id":        basetypes.StringType{},
+			"scope_id":      basetypes.StringType{},
+			"session_id":    basetypes.StringType{},
+			"sha":           basetypes.StringType{},
+			"source_branch": basetypes.StringType{},
+			"source_sha":    basetypes.StringType{},
+			"step":          basetypes.Int64Type{},
+			"summary":       basetypes.StringType{},
+			"tag":           basetypes.StringType{},
+			"target_branch": basetypes.StringType{},
+			"target_sha":    basetypes.StringType{},
+			"to":            basetypes.StringType{},
+		}), diags
+	}
+
+	var environmentsVal basetypes.ListValue
+	switch {
+	case v.Environments.IsUnknown():
+		environmentsVal = types.ListUnknown(types.StringType)
+	case v.Environments.IsNull():
+		environmentsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		environmentsVal, d = types.ListValue(types.StringType, v.Environments.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"action":      basetypes.StringType{},
+			"address":     basetypes.StringType{},
+			"body_digest": basetypes.StringType{},
+			"branch":      basetypes.StringType{},
+			"dependencies": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"environments": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"from_sha":          basetypes.StringType{},
+			"issue_uid":         basetypes.StringType{},
+			"merge_request_iid": basetypes.Int64Type{},
+			"method":            basetypes.StringType{},
+			"outcome_digest":    basetypes.StringType{},
+			"path":              basetypes.StringType{},
+			"paths": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"repository_id": basetypes.StringType{},
+			"run_id":        basetypes.StringType{},
+			"scope_id":      basetypes.StringType{},
+			"session_id":    basetypes.StringType{},
+			"sha":           basetypes.StringType{},
+			"source_branch": basetypes.StringType{},
+			"source_sha":    basetypes.StringType{},
+			"step":          basetypes.Int64Type{},
+			"summary":       basetypes.StringType{},
+			"tag":           basetypes.StringType{},
+			"target_branch": basetypes.StringType{},
+			"target_sha":    basetypes.StringType{},
+			"to":            basetypes.StringType{},
+		}), diags
+	}
+
+	var pathsVal basetypes.ListValue
+	switch {
+	case v.Paths.IsUnknown():
+		pathsVal = types.ListUnknown(types.StringType)
+	case v.Paths.IsNull():
+		pathsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		pathsVal, d = types.ListValue(types.StringType, v.Paths.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"action":      basetypes.StringType{},
+			"address":     basetypes.StringType{},
+			"body_digest": basetypes.StringType{},
+			"branch":      basetypes.StringType{},
+			"dependencies": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"environments": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"from_sha":          basetypes.StringType{},
+			"issue_uid":         basetypes.StringType{},
+			"merge_request_iid": basetypes.Int64Type{},
+			"method":            basetypes.StringType{},
+			"outcome_digest":    basetypes.StringType{},
+			"path":              basetypes.StringType{},
+			"paths": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"repository_id": basetypes.StringType{},
+			"run_id":        basetypes.StringType{},
+			"scope_id":      basetypes.StringType{},
+			"session_id":    basetypes.StringType{},
+			"sha":           basetypes.StringType{},
+			"source_branch": basetypes.StringType{},
+			"source_sha":    basetypes.StringType{},
+			"step":          basetypes.Int64Type{},
+			"summary":       basetypes.StringType{},
+			"tag":           basetypes.StringType{},
+			"target_branch": basetypes.StringType{},
+			"target_sha":    basetypes.StringType{},
+			"to":            basetypes.StringType{},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"action":      basetypes.StringType{},
+		"address":     basetypes.StringType{},
+		"body_digest": basetypes.StringType{},
+		"branch":      basetypes.StringType{},
+		"dependencies": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"environments": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"from_sha":          basetypes.StringType{},
+		"issue_uid":         basetypes.StringType{},
+		"merge_request_iid": basetypes.Int64Type{},
+		"method":            basetypes.StringType{},
+		"outcome_digest":    basetypes.StringType{},
+		"path":              basetypes.StringType{},
+		"paths": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"repository_id": basetypes.StringType{},
+		"run_id":        basetypes.StringType{},
+		"scope_id":      basetypes.StringType{},
+		"session_id":    basetypes.StringType{},
+		"sha":           basetypes.StringType{},
+		"source_branch": basetypes.StringType{},
+		"source_sha":    basetypes.StringType{},
+		"step":          basetypes.Int64Type{},
+		"summary":       basetypes.StringType{},
+		"tag":           basetypes.StringType{},
+		"target_branch": basetypes.StringType{},
+		"target_sha":    basetypes.StringType{},
+		"to":            basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"action":            v.Action,
+			"address":           v.Address,
+			"body_digest":       v.BodyDigest,
+			"branch":            v.Branch,
+			"dependencies":      dependenciesVal,
+			"environments":      environmentsVal,
+			"from_sha":          v.FromSha,
+			"issue_uid":         v.IssueUid,
+			"merge_request_iid": v.MergeRequestIid,
+			"method":            v.Method,
+			"outcome_digest":    v.OutcomeDigest,
+			"path":              v.Path,
+			"paths":             pathsVal,
+			"repository_id":     v.RepositoryId,
+			"run_id":            v.RunId,
+			"scope_id":          v.ScopeId,
+			"session_id":        v.SessionId,
+			"sha":               v.Sha,
+			"source_branch":     v.SourceBranch,
+			"source_sha":        v.SourceSha,
+			"step":              v.Step,
+			"summary":           v.Summary,
+			"tag":               v.Tag,
+			"target_branch":     v.TargetBranch,
+			"target_sha":        v.TargetSha,
+			"to":                v.To,
+		})
+
+	return objVal, diags
+}
+
+func (v SubjectValue) Equal(o attr.Value) bool {
+	other, ok := o.(SubjectValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Action.Equal(other.Action) {
+		return false
+	}
+
+	if !v.Address.Equal(other.Address) {
+		return false
+	}
+
+	if !v.BodyDigest.Equal(other.BodyDigest) {
+		return false
+	}
+
+	if !v.Branch.Equal(other.Branch) {
+		return false
+	}
+
+	if !v.Dependencies.Equal(other.Dependencies) {
+		return false
+	}
+
+	if !v.Environments.Equal(other.Environments) {
+		return false
+	}
+
+	if !v.FromSha.Equal(other.FromSha) {
+		return false
+	}
+
+	if !v.IssueUid.Equal(other.IssueUid) {
+		return false
+	}
+
+	if !v.MergeRequestIid.Equal(other.MergeRequestIid) {
+		return false
+	}
+
+	if !v.Method.Equal(other.Method) {
+		return false
+	}
+
+	if !v.OutcomeDigest.Equal(other.OutcomeDigest) {
+		return false
+	}
+
+	if !v.Path.Equal(other.Path) {
+		return false
+	}
+
+	if !v.Paths.Equal(other.Paths) {
+		return false
+	}
+
+	if !v.RepositoryId.Equal(other.RepositoryId) {
+		return false
+	}
+
+	if !v.RunId.Equal(other.RunId) {
+		return false
+	}
+
+	if !v.ScopeId.Equal(other.ScopeId) {
+		return false
+	}
+
+	if !v.SessionId.Equal(other.SessionId) {
+		return false
+	}
+
+	if !v.Sha.Equal(other.Sha) {
+		return false
+	}
+
+	if !v.SourceBranch.Equal(other.SourceBranch) {
+		return false
+	}
+
+	if !v.SourceSha.Equal(other.SourceSha) {
+		return false
+	}
+
+	if !v.Step.Equal(other.Step) {
+		return false
+	}
+
+	if !v.Summary.Equal(other.Summary) {
+		return false
+	}
+
+	if !v.Tag.Equal(other.Tag) {
+		return false
+	}
+
+	if !v.TargetBranch.Equal(other.TargetBranch) {
+		return false
+	}
+
+	if !v.TargetSha.Equal(other.TargetSha) {
+		return false
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	return true
+}
+
+func (v SubjectValue) Type(ctx context.Context) attr.Type {
+	return SubjectType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SubjectValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"action":      basetypes.StringType{},
+		"address":     basetypes.StringType{},
+		"body_digest": basetypes.StringType{},
+		"branch":      basetypes.StringType{},
+		"dependencies": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"environments": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"from_sha":          basetypes.StringType{},
+		"issue_uid":         basetypes.StringType{},
+		"merge_request_iid": basetypes.Int64Type{},
+		"method":            basetypes.StringType{},
+		"outcome_digest":    basetypes.StringType{},
+		"path":              basetypes.StringType{},
+		"paths": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"repository_id": basetypes.StringType{},
+		"run_id":        basetypes.StringType{},
+		"scope_id":      basetypes.StringType{},
+		"session_id":    basetypes.StringType{},
+		"sha":           basetypes.StringType{},
+		"source_branch": basetypes.StringType{},
+		"source_sha":    basetypes.StringType{},
+		"step":          basetypes.Int64Type{},
+		"summary":       basetypes.StringType{},
+		"tag":           basetypes.StringType{},
+		"target_branch": basetypes.StringType{},
+		"target_sha":    basetypes.StringType{},
+		"to":            basetypes.StringType{},
 	}
 }

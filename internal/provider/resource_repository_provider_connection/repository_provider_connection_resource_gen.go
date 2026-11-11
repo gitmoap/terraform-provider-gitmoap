@@ -34,6 +34,12 @@ func RepositoryProviderConnectionResourceSchema(ctx context.Context) schema.Sche
 					),
 				},
 			},
+			"config_overrides": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "JSON: set it with `jsonencode()`.",
+				MarkdownDescription: "JSON: set it with `jsonencode()`.",
+			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
 			},
@@ -74,7 +80,15 @@ func RepositoryProviderConnectionResourceSchema(ctx context.Context) schema.Sche
 				Description:         "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
+			"credentials": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Sensitive:           true,
+				Description:         "The provider's credentials, in the shape its `auth_schema` describes. Required for\n`static_credentials`; refused for `oidc_federation`.\n\nJSON: set it with `jsonencode()`.",
+				MarkdownDescription: "The provider's credentials, in the shape its `auth_schema` describes. Required for\n`static_credentials`; refused for `oidc_federation`.\n\nJSON: set it with `jsonencode()`.",
+			},
 			"environment_bound": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
 				Description:         "Whether the connection is bound to environments. When it is, only a step deploying to one\nof `environment_ids` may use it, and a connection bound only to environments since deleted\nis usable by no step.",
 				MarkdownDescription: "Whether the connection is bound to environments. When it is, only a step deploying to one\nof `environment_ids` may use it, and a connection bound only to environments since deleted\nis usable by no step.",
@@ -85,6 +99,42 @@ func RepositoryProviderConnectionResourceSchema(ctx context.Context) schema.Sche
 				Computed:            true,
 				Description:         "Binds the connection to these environments, so only a step deploying to one of them may\nuse it. Each must be an environment the connection's pipelines can deploy to: one this\ngroup or repository owns, a group above it, or — for a group's connection — a group or\nrepository beneath it. Leave it out to let any step use the connection. At most 20.",
 				MarkdownDescription: "Binds the connection to these environments, so only a step deploying to one of them may\nuse it. Each must be an environment the connection's pipelines can deploy to: one this\ngroup or repository owns, a group above it, or — for a group's connection — a group or\nrepository beneath it. Leave it out to let any step use the connection. At most 20.",
+			},
+			"federation_target": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"audience": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The audience of the identity token. Defaults to `sts.amazonaws.com`.",
+						MarkdownDescription: "The audience of the identity token. Defaults to `sts.amazonaws.com`.",
+					},
+					"cloud": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"aws",
+							),
+						},
+					},
+					"region": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+					"role_arn": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+				CustomType: FederationTargetType{
+					ObjectType: types.ObjectType{
+						AttrTypes: FederationTargetValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "The cloud role an OIDC-federated connection assumes, identified by `cloud`. `aws` is the only\ncloud supported.",
+				MarkdownDescription: "The cloud role an OIDC-federated connection assumes, identified by `cloud`. `aws` is the only\ncloud supported.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -133,20 +183,23 @@ func RepositoryProviderConnectionResourceSchema(ctx context.Context) schema.Sche
 }
 
 type RepositoryProviderConnectionModel struct {
-	AuthMode         types.String   `tfsdk:"auth_mode"`
-	CreatedAt        types.String   `tfsdk:"created_at"`
-	CreatedBy        CreatedByValue `tfsdk:"created_by"`
-	EnvironmentBound types.Bool     `tfsdk:"environment_bound"`
-	EnvironmentIds   types.List     `tfsdk:"environment_ids"`
-	Id               types.String   `tfsdk:"id"`
-	LastRotatedAt    types.String   `tfsdk:"last_rotated_at"`
-	Name             types.String   `tfsdk:"name"`
-	Protected        types.Bool     `tfsdk:"protected"`
-	ProviderId       types.String   `tfsdk:"provider_id"`
-	RepoId           types.String   `tfsdk:"repo_id"`
-	ScopeId          types.String   `tfsdk:"scope_id"`
-	ScopeType        types.String   `tfsdk:"scope_type"`
-	SecretRefs       types.Map      `tfsdk:"secret_refs"`
+	AuthMode         types.String          `tfsdk:"auth_mode"`
+	ConfigOverrides  types.String          `tfsdk:"config_overrides"`
+	CreatedAt        types.String          `tfsdk:"created_at"`
+	CreatedBy        CreatedByValue        `tfsdk:"created_by"`
+	Credentials      types.String          `tfsdk:"credentials"`
+	EnvironmentBound types.Bool            `tfsdk:"environment_bound"`
+	EnvironmentIds   types.List            `tfsdk:"environment_ids"`
+	FederationTarget FederationTargetValue `tfsdk:"federation_target"`
+	Id               types.String          `tfsdk:"id"`
+	LastRotatedAt    types.String          `tfsdk:"last_rotated_at"`
+	Name             types.String          `tfsdk:"name"`
+	Protected        types.Bool            `tfsdk:"protected"`
+	ProviderId       types.String          `tfsdk:"provider_id"`
+	RepoId           types.String          `tfsdk:"repo_id"`
+	ScopeId          types.String          `tfsdk:"scope_id"`
+	ScopeType        types.String          `tfsdk:"scope_type"`
+	SecretRefs       types.Map             `tfsdk:"secret_refs"`
 }
 
 var _ basetypes.ObjectTypable = CreatedByType{}
@@ -690,5 +743,494 @@ func (v CreatedByValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"id":         basetypes.StringType{},
 		"kind":       basetypes.StringType{},
 		"username":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = FederationTargetType{}
+
+type FederationTargetType struct {
+	basetypes.ObjectType
+}
+
+func (t FederationTargetType) Equal(o attr.Type) bool {
+	other, ok := o.(FederationTargetType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t FederationTargetType) String() string {
+	return "FederationTargetType"
+}
+
+func (t FederationTargetType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	audienceAttribute, ok := attributes["audience"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`audience is missing from object`)
+
+		return nil, diags
+	}
+
+	audienceVal, ok := audienceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`audience expected to be basetypes.StringValue, was: %T`, audienceAttribute))
+	}
+
+	cloudAttribute, ok := attributes["cloud"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud is missing from object`)
+
+		return nil, diags
+	}
+
+	cloudVal, ok := cloudAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud expected to be basetypes.StringValue, was: %T`, cloudAttribute))
+	}
+
+	regionAttribute, ok := attributes["region"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`region is missing from object`)
+
+		return nil, diags
+	}
+
+	regionVal, ok := regionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`region expected to be basetypes.StringValue, was: %T`, regionAttribute))
+	}
+
+	roleArnAttribute, ok := attributes["role_arn"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_arn is missing from object`)
+
+		return nil, diags
+	}
+
+	roleArnVal, ok := roleArnAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_arn expected to be basetypes.StringValue, was: %T`, roleArnAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return FederationTargetValue{
+		Audience: audienceVal,
+		Cloud:    cloudVal,
+		Region:   regionVal,
+		RoleArn:  roleArnVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFederationTargetValueNull() FederationTargetValue {
+	return FederationTargetValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewFederationTargetValueUnknown() FederationTargetValue {
+	return FederationTargetValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewFederationTargetValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (FederationTargetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing FederationTargetValue Attribute Value",
+				"While creating a FederationTargetValue value, a missing attribute value was detected. "+
+					"A FederationTargetValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FederationTargetValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid FederationTargetValue Attribute Type",
+				"While creating a FederationTargetValue value, an invalid attribute value was detected. "+
+					"A FederationTargetValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FederationTargetValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("FederationTargetValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra FederationTargetValue Attribute Value",
+				"While creating a FederationTargetValue value, an extra attribute value was detected. "+
+					"A FederationTargetValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra FederationTargetValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewFederationTargetValueUnknown(), diags
+	}
+
+	audienceAttribute, ok := attributes["audience"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`audience is missing from object`)
+
+		return NewFederationTargetValueUnknown(), diags
+	}
+
+	audienceVal, ok := audienceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`audience expected to be basetypes.StringValue, was: %T`, audienceAttribute))
+	}
+
+	cloudAttribute, ok := attributes["cloud"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud is missing from object`)
+
+		return NewFederationTargetValueUnknown(), diags
+	}
+
+	cloudVal, ok := cloudAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud expected to be basetypes.StringValue, was: %T`, cloudAttribute))
+	}
+
+	regionAttribute, ok := attributes["region"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`region is missing from object`)
+
+		return NewFederationTargetValueUnknown(), diags
+	}
+
+	regionVal, ok := regionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`region expected to be basetypes.StringValue, was: %T`, regionAttribute))
+	}
+
+	roleArnAttribute, ok := attributes["role_arn"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_arn is missing from object`)
+
+		return NewFederationTargetValueUnknown(), diags
+	}
+
+	roleArnVal, ok := roleArnAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_arn expected to be basetypes.StringValue, was: %T`, roleArnAttribute))
+	}
+
+	if diags.HasError() {
+		return NewFederationTargetValueUnknown(), diags
+	}
+
+	return FederationTargetValue{
+		Audience: audienceVal,
+		Cloud:    cloudVal,
+		Region:   regionVal,
+		RoleArn:  roleArnVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFederationTargetValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) FederationTargetValue {
+	object, diags := NewFederationTargetValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewFederationTargetValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t FederationTargetType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewFederationTargetValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewFederationTargetValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewFederationTargetValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewFederationTargetValueMust(FederationTargetValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t FederationTargetType) ValueType(ctx context.Context) attr.Value {
+	return FederationTargetValue{}
+}
+
+var _ basetypes.ObjectValuable = FederationTargetValue{}
+
+type FederationTargetValue struct {
+	Audience basetypes.StringValue `tfsdk:"audience"`
+	Cloud    basetypes.StringValue `tfsdk:"cloud"`
+	Region   basetypes.StringValue `tfsdk:"region"`
+	RoleArn  basetypes.StringValue `tfsdk:"role_arn"`
+	state    attr.ValueState
+}
+
+func (v FederationTargetValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["audience"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["cloud"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["region"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["role_arn"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Audience.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["audience"] = val
+
+		val, err = v.Cloud.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cloud"] = val
+
+		val, err = v.Region.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["region"] = val
+
+		val, err = v.RoleArn.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["role_arn"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v FederationTargetValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v FederationTargetValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v FederationTargetValue) String() string {
+	return "FederationTargetValue"
+}
+
+func (v FederationTargetValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"audience": basetypes.StringType{},
+		"cloud":    basetypes.StringType{},
+		"region":   basetypes.StringType{},
+		"role_arn": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"audience": v.Audience,
+			"cloud":    v.Cloud,
+			"region":   v.Region,
+			"role_arn": v.RoleArn,
+		})
+
+	return objVal, diags
+}
+
+func (v FederationTargetValue) Equal(o attr.Value) bool {
+	other, ok := o.(FederationTargetValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Audience.Equal(other.Audience) {
+		return false
+	}
+
+	if !v.Cloud.Equal(other.Cloud) {
+		return false
+	}
+
+	if !v.Region.Equal(other.Region) {
+		return false
+	}
+
+	if !v.RoleArn.Equal(other.RoleArn) {
+		return false
+	}
+
+	return true
+}
+
+func (v FederationTargetValue) Type(ctx context.Context) attr.Type {
+	return FederationTargetType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v FederationTargetValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"audience": basetypes.StringType{},
+		"cloud":    basetypes.StringType{},
+		"region":   basetypes.StringType{},
+		"role_arn": basetypes.StringType{},
 	}
 }

@@ -71,7 +71,8 @@ func RepositoryPipelineVariablesDataSourceSchema(ctx context.Context) schema.Sch
 							MarkdownDescription: "The group or repository that declared a variable.",
 						},
 						"value": schema.StringAttribute{
-							Computed: true,
+							Computed:  true,
+							Sensitive: true,
 						},
 					},
 					CustomType: VariablesType{

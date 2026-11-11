@@ -58,6 +58,7 @@ Read-Only:
 - `attested_by` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
 client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--items--attested_by))
 - `check_key` (String)
+- `detail` (String) JSON: set it with `jsonencode()`.
 - `evaluated_at` (String)
 - `evidence_at` (String)
 - `evidence_commit_sha` (String)
@@ -108,6 +109,9 @@ Read-Only:
 
 Read-Only:
 
+- `by_level` (String) Services at each named level. Absent levels are absent keys, not zeroes.
+
+JSON: set it with `jsonencode()`.
 - `checks` (Attributes) How many checks are in each state. All six states are always present. (see [below for nested schema](#nestedatt--summary--scored--checks))
 - `total` (Number)
 - `unleveled` (Number) Services reaching no level at all — including every service on a scorecard with no levels.

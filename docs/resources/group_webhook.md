@@ -17,34 +17,45 @@ The token needs `webhook:manage` and `webhook:read`.
 ### Basic Usage
 
 ```terraform
-variable "webhook_secret" {
+variable "chat_webhook_secret" {
   type      = string
   sensitive = true
+  ephemeral = true
 }
 
 data "gitmoap_group_by_path" "platform" {
   full_path = "acme/platform"
 }
 
-# Every push and merge request in the group's repositories, sent to the team's chat.
+# Every push and merge request in the group's repositories, sent to the team's chat. The secret
+# is write-only: change secret_wo_version to send a new one.
 resource "gitmoap_group_webhook" "chat" {
-  group_id = data.gitmoap_group_by_path.platform.group_id
-  name     = "chat"
-  url      = "https://chat.example.com/hooks/gitmoap"
-  secret   = var.webhook_secret
-  events   = ["push", "merge_request"]
+  group_id          = data.gitmoap_group_by_path.platform.group_id
+  name              = "chat"
+  url               = "https://chat.example.com/hooks/gitmoap"
+  secret_wo         = var.chat_webhook_secret
+  secret_wo_version = 1
+  events            = ["push", "merge_request"]
 }
 ```
 
-### Webhooks with generated secrets
+### Webhooks whose secrets never reach the state
 
-Each endpoint checks deliveries against a secret, generated here with the
-[random provider](https://registry.terraform.io/providers/hashicorp/random/latest/docs) rather than
-written down. The secrets end up in Terraform's state, so keep the state somewhere safe.
+Each endpoint checks deliveries against a secret. Here the secrets come in through an ephemeral
+variable, say from `TF_VAR_webhook_secrets`, and go to gitmoap write-only, so they're in neither
+Terraform's plan nor its state (Terraform 1.11 and later). Terraform can't tell when a value it
+doesn't keep changes: after changing a secret, change its `secret_wo_version` too.
 
 ```terraform
 data "gitmoap_group_by_path" "acme" {
   full_path = "acme"
+}
+
+variable "webhook_secrets" {
+  description = "The secret each endpoint checks deliveries against, by endpoint: ci and chat."
+  type        = map(string)
+  sensitive   = true
+  ephemeral   = true
 }
 
 resource "gitmoap_repository" "api" {
@@ -53,35 +64,24 @@ resource "gitmoap_repository" "api" {
   visibility      = "private"
 }
 
-resource "random_password" "webhook" {
-  for_each = toset(["ci", "chat"])
-
-  length  = 32
-  special = false
-}
-
 # The CI server builds every push, merge request and tag of the api repository.
 resource "gitmoap_repository_webhook" "ci" {
-  repo_id = gitmoap_repository.api.repository_id
-  name    = "ci"
-  url     = "https://ci.example.com/hooks/gitmoap"
-  secret  = random_password.webhook["ci"].result
-  events  = ["push", "merge_request", "tag_push"]
+  repo_id           = gitmoap_repository.api.repository_id
+  name              = "ci"
+  url               = "https://ci.example.com/hooks/gitmoap"
+  secret_wo         = var.webhook_secrets["ci"]
+  secret_wo_version = 1
+  events            = ["push", "merge_request", "tag_push"]
 }
 
 # The team's chat hears about merge requests in every repository of the group.
 resource "gitmoap_group_webhook" "chat" {
-  group_id = data.gitmoap_group_by_path.acme.group_id
-  name     = "chat"
-  url      = "https://chat.example.com/hooks/gitmoap"
-  secret   = random_password.webhook["chat"].result
-  events   = ["merge_request"]
-}
-
-# To configure on the receiving end.
-output "webhook_secrets" {
-  value     = { for name, secret in random_password.webhook : name => secret.result }
-  sensitive = true
+  group_id          = data.gitmoap_group_by_path.acme.group_id
+  name              = "chat"
+  url               = "https://chat.example.com/hooks/gitmoap"
+  secret_wo         = var.webhook_secrets["chat"]
+  secret_wo_version = 1
+  events            = ["merge_request"]
 }
 ```
 
@@ -92,14 +92,18 @@ output "webhook_secrets" {
 
 - `events` (List of String) The events that trigger a delivery.
 - `group_id` (String) Group ID
-- `secret` (String, Sensitive) The secret each delivery is signed with, so your endpoint can check it came from gitmoap.
-Stored encrypted and never returned.
 - `url` (String)
 
 ### Optional
 
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
+
 - `active` (Boolean) Whether deliveries are sent. Defaults to `true`.
 - `name` (String)
+- `secret` (String, Sensitive) The secret each delivery is signed with, so your endpoint can check it came from gitmoap.
+Stored encrypted and never returned. Or set `secret_wo`, to keep it out of the state.
+- `secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sets `secret` without keeping it in Terraform's plan or state: write-only, with Terraform 1.11 and later. Change `secret_wo_version` to send it again.
+- `secret_wo_version` (Number) A number to change when `secret_wo` changes, to send it again: Terraform can't tell, since it doesn't keep it.
 
 ### Read-Only
 

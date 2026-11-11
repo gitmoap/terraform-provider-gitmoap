@@ -70,6 +70,12 @@ client needs to draw and link them, so a page of records names its actors withou
 - `state` (String) Where a gate stands: waiting for a decision, approved or denied, spent by the action it
 approved, lapsed undecided, withdrawn with its session, or — for a gate set to notify — a record
 that the agent went ahead and people were told.
+- `subject` (Attributes) The exact action a gate waits on, as it is stored and served. `action` says which, and decides
+the other fields. Every action also carries `summary`, one line for the person deciding, and
+`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a
+line saying how many more there were.
+
+`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`. (see [below for nested schema](#nestedatt--items--subject))
 
 <a id="nestedatt--items--agent"></a>
 ### Nested Schema for `items.agent`
@@ -126,3 +132,36 @@ and so which page it links to: a person's profile, a service account's page or a
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+
+<a id="nestedatt--items--subject"></a>
+### Nested Schema for `items.subject`
+
+Read-Only:
+
+- `action` (String)
+- `address` (String) What it is about.
+- `body_digest` (String) The SHA-256 of the title and description, which the approval binds.
+- `branch` (String) The branch.
+- `dependencies` (List of String) The dependencies added, each as `manifest:name`.
+- `environments` (List of String) The environments, each as `environment:tier`.
+- `from_sha` (String) The commit it moves from.
+- `issue_uid` (String) The work item.
+- `merge_request_iid` (Number) The merge request's number in the repository.
+- `method` (String) The request's method.
+- `outcome_digest` (String) The SHA-256 of the outcome, which the approval binds.
+- `path` (String) The request's path.
+- `paths` (List of String) The privileged paths the change touches.
+- `repository_id` (String) The repository.
+- `run_id` (String) The run.
+- `scope_id` (String) The repository or group it would be filed in.
+- `session_id` (String) The session.
+- `sha` (String) The commit it deploys.
+- `source_branch` (String) The branch it opens from.
+- `source_sha` (String) The source head the approval is for.
+- `step` (Number) Which multiple of the alert it reached.
+- `summary` (String) One line for the person deciding.
+- `tag` (String) The tag.
+- `target_branch` (String) The branch it merges into.
+- `target_sha` (String) The target's head the approval is for.
+- `to` (String) What it moves to: a pushed tip, or a web commit's tree.

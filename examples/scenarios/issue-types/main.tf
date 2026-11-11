@@ -26,8 +26,12 @@ resource "gitmoap_group_issue_blueprint" "api_feature" {
   ]
 }
 
-# New work items are stories unless their author picks another type.
+# Work items follow their merge requests: in review when one opens, done when it merges, and back
+# where they were when it's closed without merging.
 resource "gitmoap_group_issue_settings" "acme" {
   group_id           = data.gitmoap_group_by_path.acme.group_id
   default_issue_type = "story"
+  on_mr_opened       = { to = "in_review" }
+  on_mr_merged       = { to = "done" }
+  on_mr_closed       = { value = "restore" }
 }

@@ -58,6 +58,9 @@ input port of the same name: connect it and read it with `{"$from": "<key>"}`, o
 unconnected and write the value yourself.
 - `cache_enabled` (Boolean)
 - `capability_id` (String)
+- `config_schema` (String) The JSON Schema a step's `config` must satisfy to use this capability.
+
+JSON: set it with `jsonencode()`.
 - `default_timeout_seconds` (Number)
 - `description` (String)
 - `image_digest` (String) The exact build of the capability's container image, when the catalog records one. Pinned so

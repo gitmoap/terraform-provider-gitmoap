@@ -20,6 +20,7 @@ The token needs `pipeline_variable:manage` and `pipeline_variable:read`.
 variable "deploy_key" {
   type      = string
   sensitive = true
+  ephemeral = true
 }
 
 data "gitmoap_repository_by_path" "api" {
@@ -34,19 +35,22 @@ resource "gitmoap_repository_pipeline_variable" "log_level" {
 
 # Only runs on protected branches and tags receive it.
 resource "gitmoap_repository_pipeline_variable" "deploy_key" {
-  repo_id   = data.gitmoap_repository_by_path.api.repository_id
-  name      = "DEPLOY_KEY"
-  value     = var.deploy_key
-  secret    = true
-  protected = true
+  repo_id          = data.gitmoap_repository_by_path.api.repository_id
+  name             = "DEPLOY_KEY"
+  value_wo         = var.deploy_key
+  value_wo_version = 1
+  secret           = true
+  protected        = true
 }
 ```
 
-### A service account for CI, its token stored for the pipelines
+### A service account for CI, its token handed to the pipelines
 
-A service account gets the access it needs and no more. Its token is narrowed further, to read
-one repository, and handed to that repository's pipelines as a secret variable: nobody copies it
-by hand. To rotate it, run `terraform apply -replace=gitmoap_service_account_token.ci`.
+A service account gets the access it needs and no more, and its token is narrowed to one
+repository. Terraform hands the token to that repository's pipelines, as a secret variable and as
+the credentials of a gitmoap provider connection, both write-only: nobody copies it by hand, and
+neither keeps it in the state. When the token is replaced, say with
+`terraform apply -replace=gitmoap_service_account_token.ci`, both are replaced with it.
 
 ```terraform
 data "gitmoap_group_by_path" "acme" {
@@ -62,14 +66,14 @@ resource "gitmoap_repository" "api" {
 resource "gitmoap_group_service_account" "ci" {
   group_id     = data.gitmoap_group_by_path.acme.group_id
   name         = "ci"
-  access_level = "reporter"
+  access_level = "developer"
 }
 
-# The token reads the api repository, nothing else, for 90 days.
+# The token reads and writes the api repository, nothing else, for 90 days.
 resource "gitmoap_service_account_token" "ci" {
   sa_id           = gitmoap_group_service_account.ci.service_account_id
   name            = "ci-api"
-  scopes          = ["repo:read"]
+  scopes          = ["repo:read", "repo:update"]
   expires_in_days = 90
 
   resource = {
@@ -78,13 +82,33 @@ resource "gitmoap_service_account_token" "ci" {
   }
 }
 
-# Only runs on protected branches and tags receive it, and the value is never shown.
+# Only runs on protected branches and tags receive it.
 resource "gitmoap_repository_pipeline_variable" "ci_token" {
-  repo_id   = gitmoap_repository.api.repository_id
-  name      = "CI_TOKEN"
-  value     = gitmoap_service_account_token.ci.token
-  secret    = true
-  protected = true
+  repo_id          = gitmoap_repository.api.repository_id
+  name             = "CI_TOKEN"
+  value_wo         = gitmoap_service_account_token.ci.token
+  value_wo_version = 1
+  secret           = true
+  protected        = true
+
+  lifecycle {
+    replace_triggered_by = [gitmoap_service_account_token.ci]
+  }
+}
+
+# Pipeline steps that call gitmoap through its provider use the same token.
+resource "gitmoap_repository_provider_connection" "gitmoap" {
+  repo_id                = gitmoap_repository.api.repository_id
+  provider_id            = "gitmoap"
+  name                   = "ci"
+  auth_mode              = "static_credentials"
+  credentials_wo         = jsonencode({ api_token = gitmoap_service_account_token.ci.token })
+  credentials_wo_version = 1
+  protected              = true
+
+  lifecycle {
+    replace_triggered_by = [gitmoap_service_account_token.ci]
+  }
 }
 ```
 
@@ -95,9 +119,10 @@ resource "gitmoap_repository_pipeline_variable" "ci_token" {
 
 - `name` (String)
 - `repo_id` (String) The repository's id
-- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back.
 
 ### Optional
+
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `protected` (Boolean) Whether only a run on a protected branch or tag receives the variable: one a branch or tag
 rule protects, building a commit in that ref's history. A run on any other ref receives
@@ -106,6 +131,9 @@ it is refused. Defaults to `false`.
 - `secret` (Boolean) Whether the value is a secret. A secret's value can never be read back and is redacted from
 step logs; either way every step receives it as an environment variable. Defaults to
 `false`.
+- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back. Or set `value_wo`, to keep it out of the state.
+- `value_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sets `value` without keeping it in Terraform's plan or state: write-only, with Terraform 1.11 and later. Change `value_wo_version` to send it again.
+- `value_wo_version` (Number) A number to change when `value_wo` changes, to send it again: Terraform can't tell, since it doesn't keep it.
 
 ### Read-Only
 

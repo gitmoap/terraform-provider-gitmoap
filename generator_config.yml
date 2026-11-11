@@ -47,12 +47,6 @@ resources:
     delete:
       path: /catalog/scorecards/{scorecard_id}
       method: DELETE
-    schema:
-      ignores:
-      - applies_to.annotations
-      - checks.config
-      - checks.rule
-      - scope
   catalog_service:
     create:
       path: /groups/{group_id}/catalog/services
@@ -66,11 +60,6 @@ resources:
     delete:
       path: /catalog/services/{service_id}
       method: DELETE
-    schema:
-      ignores:
-      - annotations
-      - lifecycle
-      - owner
   group:
     create:
       path: /groups
@@ -84,6 +73,29 @@ resources:
     delete:
       path: /groups/{group_id}
       method: DELETE
+  group_access_grant:
+    create:
+      path: /groups/{group_id}/access/grants
+      method: POST
+    read:
+      path: /groups/{group_id}/access
+      method: GET
+    update:
+      path: /access/grants/{grant_id}
+      method: PATCH
+    delete:
+      path: /access/grants/{grant_id}
+      method: DELETE
+    schema:
+      ignores:
+      - advanced_in_use
+      - entries
+      - limit
+      - next_token
+      - organization_owners
+      - search
+      - source
+      - subject_kind
   group_ai_org_conventions:
     create:
       path: /groups/{group_id}/ai-org/conventions
@@ -114,10 +126,25 @@ resources:
     update:
       path: /groups/{group_id}/approval-policy
       method: PUT
+  group_approval_rule:
+    create:
+      path: /groups/{group_id}/approval-rules
+      method: POST
+    read:
+      path: /groups/{group_id}/approval-policy
+      method: GET
+    update:
+      path: /approval-rules/{rule_id}
+      method: PATCH
+    delete:
+      path: /approval-rules/{rule_id}
+      method: DELETE
     schema:
       ignores:
-      - rules.approvers
-      - rules_here.approvers
+      - effective
+      - policy
+      - rules
+      - rules_here
   group_branch_rule:
     create:
       path: /groups/{group_id}/branch-rules
@@ -144,13 +171,6 @@ resources:
     delete:
       path: /catalog/environments/{environment_id}
       method: DELETE
-    schema:
-      ignores:
-      - concurrency.mode
-      - protection.accept_from
-      - protection.allowed_scopes
-      - protection.approvers
-      - scope
   group_fork_settings:
     create:
       path: /groups/{group_id}/fork-settings
@@ -177,9 +197,6 @@ resources:
     delete:
       path: /groups/{group_id}/issue-blueprints/{blueprint_id}
       method: DELETE
-    schema:
-      ignores:
-      - facets.binding
   group_issue_settings:
     create:
       path: /groups/{group_id}/issue-settings
@@ -193,13 +210,6 @@ resources:
     delete:
       path: /groups/{group_id}/issue-settings
       method: DELETE
-    schema:
-      ignores:
-      - on_branch_created
-      - on_mr_closed
-      - on_mr_merged
-      - on_mr_opened
-      - transitions
   group_iteration:
     create:
       path: /groups/{group_id}/iterations
@@ -268,9 +278,6 @@ resources:
     delete:
       path: /groups/{group_id}/milestones/{milestone_id}
       method: DELETE
-    schema:
-      ignores:
-      - items.issue_ref.scope
   group_mr_settings:
     create:
       path: /groups/{group_id}/mr-settings
@@ -319,10 +326,6 @@ resources:
       attributes:
         aliases:
           connection_id: id
-      ignores:
-      - config_overrides
-      - credentials
-      - federation_target
   group_provider_policy:
     create:
       path: /groups/{group_id}/provider-policy
@@ -392,9 +395,6 @@ resources:
     delete:
       path: /groups/{group_id}/sso-connection
       method: DELETE
-    schema:
-      ignores:
-      - default_role
   group_sso_domain:
     create:
       path: /groups/{group_id}/sso-domains
@@ -421,7 +421,6 @@ resources:
     schema:
       ignores:
       - invites
-      - role
   group_tag_rule:
     create:
       path: /groups/{group_id}/tag-rules
@@ -481,10 +480,6 @@ resources:
     update:
       path: /providers/{provider_id}/listing
       method: PUT
-    schema:
-      ignores:
-      - provider
-      - provider.visibility
   repository:
     create:
       path: /repositories
@@ -502,6 +497,29 @@ resources:
       attributes:
         aliases:
           repo_id: repository_id
+  repository_access_grant:
+    create:
+      path: /repositories/{repo_id}/access/grants
+      method: POST
+    read:
+      path: /repositories/{repo_id}/access
+      method: GET
+    update:
+      path: /access/grants/{grant_id}
+      method: PATCH
+    delete:
+      path: /access/grants/{grant_id}
+      method: DELETE
+    schema:
+      ignores:
+      - advanced_in_use
+      - entries
+      - limit
+      - next_token
+      - organization_owners
+      - search
+      - source
+      - subject_kind
   repository_approval_policy:
     create:
       path: /repositories/{repo_id}/approval-policy
@@ -512,10 +530,25 @@ resources:
     update:
       path: /repositories/{repo_id}/approval-policy
       method: PUT
+  repository_approval_rule:
+    create:
+      path: /repositories/{repo_id}/approval-rules
+      method: POST
+    read:
+      path: /repositories/{repo_id}/approval-policy
+      method: GET
+    update:
+      path: /approval-rules/{rule_id}
+      method: PATCH
+    delete:
+      path: /approval-rules/{rule_id}
+      method: DELETE
     schema:
       ignores:
-      - rules.approvers
-      - rules_here.approvers
+      - effective
+      - policy
+      - rules
+      - rules_here
   repository_branch:
     create:
       path: /repositories/{repo_id}/branches
@@ -552,13 +585,6 @@ resources:
     delete:
       path: /catalog/environments/{environment_id}
       method: DELETE
-    schema:
-      ignores:
-      - concurrency.mode
-      - protection.accept_from
-      - protection.allowed_scopes
-      - protection.approvers
-      - scope
   repository_fork:
     create:
       path: /repositories/{repo_id}/fork
@@ -595,9 +621,6 @@ resources:
     delete:
       path: /repositories/{repo_id}/issue-blueprints/{blueprint_id}
       method: DELETE
-    schema:
-      ignores:
-      - facets.binding
   repository_issue_settings:
     create:
       path: /repositories/{repo_id}/issue-settings
@@ -611,13 +634,6 @@ resources:
     delete:
       path: /repositories/{repo_id}/issue-settings
       method: DELETE
-    schema:
-      ignores:
-      - on_branch_created
-      - on_mr_closed
-      - on_mr_merged
-      - on_mr_opened
-      - transitions
   repository_label:
     create:
       path: /repositories/{repo_id}/labels
@@ -660,9 +676,6 @@ resources:
     delete:
       path: /repositories/{repo_id}/milestones/{milestone_id}
       method: DELETE
-    schema:
-      ignores:
-      - items.issue_ref.scope
   repository_mr_settings:
     create:
       path: /repositories/{repo_id}/mr-settings
@@ -711,10 +724,6 @@ resources:
       attributes:
         aliases:
           connection_id: id
-      ignores:
-      - config_overrides
-      - credentials
-      - federation_target
   repository_push_rules:
     create:
       path: /repositories/{repo_id}/push-rules
@@ -910,9 +919,6 @@ data_sources:
     read:
       path: /ai-gates/{gate_id}
       method: GET
-    schema:
-      ignores:
-      - subject
   ai_models:
     read:
       path: /ai-models
@@ -925,31 +931,14 @@ data_sources:
     read:
       path: /ai-ritual-presets
       method: GET
-    schema:
-      ignores:
-      - items.rituals.cadence
-      - items.rituals.facilitator
-      - items.rituals.people
-      - items.rituals.scope
   catalog_check_kinds:
     read:
       path: /catalog/check-kinds
       method: GET
-    schema:
-      ignores:
-      - kinds.config_schema
-      - kinds.fields.field_type
   catalog_environment:
     read:
       path: /catalog/environments/{environment_id}
       method: GET
-    schema:
-      ignores:
-      - concurrency.mode
-      - protection.accept_from
-      - protection.allowed_scopes
-      - protection.approvers
-      - scope
   catalog_environment_deployments:
     read:
       path: /catalog/environments/{environment_id}/deployments
@@ -970,45 +959,26 @@ data_sources:
     read:
       path: /catalog/scorecards/{scorecard_id}
       method: GET
-    schema:
-      ignores:
-      - applies_to.annotations
-      - checks.config
-      - checks.rule
-      - scope
   catalog_scorecard_results:
     read:
       path: /catalog/scorecards/{scorecard_id}/results
       method: GET
     schema:
       ignores:
-      - items.detail
       - limit
       - next_token
-      - summary.scored.by_level
   catalog_service:
     read:
       path: /catalog/services/{service_id}
       method: GET
-    schema:
-      ignores:
-      - annotations
-      - lifecycle
-      - owner
   catalog_service_dependencies:
     read:
       path: /catalog/services/{service_id}/dependencies
       method: GET
-    schema:
-      ignores:
-      - edges.to.owner
   catalog_service_dependents:
     read:
       path: /catalog/services/{service_id}/dependents
       method: GET
-    schema:
-      ignores:
-      - edges.to.owner
   catalog_service_deployments:
     read:
       path: /catalog/services/{service_id}/deployments
@@ -1050,8 +1020,6 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - entries.limited_to.subject
-      - entries.subject
       - limit
       - next_token
   group_ai_agent_by_handle:
@@ -1076,7 +1044,6 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - items.subject
       - limit
       - next_token
   group_ai_org_model_connections:
@@ -1099,10 +1066,6 @@ data_sources:
     read:
       path: /groups/{group_id}/approval-policy
       method: GET
-    schema:
-      ignores:
-      - rules.approvers
-      - rules_here.approvers
   group_branch_rule:
     read:
       path: /groups/{group_id}/branch-rules/{branch_rule_id}
@@ -1124,17 +1087,14 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - environments.scope
       - limit
       - next_token
-      - rows.service.owner
   group_catalog_environments:
     read:
       path: /groups/{group_id}/catalog/environments
       method: GET
     schema:
       ignores:
-      - items.scope
       - limit
       - next_token
   group_catalog_scorecards:
@@ -1143,26 +1103,18 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - items.scope
       - limit
       - next_token
   group_catalog_service_by_slug:
     read:
       path: /groups/{group_id}/catalog/services/by-slug/{slug}
       method: GET
-    schema:
-      ignores:
-      - annotations
-      - lifecycle
-      - owner
   group_catalog_services:
     read:
       path: /groups/{group_id}/catalog/services
       method: GET
     schema:
       ignores:
-      - items.service.owner
-      - lifecycle
       - limit
       - next_token
   group_channels:
@@ -1181,27 +1133,14 @@ data_sources:
     read:
       path: /groups/{group_id}/issue-blueprints/{blueprint_id}
       method: GET
-    schema:
-      ignores:
-      - facets.binding
   group_issue_blueprints:
     read:
       path: /groups/{group_id}/issue-blueprints
       method: GET
-    schema:
-      ignores:
-      - facets.binding
   group_issue_settings:
     read:
       path: /groups/{group_id}/issue-settings
       method: GET
-    schema:
-      ignores:
-      - on_branch_created
-      - on_mr_closed
-      - on_mr_merged
-      - on_mr_opened
-      - transitions
   group_iteration:
     read:
       path: /groups/{group_id}/iterations/{iteration_id}
@@ -1238,9 +1177,6 @@ data_sources:
     read:
       path: /groups/{group_id}/milestones/{milestone_id}
       method: GET
-    schema:
-      ignores:
-      - items.issue_ref.scope
   group_milestones:
     read:
       path: /groups/{group_id}/milestones
@@ -1273,9 +1209,6 @@ data_sources:
     read:
       path: /groups/{group_id}/providers/{provider_id}
       method: GET
-    schema:
-      ignores:
-      - allowed_versions
   group_provider_connection:
     read:
       path: /groups/{group_id}/provider-connections/{connection_id}
@@ -1284,17 +1217,12 @@ data_sources:
       attributes:
         aliases:
           connection_id: id
-      ignores:
-      - config_overrides
-      - federation_target
   group_provider_connections:
     read:
       path: /groups/{group_id}/provider-connections
       method: GET
     schema:
       ignores:
-      - items.config_overrides
-      - items.federation_target
       - limit
       - next_token
   group_provider_policy:
@@ -1305,9 +1233,6 @@ data_sources:
     read:
       path: /groups/{group_id}/providers
       method: GET
-    schema:
-      ignores:
-      - items.allowed_versions
   group_push_rules:
     read:
       path: /groups/{group_id}/push-rules
@@ -1406,10 +1331,6 @@ data_sources:
     read:
       path: /issue-criterion-kinds
       method: GET
-    schema:
-      ignores:
-      - kinds.config_schema
-      - kinds.fields.field_type
   provider:
     read:
       path: /providers/{provider_id}
@@ -1418,32 +1339,18 @@ data_sources:
       attributes:
         aliases:
           provider_id: id
-      ignores:
-      - auth_schema
-      - visibility
   provider_capabilities:
     read:
       path: /providers/{provider_id}/capabilities
       method: GET
-    schema:
-      ignores:
-      - items.config_schema
   provider_listing:
     read:
       path: /providers/{provider_id}/listing
       method: GET
-    schema:
-      ignores:
-      - provider
-      - provider.visibility
   provider_submission:
     read:
       path: /provider-submissions/{submission_id}
       method: GET
-    schema:
-      ignores:
-      - auth_schema
-      - manifest.capabilities.config_schema
   provider_submissions:
     read:
       path: /providers/{provider_id}/submissions
@@ -1452,16 +1359,12 @@ data_sources:
     read:
       path: /providers/{provider_id}/versions/{version}
       method: GET
-    schema:
-      ignores:
-      - capabilities.config_schema
   provider_versions:
     read:
       path: /providers/{provider_id}/versions
       method: GET
     schema:
       ignores:
-      - items.capabilities.config_schema
       - limit
       - next_token
   providers:
@@ -1470,7 +1373,6 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - items.visibility
       - limit
       - next_token
   publisher:
@@ -1507,18 +1409,12 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - entries.limited_to.subject
-      - entries.subject
       - limit
       - next_token
   repository_approval_policy:
     read:
       path: /repositories/{repo_id}/approval-policy
       method: GET
-    schema:
-      ignores:
-      - rules.approvers
-      - rules_here.approvers
   repository_branch:
     read:
       path: /repositories/{repo_id}/branches/{branch_name}
@@ -1552,25 +1448,18 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - items.scope
       - limit
       - next_token
   repository_catalog_resolve:
     read:
       path: /repositories/{repo_id}/catalog/resolve
       method: GET
-    schema:
-      ignores:
-      - resolved.overlapping.owner
-      - resolved.service.owner
   repository_catalog_services:
     read:
       path: /repositories/{repo_id}/catalog/services
       method: GET
     schema:
       ignores:
-      - items.service.owner
-      - lifecycle
       - limit
       - next_token
   repository_fork:
@@ -1593,27 +1482,14 @@ data_sources:
     read:
       path: /repositories/{repo_id}/issue-blueprints/{blueprint_id}
       method: GET
-    schema:
-      ignores:
-      - facets.binding
   repository_issue_blueprints:
     read:
       path: /repositories/{repo_id}/issue-blueprints
       method: GET
-    schema:
-      ignores:
-      - facets.binding
   repository_issue_settings:
     read:
       path: /repositories/{repo_id}/issue-settings
       method: GET
-    schema:
-      ignores:
-      - on_branch_created
-      - on_mr_closed
-      - on_mr_merged
-      - on_mr_opened
-      - transitions
   repository_labels:
     read:
       path: /repositories/{repo_id}/labels
@@ -1634,9 +1510,6 @@ data_sources:
     read:
       path: /repositories/{repo_id}/milestones/{milestone_id}
       method: GET
-    schema:
-      ignores:
-      - items.issue_ref.scope
   repository_milestones:
     read:
       path: /repositories/{repo_id}/milestones
@@ -1653,12 +1526,6 @@ data_sources:
       attributes:
         aliases:
           pipeline_id: id
-      ignores:
-      - component_instances.params
-      - stages.nodes.approval.approvers
-      - stages.nodes.config
-      - stages.nodes.matrix
-      - trigger_config
   repository_pipeline_component:
     read:
       path: /repositories/{repo_id}/pipeline-components/{component_id}
@@ -1667,26 +1534,10 @@ data_sources:
       attributes:
         aliases:
           component_id: id
-      ignores:
-      - body.component_instances.params
-      - body.nodes.node.approval.approvers
-      - body.nodes.node.config
-      - body.nodes.node.matrix
-      - body.parameters.allowed_values
-      - body.parameters.default
-      - scope
   repository_pipeline_component_version:
     read:
       path: /repositories/{repo_id}/pipeline-components/{component_id}/versions/{version}
       method: GET
-    schema:
-      ignores:
-      - body.component_instances.params
-      - body.nodes.node.approval.approvers
-      - body.nodes.node.config
-      - body.nodes.node.matrix
-      - body.parameters.allowed_values
-      - body.parameters.default
   repository_pipeline_component_versions:
     read:
       path: /repositories/{repo_id}/pipeline-components/{component_id}/versions
@@ -1701,26 +1552,12 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - items.body.component_instances.params
-      - items.body.nodes.node.approval.approvers
-      - items.body.nodes.node.config
-      - items.body.nodes.node.matrix
-      - items.body.parameters.allowed_values
-      - items.body.parameters.default
-      - items.scope
       - limit
       - next_token
   repository_pipeline_file:
     read:
       path: /repositories/{repo_id}/pipeline-files/{pipeline_name}
       method: GET
-    schema:
-      ignores:
-      - definition.component_instances.params
-      - definition.stages.nodes.approval.approvers
-      - definition.stages.nodes.config
-      - definition.stages.nodes.matrix
-      - definition.trigger_config
   repository_pipeline_files:
     read:
       path: /repositories/{repo_id}/pipeline-files
@@ -1746,11 +1583,6 @@ data_sources:
       method: GET
     schema:
       ignores:
-      - items.component_instances.params
-      - items.stages.nodes.approval.approvers
-      - items.stages.nodes.config
-      - items.stages.nodes.matrix
-      - items.trigger_config
       - limit
       - next_token
   repository_profile:
@@ -1761,9 +1593,6 @@ data_sources:
     read:
       path: /repositories/{repo_id}/providers/{provider_id}
       method: GET
-    schema:
-      ignores:
-      - allowed_versions
   repository_provider_connection:
     read:
       path: /repositories/{repo_id}/provider-connections/{connection_id}
@@ -1772,17 +1601,12 @@ data_sources:
       attributes:
         aliases:
           connection_id: id
-      ignores:
-      - config_overrides
-      - federation_target
   repository_provider_connections:
     read:
       path: /repositories/{repo_id}/provider-connections
       method: GET
     schema:
       ignores:
-      - items.config_overrides
-      - items.federation_target
       - limit
       - next_token
   repository_provider_policy:
@@ -1793,9 +1617,6 @@ data_sources:
     read:
       path: /repositories/{repo_id}/providers
       method: GET
-    schema:
-      ignores:
-      - items.allowed_versions
   repository_push_rules:
     read:
       path: /repositories/{repo_id}/push-rules
@@ -1824,10 +1645,6 @@ data_sources:
     read:
       path: /repositories/{repo_id}/resolved-provider-connections
       method: GET
-    schema:
-      ignores:
-      - items.config_overrides
-      - items.federation_target
   repository_service_accounts:
     read:
       path: /repositories/{repo_id}/service-accounts

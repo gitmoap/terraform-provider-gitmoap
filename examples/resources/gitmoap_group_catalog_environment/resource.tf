@@ -9,10 +9,15 @@ resource "gitmoap_group_catalog_environment" "production" {
   tier         = "production"
   url          = "https://api.example.com"
 
-  # Deploys come from main only, and wait five minutes before they start.
+  # Deploys come from main only, once a Maintainer other than whoever started them approves.
   protection = {
-    allowed_refs       = ["main"]
-    wait_timer_seconds = 300
+    allowed_refs          = ["main"]
+    requires_approval     = true
+    required              = 1
+    prevent_self_approval = true
+    approvers = [
+      { role = { min = "maintainer", at = { group = data.gitmoap_group_by_path.platform.group_id } } },
+    ]
   }
 
   concurrency = {

@@ -26,11 +26,13 @@ policy add to the group's; merge request settings only take over from the group'
 
 {{ tffile "examples/scenarios/protected-repository/main.tf" }}
 
-### A service account for CI, its token stored for the pipelines
+### A service account for CI, its token handed to the pipelines
 
-A service account gets the access it needs and no more. Its token is narrowed further, to read
-one repository, and handed to that repository's pipelines as a secret variable: nobody copies it
-by hand. To rotate it, run `terraform apply -replace=gitmoap_service_account_token.ci`.
+A service account gets the access it needs and no more, and its token is narrowed to one
+repository. Terraform hands the token to that repository's pipelines, as a secret variable and as
+the credentials of a gitmoap provider connection, both write-only: nobody copies it by hand, and
+neither keeps it in the state. When the token is replaced, say with
+`terraform apply -replace=gitmoap_service_account_token.ci`, both are replaced with it.
 
 {{ tffile "examples/scenarios/ci-service-account/main.tf" }}
 
@@ -38,9 +40,18 @@ by hand. To rotate it, run `terraform apply -replace=gitmoap_service_account_tok
 
 The payments service is one folder of the services monorepo: the catalog knows where its code is,
 where it deploys, and what each environment gives it. Production only takes deploys from main,
-one at a time.
+one at a time, approved by a Maintainer other than whoever started them.
 
 {{ tffile "examples/scenarios/service-catalog/main.tf" }}
+
+### A short-lived token for one run
+
+An ephemeral token, minted when Terraform opens it and revoked when it's done, configures a second
+gitmoap provider that only reads groups: the rest of the run can't write anything through it, and
+the token is never in the plan or the state (Terraform 1.10 and later). The service account it acts
+as exists already, since Terraform can't configure a provider with what the same run creates.
+
+{{ tffile "examples/scenarios/short-lived-token/main.tf" }}
 
 ### A team, with its members found by username
 
@@ -70,6 +81,8 @@ A blueprint is a work item type of the organization's own, built on a base type.
 facets becomes an acceptance criterion on every work item of that type, and a required one has
 to be met before the item closes.
 
+The settings also move work items along with their merge requests.
+
 {{ tffile "examples/scenarios/issue-types/main.tf" }}
 
 ### Defaults for every repository in an organization
@@ -79,6 +92,14 @@ once. An `enforced` setting can't be relaxed further down; the others can be ove
 subgroup or a repository.
 
 {{ tffile "examples/scenarios/organization-defaults/main.tf" }}
+
+### Reviews, by a team given access
+
+A team of reviewers is given access to the payments group through a grant, and an approval rule
+asks for one of their approvals before anything merges into main in any of the group's
+repositories.
+
+{{ tffile "examples/scenarios/reviews-and-access/main.tf" }}
 
 ### Single sign-on through an identity provider
 
@@ -96,12 +117,13 @@ launch, and an iteration outside the cadence covers the week before it.
 
 {{ tffile "examples/scenarios/sprints-and-milestones/main.tf" }}
 
-### Webhooks with generated secrets
+### Webhooks whose secrets never reach the state
 
-Each endpoint checks deliveries against a secret, generated here with the
-[random provider](https://registry.terraform.io/providers/hashicorp/random/latest/docs) rather than
-written down. The secrets end up in Terraform's state, so keep the state somewhere safe.
+Each endpoint checks deliveries against a secret. Here the secrets come in through an ephemeral
+variable, say from `TF_VAR_webhook_secrets`, and go to gitmoap write-only, so they're in neither
+Terraform's plan nor its state (Terraform 1.11 and later). Terraform can't tell when a value it
+doesn't keep changes: after changing a secret, change its `secret_wo_version` too.
 
-{{ tffile "examples/scenarios/webhooks-with-generated-secrets/main.tf" }}
+{{ tffile "examples/scenarios/webhooks-with-write-only-secrets/main.tf" }}
 
 {{ .SchemaMarkdown | trimspace }}

@@ -32,6 +32,9 @@ data "gitmoap_catalog_check_kinds" "example" {
 
 Read-Only:
 
+- `config_schema` (String) A JSON Schema over the fields — render a form from this.
+
+JSON: set it with `jsonencode()`.
 - `description` (String) What the check means, and the one thing to do about a failure.
 - `fields` (Attributes List) (see [below for nested schema](#nestedatt--kinds--fields))
 - `invalidated_by` (List of String) The kinds of activity that can change this check's answer, causing it to be re-evaluated.
@@ -47,6 +50,27 @@ whose answer can change with time alone.
 Read-Only:
 
 - `description` (String)
+- `field_type` (Attributes) The type of a criterion-kind field, which decides the form control that suits it.
+
+`type` says which applies: `text`; `glob`; `number`, with `max`, `min`; `choice`, with `options`. (see [below for nested schema](#nestedatt--kinds--fields--field_type))
 - `label` (String)
 - `name` (String)
 - `required` (Boolean)
+
+<a id="nestedatt--kinds--fields--field_type"></a>
+### Nested Schema for `kinds.fields.field_type`
+
+Read-Only:
+
+- `max` (Number)
+- `min` (Number)
+- `options` (Attributes List) (see [below for nested schema](#nestedatt--kinds--fields--field_type--options))
+- `type` (String)
+
+<a id="nestedatt--kinds--fields--field_type--options"></a>
+### Nested Schema for `kinds.fields.field_type.options`
+
+Read-Only:
+
+- `label` (String)
+- `value` (String)

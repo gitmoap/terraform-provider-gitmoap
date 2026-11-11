@@ -39,6 +39,10 @@ func newRestResource(name string, schemaFunc func(context.Context) schema.Schema
 	}
 }
 
+func (r *restResource) fields() fields {
+	return fields{renames: r.api.Renames, transforms: r.api.Transforms}
+}
+
 func (r *restResource) typeName() string {
 	return "gitmoap_" + r.name
 }
@@ -49,6 +53,9 @@ func (r *restResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *restResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := r.schema(ctx)
+	if err := addWriteOnly(&s, r.api.WriteOnly); err != nil {
+		resp.Diagnostics.AddError("Invalid schema for "+r.typeName(), err.Error())
+	}
 	if r.override.Schema != nil {
 		r.override.Schema(&s)
 	}
@@ -87,7 +94,14 @@ func (r *restResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 			planned = withAttribute(planned, name, prior)
 			continue
 		}
-		if value, _ := attributeAt(planned, name); !value.Equal(prior) {
+		value, _ := attributeAt(planned, name)
+		if value.IsKnown() && !value.IsFullyKnown() {
+			// Its computed parts are unknown only because something else changes: they can't
+			// change without replacing it either.
+			value = fillUnknown(value, prior)
+			planned = withAttribute(planned, name, value)
+		}
+		if !value.Equal(prior) {
 			resp.RequiresReplace = append(resp.RequiresReplace, path.Root(name))
 		}
 	}
@@ -96,7 +110,8 @@ func (r *restResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 
 func (r *restResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	planned := req.Plan.Raw
-	call, err := r.newCall("create", r.api.Create, planned, planned)
+	values := withWriteOnly(planned, req.Config.Raw, r.api.WriteOnly)
+	call, err := r.newCall("create", r.api.Create, planned, values)
 	if err != nil {
 		resp.Diagnostics.AddError("Couldn't create "+r.typeName(), err.Error())
 		return
@@ -110,6 +125,38 @@ func (r *restResource) Create(ctx context.Context, req resource.CreateRequest, r
 	state, diags := r.settle(ctx, "create", planned, created)
 	resp.Diagnostics.Append(diags...)
 	resp.State.Raw = state
+	if diags.HasError() || !r.setsUpdateOnly(planned) {
+		return
+	}
+
+	// What only an update takes, it sets now.
+	call, err = r.newCall("update", *r.api.Update, state, values)
+	if err != nil {
+		resp.Diagnostics.AddError(r.typeName()+" was created, but setting "+strings.Join(r.api.UpdateOnly, ", ")+" failed", err.Error())
+		return
+	}
+	call.plan, call.state = planned, state
+	updated, err := r.send(ctx, call)
+	if err != nil {
+		resp.Diagnostics.AddError(r.typeName()+" was created, but setting "+strings.Join(r.api.UpdateOnly, ", ")+" failed", err.Error())
+		return
+	}
+	state, diags = r.settle(ctx, "update", planned, updated)
+	resp.Diagnostics.Append(diags...)
+	resp.State.Raw = state
+}
+
+// setsUpdateOnly reports whether the plan sets an attribute only the update operation takes.
+func (r *restResource) setsUpdateOnly(planned tftypes.Value) bool {
+	if r.api.Update == nil {
+		return false
+	}
+	for _, name := range r.api.UpdateOnly {
+		if value, ok := attributeAt(planned, name); ok && value.IsKnown() && !value.IsNull() {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *restResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -122,7 +169,7 @@ func (r *restResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	state, err := fromJSON(req.State.Raw.Type(), object, req.State.Raw, "", r.api.Renames)
+	state, err := fromJSON(req.State.Raw.Type(), object, req.State.Raw, "", r.fields())
 	if err != nil {
 		resp.Diagnostics.AddError("Couldn't read "+r.typeName(), err.Error())
 		return
@@ -138,7 +185,7 @@ func (r *restResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 	// The path takes the identity the object has now: an update can change it.
-	call, err := r.newCall("update", *r.api.Update, req.State.Raw, planned)
+	call, err := r.newCall("update", *r.api.Update, req.State.Raw, withWriteOnly(planned, req.Config.Raw, r.api.WriteOnly))
 	if err != nil {
 		resp.Diagnostics.AddError("Couldn't update "+r.typeName(), err.Error())
 		return
@@ -216,7 +263,7 @@ func (r *restResource) settle(ctx context.Context, operation string, planned tft
 				return unknownToNull(state), diags
 			}
 		}
-		converted, err := fromJSON(planned.Type(), object, planned, "", r.api.Renames)
+		converted, err := fromJSON(planned.Type(), object, planned, "", r.fields())
 		if err != nil {
 			diags.AddError("Couldn't "+operation+" "+r.typeName(), err.Error())
 			return unknownToNull(state), diags
@@ -231,7 +278,7 @@ func (r *restResource) settle(ctx context.Context, operation string, planned tft
 	case !found:
 		diags.AddError(r.typeName()+" was "+operation+"d, but reading it back didn't find it", "The API may need a moment, or the provider is looking in the wrong place.")
 	default:
-		converted, err := fromJSON(planned.Type(), object, state, "", r.api.Renames)
+		converted, err := fromJSON(planned.Type(), object, state, "", r.fields())
 		if err != nil {
 			diags.AddError(r.typeName()+" was "+operation+"d, but reading it back failed", err.Error())
 			break
@@ -318,7 +365,7 @@ func (r *restResource) newCall(name string, op operation, identity, values tftyp
 			if name == "update" && !value.IsKnown() {
 				value, _ = attributeAt(identity, attribute)
 			}
-			converted, ok, err := toJSON(value, attribute, r.api.Renames)
+			converted, ok, err := toJSON(value, attribute, r.fields())
 			if err != nil {
 				return nil, err
 			}

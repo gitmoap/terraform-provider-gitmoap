@@ -53,6 +53,24 @@ func GroupCatalogScorecardsDataSourceSchema(ctx context.Context) schema.Schema {
 						"name": schema.StringAttribute{
 							Computed: true,
 						},
+						"scope": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"group": schema.StringAttribute{
+									Computed: true,
+								},
+								"repo": schema.StringAttribute{
+									Computed: true,
+								},
+							},
+							CustomType: ScopeType{
+								ObjectType: types.ObjectType{
+									AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+							MarkdownDescription: "A group or a repository, whichever a setting belongs to.\n\nSet one of `group` or `repo`.",
+						},
 						"scorecard_id": schema.StringAttribute{
 							Computed: true,
 						},
@@ -196,6 +214,24 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
 	}
 
+	scopeAttribute, ok := attributes["scope"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeVal, ok := scopeAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope expected to be basetypes.ObjectValue, was: %T`, scopeAttribute))
+	}
+
 	scorecardIdAttribute, ok := attributes["scorecard_id"]
 
 	if !ok {
@@ -242,6 +278,7 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		Enabled:        enabledVal,
 		LevelCount:     levelCountVal,
 		Name:           nameVal,
+		Scope:          scopeVal,
 		ScorecardId:    scorecardIdVal,
 		Slug:           slugVal,
 		state:          attr.ValueStateKnown,
@@ -401,6 +438,24 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
 	}
 
+	scopeAttribute, ok := attributes["scope"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	scopeVal, ok := scopeAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope expected to be basetypes.ObjectValue, was: %T`, scopeAttribute))
+	}
+
 	scorecardIdAttribute, ok := attributes["scorecard_id"]
 
 	if !ok {
@@ -447,6 +502,7 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		Enabled:        enabledVal,
 		LevelCount:     levelCountVal,
 		Name:           nameVal,
+		Scope:          scopeVal,
 		ScorecardId:    scorecardIdVal,
 		Slug:           slugVal,
 		state:          attr.ValueStateKnown,
@@ -526,13 +582,14 @@ type ItemsValue struct {
 	Enabled        basetypes.BoolValue   `tfsdk:"enabled"`
 	LevelCount     basetypes.Int64Value  `tfsdk:"level_count"`
 	Name           basetypes.StringValue `tfsdk:"name"`
+	Scope          basetypes.ObjectValue `tfsdk:"scope"`
 	ScorecardId    basetypes.StringValue `tfsdk:"scorecard_id"`
 	Slug           basetypes.StringValue `tfsdk:"slug"`
 	state          attr.ValueState
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 8)
 
 	var val tftypes.Value
 	var err error
@@ -542,6 +599,9 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["enabled"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["level_count"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["scope"] = basetypes.ObjectType{
+		AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["scorecard_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["slug"] = basetypes.StringType{}.TerraformType(ctx)
 
@@ -549,7 +609,7 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 8)
 
 		val, err = v.CampaignActive.ToTerraformValue(ctx)
 
@@ -590,6 +650,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["name"] = val
+
+		val, err = v.Scope.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope"] = val
 
 		val, err = v.ScorecardId.ToTerraformValue(ctx)
 
@@ -636,14 +704,38 @@ func (v ItemsValue) String() string {
 func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var scope basetypes.ObjectValue
+
+	if v.Scope.IsNull() {
+		scope = types.ObjectNull(
+			ScopeValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Scope.IsUnknown() {
+		scope = types.ObjectUnknown(
+			ScopeValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Scope.IsNull() && !v.Scope.IsUnknown() {
+		scope = types.ObjectValueMust(
+			ScopeValue{}.AttributeTypes(ctx),
+			v.Scope.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"campaign_active": basetypes.BoolType{},
 		"check_count":     basetypes.Int64Type{},
 		"enabled":         basetypes.BoolType{},
 		"level_count":     basetypes.Int64Type{},
 		"name":            basetypes.StringType{},
-		"scorecard_id":    basetypes.StringType{},
-		"slug":            basetypes.StringType{},
+		"scope": basetypes.ObjectType{
+			AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+		},
+		"scorecard_id": basetypes.StringType{},
+		"slug":         basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -662,6 +754,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"enabled":         v.Enabled,
 			"level_count":     v.LevelCount,
 			"name":            v.Name,
+			"scope":           scope,
 			"scorecard_id":    v.ScorecardId,
 			"slug":            v.Slug,
 		})
@@ -704,6 +797,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Scope.Equal(other.Scope) {
+		return false
+	}
+
 	if !v.ScorecardId.Equal(other.ScorecardId) {
 		return false
 	}
@@ -730,7 +827,389 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"enabled":         basetypes.BoolType{},
 		"level_count":     basetypes.Int64Type{},
 		"name":            basetypes.StringType{},
-		"scorecard_id":    basetypes.StringType{},
-		"slug":            basetypes.StringType{},
+		"scope": basetypes.ObjectType{
+			AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+		},
+		"scorecard_id": basetypes.StringType{},
+		"slug":         basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ScopeType{}
+
+type ScopeType struct {
+	basetypes.ObjectType
+}
+
+func (t ScopeType) Equal(o attr.Type) bool {
+	other, ok := o.(ScopeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ScopeType) String() string {
+	return "ScopeType"
+}
+
+func (t ScopeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return nil, diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return nil, diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ScopeValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopeValueNull() ScopeValue {
+	return ScopeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewScopeValueUnknown() ScopeValue {
+	return ScopeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewScopeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ScopeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ScopeValue Attribute Value",
+				"While creating a ScopeValue value, a missing attribute value was detected. "+
+					"A ScopeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ScopeValue Attribute Type",
+				"While creating a ScopeValue value, an invalid attribute value was detected. "+
+					"A ScopeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ScopeValue Attribute Value",
+				"While creating a ScopeValue value, an extra attribute value was detected. "+
+					"A ScopeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ScopeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewScopeValueUnknown(), diags
+	}
+
+	groupAttribute, ok := attributes["group"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group is missing from object`)
+
+		return NewScopeValueUnknown(), diags
+	}
+
+	groupVal, ok := groupAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group expected to be basetypes.StringValue, was: %T`, groupAttribute))
+	}
+
+	repoAttribute, ok := attributes["repo"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`repo is missing from object`)
+
+		return NewScopeValueUnknown(), diags
+	}
+
+	repoVal, ok := repoAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`repo expected to be basetypes.StringValue, was: %T`, repoAttribute))
+	}
+
+	if diags.HasError() {
+		return NewScopeValueUnknown(), diags
+	}
+
+	return ScopeValue{
+		Group: groupVal,
+		Repo:  repoVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ScopeValue {
+	object, diags := NewScopeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewScopeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ScopeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewScopeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewScopeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewScopeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewScopeValueMust(ScopeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ScopeType) ValueType(ctx context.Context) attr.Value {
+	return ScopeValue{}
+}
+
+var _ basetypes.ObjectValuable = ScopeValue{}
+
+type ScopeValue struct {
+	Group basetypes.StringValue `tfsdk:"group"`
+	Repo  basetypes.StringValue `tfsdk:"repo"`
+	state attr.ValueState
+}
+
+func (v ScopeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["group"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["repo"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Group.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["group"] = val
+
+		val, err = v.Repo.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["repo"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ScopeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ScopeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ScopeValue) String() string {
+	return "ScopeValue"
+}
+
+func (v ScopeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"group": v.Group,
+			"repo":  v.Repo,
+		})
+
+	return objVal, diags
+}
+
+func (v ScopeValue) Equal(o attr.Value) bool {
+	other, ok := o.(ScopeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Group.Equal(other.Group) {
+		return false
+	}
+
+	if !v.Repo.Equal(other.Repo) {
+		return false
+	}
+
+	return true
+}
+
+func (v ScopeValue) Type(ctx context.Context) attr.Type {
+	return ScopeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ScopeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"group": basetypes.StringType{},
+		"repo":  basetypes.StringType{},
 	}
 }

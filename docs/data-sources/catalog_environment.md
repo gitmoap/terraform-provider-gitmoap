@@ -57,6 +57,9 @@ the slug it forms the environment's OIDC claim, `{owner_full_path}:{slug}`.
 - `protection` (Attributes) The rules for deploying to an environment: whether a deployment needs approval and from whom,
 which refs may deploy, and which groups and repositories may use it. Approvers are checked when
 the approval is given, so a change in who belongs to a team applies at once. (see [below for nested schema](#nestedatt--protection))
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--scope))
 - `slug` (String)
 - `tier` (String) What kind of environment this is, whatever it is called: `development`, `testing`, `staging`
 or `production`. A `production` environment is protected by default.
@@ -75,6 +78,9 @@ Read-Only:
 - `max_lock_wait_seconds` (Number) How long a queued deploy waits for its turn before failing, in seconds: from 60 (shorter
 values are rounded up) to 21600. `0`, the default, means it waits for as long as the
 pipeline's timeout allows.
+- `mode` (String) What happens when a run wants to deploy while another run holds the lock: `queue` (the
+default) waits its turn, `skip` skips the step, and `cancel_previous` cancels the other run.
+`cancel_previous` is available on environments only, not on a step's resource group.
 
 
 <a id="nestedatt--created_by"></a>
@@ -101,8 +107,13 @@ digits, a shape no open account may take, with an address under `.invalid`.
 
 Read-Only:
 
+- `accept_from` (String) Which kinds of approval count toward a rule.
 - `allowed_refs` (List of String) Globs the ref a run was started from must match for it to deploy here, in the same pattern
 language as branch rules. Empty allows any ref.
+- `allowed_scopes` (Attributes List) The only groups and repositories allowed to deploy to this environment. Absent means the
+group or repository that owns it and everything beneath it. (see [below for nested schema](#nestedatt--protection--allowed_scopes))
+- `approvers` (Attributes List) Who may approve: people, teams, or a role at a group or repository. Authority to approve a
+deployment comes from being named here, never from a role alone. (see [below for nested schema](#nestedatt--protection--approvers))
 - `prevent_self_approval` (Boolean) Whether the person who started the run is barred from approving its deployment. What counts
 is who started the run, not who wrote the commit: deploying somebody else's commit is still
 your deploy.
@@ -111,3 +122,55 @@ your deploy.
 and no credentials are issued while it waits.
 - `wait_timer_seconds` (Number) How long a deployment waits before it may start, in seconds, up to one hour. `0` means no
 wait.
+
+<a id="nestedatt--protection--allowed_scopes"></a>
+### Nested Schema for `protection.allowed_scopes`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
+
+
+<a id="nestedatt--protection--approvers"></a>
+### Nested Schema for `protection.approvers`
+
+Read-Only:
+
+- `anyone` (Boolean) Anyone who may approve merge requests in the repository.
+- `code_owners` (Boolean) The owners of the files the merge request changes.
+- `person` (String)
+- `role` (Attributes) Anyone whose role at a group or repository is at least `min`. (see [below for nested schema](#nestedatt--protection--approvers--role))
+- `team` (String)
+
+<a id="nestedatt--protection--approvers--role"></a>
+### Nested Schema for `protection.approvers.role`
+
+Read-Only:
+
+- `at` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--protection--approvers--role--at))
+- `direct_only` (Boolean) Count only access given on `at` itself — directly or through a team — and not access
+that reaches it from a group above.
+- `min` (String)
+
+<a id="nestedatt--protection--approvers--role--at"></a>
+### Nested Schema for `protection.approvers.role.at`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
+
+
+
+
+
+<a id="nestedatt--scope"></a>
+### Nested Schema for `scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)

@@ -41,10 +41,11 @@ data "gitmoap_group_by_path" "acme" {
 }
 
 resource "gitmoap_repository" "payments" {
-  group_id        = data.gitmoap_group_by_path.acme.group_id
-  repository_name = "payments"
-  description     = "Card payments"
-  visibility      = "private"
+  group_id          = data.gitmoap_group_by_path.acme.group_id
+  repository_name   = "payments"
+  description       = "Card payments"
+  visibility        = "private"
+  pipelines_enabled = true
 }
 
 locals {
@@ -74,6 +75,14 @@ resource "gitmoap_repository_approval_policy" "payments" {
   committers_can_approve  = false
   last_pusher_can_approve = false
   reset_on_push           = true
+}
+
+# The owners of the files a merge request changes have to approve it.
+resource "gitmoap_repository_approval_rule" "code_owners" {
+  repo_id   = local.repo_id
+  name      = "Code owners"
+  required  = 1
+  approvers = [{ code_owners = true }]
 }
 
 # Every merge is squashed, and only once its pipeline passed.

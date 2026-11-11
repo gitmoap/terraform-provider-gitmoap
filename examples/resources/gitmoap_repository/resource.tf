@@ -7,4 +7,7 @@ resource "gitmoap_repository" "api" {
   repository_name = "api"
   description     = "The public API"
   visibility      = "private"
+
+  # Only an update can turn pipelines on: the provider creates the repository, then updates it.
+  pipelines_enabled = true
 }

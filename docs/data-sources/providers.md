@@ -64,3 +64,14 @@ builds itself, which have no publisher.
 providers' are.
 - `tier` (String) How a pipeline provider is distributed and how much it is vouched for.
 - `updated_at` (String)
+- `visibility` (Attributes) Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.
+
+`kind` says which applies: `public`; `private`, with `owning_group_id`. (see [below for nested schema](#nestedatt--items--visibility))
+
+<a id="nestedatt--items--visibility"></a>
+### Nested Schema for `items.visibility`
+
+Read-Only:
+
+- `kind` (String)
+- `owning_group_id` (String)

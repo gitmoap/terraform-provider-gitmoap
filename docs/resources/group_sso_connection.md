@@ -20,6 +20,7 @@ The token needs `sso:manage` and `sso:read`.
 variable "oidc_client_secret" {
   type      = string
   sensitive = true
+  ephemeral = true
 }
 
 data "gitmoap_group_by_path" "acme" {
@@ -31,9 +32,10 @@ resource "gitmoap_group_sso_connection" "acme" {
   protocol = "oidc"
 
   oidc = {
-    issuer_url    = "https://acme.okta.com"
-    client_id     = "0oa1b2c3d4e5f6g7h8i9"
-    client_secret = var.oidc_client_secret
+    issuer_url               = "https://acme.okta.com"
+    client_id                = "0oa1b2c3d4e5f6g7h8i9"
+    client_secret_wo         = var.oidc_client_secret
+    client_secret_wo_version = 1
   }
 
   # Create an account the first time someone from a verified domain signs in.
@@ -57,6 +59,7 @@ variable "oidc_client_secret" {
   description = "The client secret of the gitmoap app in Okta."
   type        = string
   sensitive   = true
+  ephemeral   = true
 }
 
 locals {
@@ -74,9 +77,10 @@ resource "gitmoap_group_sso_connection" "okta" {
   protocol = "oidc"
 
   oidc = {
-    issuer_url    = "https://acme.okta.com"
-    client_id     = "0oa1b2c3d4e5f6g7h8i9"
-    client_secret = var.oidc_client_secret
+    issuer_url               = "https://acme.okta.com"
+    client_id                = "0oa1b2c3d4e5f6g7h8i9"
+    client_secret_wo         = var.oidc_client_secret
+    client_secret_wo_version = 1
   }
 
   attribute_mapping = {
@@ -124,6 +128,9 @@ resource "gitmoap_group_sso_invite" "contractor" {
 - `attribute_mapping` (Attributes) Which identity-provider claim or attribute supplies each gitmoap field. (see [below for nested schema](#nestedatt--attribute_mapping))
 - `auto_provision` (Boolean) Whether to create an account for a person from a verified domain the first time they sign in.
 Defaults to `false`.
+- `default_role` (Attributes) A role, as a grant names it: `{ "builtin": "developer" }` or `{ "custom": "<role id>" }`.
+
+Set one of `builtin` or `custom`. (see [below for nested schema](#nestedatt--default_role))
 - `enforced` (Boolean) Whether people from a verified domain must sign in through SSO. Defaults to `false`.
 - `idp_sync_max_age_days` (Number) Days, 1–365, a person's place on a team linked to an identity-provider group lasts without
 them signing in again to confirm it (default 30).
@@ -155,13 +162,29 @@ those groups follow it.
 - `username` (String) The claim a new account's username is derived from, if any.
 
 
+<a id="nestedatt--default_role"></a>
+### Nested Schema for `default_role`
+
+Optional:
+
+- `builtin` (String)
+- `custom` (String)
+
+Read-Only:
+
+- `name` (String) The role's display name: a built-in name such as `Developer`, or the custom role's name.
+- `rank` (String)
+
+
 <a id="nestedatt--oidc"></a>
 ### Nested Schema for `oidc`
 
 Optional:
 
 - `client_id` (String)
-- `client_secret` (String, Sensitive) The client secret. Write-only: it is stored encrypted and never returned.
+- `client_secret` (String, Sensitive) The client secret. Write-only: it is stored encrypted and never returned. Or set `client_secret_wo`, to keep it out of the state.
+- `client_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sets `client_secret` without keeping it in Terraform's plan or state: write-only, with Terraform 1.11 and later. Change `client_secret_wo_version` to send it again.
+- `client_secret_wo_version` (Number) A number to change when `client_secret_wo` changes, to send it again: Terraform can't tell, since it doesn't keep it.
 - `issuer_url` (String) The OIDC issuer URL. Its settings are discovered from `/.well-known/openid-configuration`.
 - `scopes` (List of String) The scopes to request. Defaults to `["openid", "email", "profile"]`.
 

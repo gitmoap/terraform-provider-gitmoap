@@ -27,6 +27,10 @@ func newRestDataSource(name string, schemaFunc func(context.Context) schema.Sche
 	}
 }
 
+func (d *restDataSource) fields() fields {
+	return fields{renames: d.api.Renames, transforms: d.api.Transforms}
+}
+
 func (d *restDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_" + d.name
 }
@@ -80,7 +84,7 @@ func (d *restDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			return
 		}
 	}
-	state, err := fromJSON(config.Type(), object, config, "", d.api.Renames)
+	state, err := fromJSON(config.Type(), object, config, "", d.fields())
 	if err != nil {
 		fail(err)
 		return

@@ -103,6 +103,44 @@ func GroupSsoConnectionResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 				MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
 			},
+			"default_role": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"builtin": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"guest",
+								"reporter",
+								"developer",
+								"maintainer",
+								"owner",
+							),
+						},
+					},
+					"custom": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+					"name": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The role's display name: a built-in name such as `Developer`, or the custom role's name.",
+						MarkdownDescription: "The role's display name: a built-in name such as `Developer`, or the custom role's name.",
+					},
+					"rank": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+				CustomType: DefaultRoleType{
+					ObjectType: types.ObjectType{
+						AttrTypes: DefaultRoleValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "A role, as a grant names it: `{ \"builtin\": \"developer\" }` or `{ \"custom\": \"<role id>\" }`.\n\nSet one of `builtin` or `custom`.",
+				MarkdownDescription: "A role, as a grant names it: `{ \"builtin\": \"developer\" }` or `{ \"custom\": \"<role id>\" }`.\n\nSet one of `builtin` or `custom`.",
+			},
 			"enforced": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -296,6 +334,7 @@ type GroupSsoConnectionModel struct {
 	CognitoIdpName     types.String          `tfsdk:"cognito_idp_name"`
 	CreatedAt          types.String          `tfsdk:"created_at"`
 	CreatedBy          CreatedByValue        `tfsdk:"created_by"`
+	DefaultRole        DefaultRoleValue      `tfsdk:"default_role"`
 	Enforced           types.Bool            `tfsdk:"enforced"`
 	GroupId            types.String          `tfsdk:"group_id"`
 	IdpSyncMaxAgeDays  types.Int64           `tfsdk:"idp_sync_max_age_days"`
@@ -1285,6 +1324,495 @@ func (v CreatedByValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"id":         basetypes.StringType{},
 		"kind":       basetypes.StringType{},
 		"username":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = DefaultRoleType{}
+
+type DefaultRoleType struct {
+	basetypes.ObjectType
+}
+
+func (t DefaultRoleType) Equal(o attr.Type) bool {
+	other, ok := o.(DefaultRoleType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DefaultRoleType) String() string {
+	return "DefaultRoleType"
+}
+
+func (t DefaultRoleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	builtinAttribute, ok := attributes["builtin"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`builtin is missing from object`)
+
+		return nil, diags
+	}
+
+	builtinVal, ok := builtinAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`builtin expected to be basetypes.StringValue, was: %T`, builtinAttribute))
+	}
+
+	customAttribute, ok := attributes["custom"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`custom is missing from object`)
+
+		return nil, diags
+	}
+
+	customVal, ok := customAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom expected to be basetypes.StringValue, was: %T`, customAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	rankAttribute, ok := attributes["rank"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rank is missing from object`)
+
+		return nil, diags
+	}
+
+	rankVal, ok := rankAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rank expected to be basetypes.StringValue, was: %T`, rankAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DefaultRoleValue{
+		Builtin: builtinVal,
+		Custom:  customVal,
+		Name:    nameVal,
+		Rank:    rankVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDefaultRoleValueNull() DefaultRoleValue {
+	return DefaultRoleValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDefaultRoleValueUnknown() DefaultRoleValue {
+	return DefaultRoleValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDefaultRoleValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DefaultRoleValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DefaultRoleValue Attribute Value",
+				"While creating a DefaultRoleValue value, a missing attribute value was detected. "+
+					"A DefaultRoleValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DefaultRoleValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DefaultRoleValue Attribute Type",
+				"While creating a DefaultRoleValue value, an invalid attribute value was detected. "+
+					"A DefaultRoleValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DefaultRoleValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DefaultRoleValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DefaultRoleValue Attribute Value",
+				"While creating a DefaultRoleValue value, an extra attribute value was detected. "+
+					"A DefaultRoleValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DefaultRoleValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDefaultRoleValueUnknown(), diags
+	}
+
+	builtinAttribute, ok := attributes["builtin"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`builtin is missing from object`)
+
+		return NewDefaultRoleValueUnknown(), diags
+	}
+
+	builtinVal, ok := builtinAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`builtin expected to be basetypes.StringValue, was: %T`, builtinAttribute))
+	}
+
+	customAttribute, ok := attributes["custom"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`custom is missing from object`)
+
+		return NewDefaultRoleValueUnknown(), diags
+	}
+
+	customVal, ok := customAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom expected to be basetypes.StringValue, was: %T`, customAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewDefaultRoleValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	rankAttribute, ok := attributes["rank"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rank is missing from object`)
+
+		return NewDefaultRoleValueUnknown(), diags
+	}
+
+	rankVal, ok := rankAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rank expected to be basetypes.StringValue, was: %T`, rankAttribute))
+	}
+
+	if diags.HasError() {
+		return NewDefaultRoleValueUnknown(), diags
+	}
+
+	return DefaultRoleValue{
+		Builtin: builtinVal,
+		Custom:  customVal,
+		Name:    nameVal,
+		Rank:    rankVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDefaultRoleValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DefaultRoleValue {
+	object, diags := NewDefaultRoleValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDefaultRoleValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DefaultRoleType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDefaultRoleValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDefaultRoleValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDefaultRoleValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDefaultRoleValueMust(DefaultRoleValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DefaultRoleType) ValueType(ctx context.Context) attr.Value {
+	return DefaultRoleValue{}
+}
+
+var _ basetypes.ObjectValuable = DefaultRoleValue{}
+
+type DefaultRoleValue struct {
+	Builtin basetypes.StringValue `tfsdk:"builtin"`
+	Custom  basetypes.StringValue `tfsdk:"custom"`
+	Name    basetypes.StringValue `tfsdk:"name"`
+	Rank    basetypes.StringValue `tfsdk:"rank"`
+	state   attr.ValueState
+}
+
+func (v DefaultRoleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["builtin"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["custom"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["rank"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Builtin.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["builtin"] = val
+
+		val, err = v.Custom.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["custom"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.Rank.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rank"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DefaultRoleValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DefaultRoleValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DefaultRoleValue) String() string {
+	return "DefaultRoleValue"
+}
+
+func (v DefaultRoleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"builtin": basetypes.StringType{},
+		"custom":  basetypes.StringType{},
+		"name":    basetypes.StringType{},
+		"rank":    basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"builtin": v.Builtin,
+			"custom":  v.Custom,
+			"name":    v.Name,
+			"rank":    v.Rank,
+		})
+
+	return objVal, diags
+}
+
+func (v DefaultRoleValue) Equal(o attr.Value) bool {
+	other, ok := o.(DefaultRoleValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Builtin.Equal(other.Builtin) {
+		return false
+	}
+
+	if !v.Custom.Equal(other.Custom) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.Rank.Equal(other.Rank) {
+		return false
+	}
+
+	return true
+}
+
+func (v DefaultRoleValue) Type(ctx context.Context) attr.Type {
+	return DefaultRoleType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DefaultRoleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"builtin": basetypes.StringType{},
+		"custom":  basetypes.StringType{},
+		"name":    basetypes.StringType{},
+		"rank":    basetypes.StringType{},
 	}
 }
 

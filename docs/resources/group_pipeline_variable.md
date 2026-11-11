@@ -19,6 +19,7 @@ The token needs `pipeline_variable:manage` and `pipeline_variable:read`.
 variable "registry_token" {
   type      = string
   sensitive = true
+  ephemeral = true
 }
 
 data "gitmoap_group_by_path" "platform" {
@@ -31,12 +32,13 @@ resource "gitmoap_group_pipeline_variable" "region" {
   value    = "eu-west-1"
 }
 
-# A secret value is write-only: the API never returns it.
+# A secret value is never returned by the API, and value_wo keeps it out of Terraform's state too.
 resource "gitmoap_group_pipeline_variable" "registry_token" {
-  group_id = data.gitmoap_group_by_path.platform.group_id
-  name     = "REGISTRY_TOKEN"
-  value    = var.registry_token
-  secret   = true
+  group_id         = data.gitmoap_group_by_path.platform.group_id
+  name             = "REGISTRY_TOKEN"
+  value_wo         = var.registry_token
+  value_wo_version = 1
+  secret           = true
 }
 ```
 
@@ -47,9 +49,10 @@ resource "gitmoap_group_pipeline_variable" "registry_token" {
 
 - `group_id` (String) The group's id
 - `name` (String)
-- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back.
 
 ### Optional
+
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `protected` (Boolean) Whether only a run on a protected branch or tag receives the variable: one a branch or tag
 rule protects, building a commit in that ref's history. A run on any other ref receives
@@ -58,6 +61,9 @@ it is refused. Defaults to `false`.
 - `secret` (Boolean) Whether the value is a secret. A secret's value can never be read back and is redacted from
 step logs; either way every step receives it as an environment variable. Defaults to
 `false`.
+- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back. Or set `value_wo`, to keep it out of the state.
+- `value_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sets `value` without keeping it in Terraform's plan or state: write-only, with Terraform 1.11 and later. Change `value_wo_version` to send it again.
+- `value_wo_version` (Number) A number to change when `value_wo` changes, to send it again: Terraform can't tell, since it doesn't keep it.
 
 ### Read-Only
 

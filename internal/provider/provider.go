@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -18,7 +19,10 @@ const (
 	tokenEnv        = "GITMOAP_TOKEN"
 )
 
-var _ provider.Provider = (*gitmoapProvider)(nil)
+var (
+	_ provider.Provider                       = (*gitmoapProvider)(nil)
+	_ provider.ProviderWithEphemeralResources = (*gitmoapProvider)(nil)
+)
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
@@ -82,6 +86,7 @@ func (p *gitmoapProvider) Configure(ctx context.Context, req provider.ConfigureR
 	client := NewClient(endpoint, token, "terraform-provider-gitmoap/"+p.version)
 	resp.DataSourceData = client
 	resp.ResourceData = client
+	resp.EphemeralResourceData = client
 }
 
 func (p *gitmoapProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -90,6 +95,10 @@ func (p *gitmoapProvider) Resources(ctx context.Context) []func() resource.Resou
 
 func (p *gitmoapProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return dataSources()
+}
+
+func (p *gitmoapProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
+	return []func() ephemeral.EphemeralResource{newEphemeralServiceAccountToken}
 }
 
 func firstSet(values ...string) string {

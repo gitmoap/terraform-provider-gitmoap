@@ -49,6 +49,69 @@ func AiRitualPresetsDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "The most one run may spend, in millionths of a dollar; $5 when absent. A run reaching it\nends early and applies nothing it had not finished.",
 										MarkdownDescription: "The most one run may spend, in millionths of a dollar; $5 when absent. A run reaching it\nends early and applies nothing it had not finished.",
 									},
+									"cadence": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"at": schema.StringAttribute{
+												Computed:            true,
+												Description:         "A time of day on a 24-hour clock, `HH:MM`, read in the organization's time zone.",
+												MarkdownDescription: "A time of day on a 24-hour clock, `HH:MM`, read in the organization's time zone.",
+											},
+											"boundary": schema.StringAttribute{
+												Computed:            true,
+												Description:         "A point in a cycle of the organization's iteration cadence.",
+												MarkdownDescription: "A point in a cycle of the organization's iteration cadence.",
+											},
+											"day": schema.StringAttribute{
+												Computed:            true,
+												Description:         "A day of the week.",
+												MarkdownDescription: "A day of the week.",
+											},
+											"days": schema.ListAttribute{
+												ElementType:         types.StringType,
+												Computed:            true,
+												Description:         "The days; empty means Monday to Friday.",
+												MarkdownDescription: "The days; empty means Monday to Friday.",
+											},
+											"every": schema.StringAttribute{
+												Computed: true,
+											},
+											"week": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Which week of the month a monthly ritual falls in.",
+												MarkdownDescription: "Which week of the month a monthly ritual falls in.",
+											},
+										},
+										CustomType: CadenceType{
+											ObjectType: types.ObjectType{
+												AttrTypes: CadenceValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "When a ritual runs, in the organization's time zone.\n\n`every` says which applies: `day`, with `at`, `days`; `week`, with `at`, `day`; `month`, with `at`, `day`, `week`; `cycle`, with `at`, `boundary`; `release`.",
+										MarkdownDescription: "When a ritual runs, in the organization's time zone.\n\n`every` says which applies: `day`, with `at`, `days`; `week`, with `at`, `day`; `month`, with `at`, `day`, `week`; `cycle`, with `at`, `boundary`; `release`.",
+									},
+									"facilitator": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"position": schema.StringAttribute{
+												Computed:            true,
+												Description:         "An agent's job, which decides what it may do and which model tier it uses by default.",
+												MarkdownDescription: "An agent's job, which decides what it may do and which model tier it uses by default.",
+											},
+											"value": schema.StringAttribute{
+												Computed:            true,
+												Description:         "One of `platform`, `squad_lead`, instead of the other fields.",
+												MarkdownDescription: "One of `platform`, `squad_lead`, instead of the other fields.",
+											},
+										},
+										CustomType: FacilitatorType{
+											ObjectType: types.ObjectType{
+												AttrTypes: FacilitatorValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "Who runs a ritual and writes its outcome.\n\nSet `value` to `platform`, `squad_lead`, or set the other fields.",
+										MarkdownDescription: "Who runs a ritual and writes its outcome.\n\nSet `value` to `platform`, `squad_lead`, or set the other fields.",
+									},
 									"key": schema.StringAttribute{
 										Computed:            true,
 										Description:         "The key a revision names a ritual by: lowercase letters, digits, `_` and `-`, at most 64 characters.",
@@ -75,6 +138,53 @@ func AiRitualPresetsDataSourceSchema(ctx context.Context) schema.Schema {
 										Computed:            true,
 										Description:         "The positions that contribute before the facilitator writes; the kind's when absent.",
 										MarkdownDescription: "The positions that contribute before the facilitator writes; the kind's when absent.",
+									},
+									"people": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"approvers": schema.ListAttribute{
+												ElementType:         types.StringType,
+												Computed:            true,
+												Description:         "Who may approve it; empty means the board.",
+												MarkdownDescription: "Who may approve it; empty means the board.",
+											},
+											"mode": schema.StringAttribute{
+												Computed: true,
+											},
+											"users": schema.ListAttribute{
+												ElementType:         types.StringType,
+												Computed:            true,
+												Description:         "The people invited.",
+												MarkdownDescription: "The people invited.",
+											},
+										},
+										CustomType: PeopleType{
+											ObjectType: types.ObjectType{
+												AttrTypes: PeopleValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "What people do in a ritual. A ritual never evaluates a person.\n\n`mode` says which applies: `none`; `invited`, with `users`; `approves_outcome`, with `approvers`.",
+										MarkdownDescription: "What people do in a ritual. A ritual never evaluates a person.\n\n`mode` says which applies: `none`; `invited`, with `users`; `approves_outcome`, with `approvers`.",
+									},
+									"scope": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"squad": schema.StringAttribute{
+												Computed: true,
+											},
+											"value": schema.StringAttribute{
+												Computed:            true,
+												Description:         "One of `every_squad`, `organization`, instead of the other fields.",
+												MarkdownDescription: "One of `every_squad`, `organization`, instead of the other fields.",
+											},
+										},
+										CustomType: ScopeType{
+											ObjectType: types.ObjectType{
+												AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "Whom one ritual is for.\n\nSet `value` to `every_squad`, `organization`, or set the other fields.",
+										MarkdownDescription: "Whom one ritual is for.\n\nSet `value` to `every_squad`, `organization`, or set the other fields.",
 									},
 									"skip_when": schema.StringAttribute{
 										Computed:            true,
@@ -757,6 +867,42 @@ func (t RitualsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`budget_micros expected to be basetypes.Int64Value, was: %T`, budgetMicrosAttribute))
 	}
 
+	cadenceAttribute, ok := attributes["cadence"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cadence is missing from object`)
+
+		return nil, diags
+	}
+
+	cadenceVal, ok := cadenceAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cadence expected to be basetypes.ObjectValue, was: %T`, cadenceAttribute))
+	}
+
+	facilitatorAttribute, ok := attributes["facilitator"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`facilitator is missing from object`)
+
+		return nil, diags
+	}
+
+	facilitatorVal, ok := facilitatorAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`facilitator expected to be basetypes.ObjectValue, was: %T`, facilitatorAttribute))
+	}
+
 	keyAttribute, ok := attributes["key"]
 
 	if !ok {
@@ -847,6 +993,42 @@ func (t RitualsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`participants expected to be basetypes.ListValue, was: %T`, participantsAttribute))
 	}
 
+	peopleAttribute, ok := attributes["people"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`people is missing from object`)
+
+		return nil, diags
+	}
+
+	peopleVal, ok := peopleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`people expected to be basetypes.ObjectValue, was: %T`, peopleAttribute))
+	}
+
+	scopeAttribute, ok := attributes["scope"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeVal, ok := scopeAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope expected to be basetypes.ObjectValue, was: %T`, scopeAttribute))
+	}
+
 	skipWhenAttribute, ok := attributes["skip_when"]
 
 	if !ok {
@@ -889,11 +1071,15 @@ func (t RitualsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 
 	return RitualsValue{
 		BudgetMicros: budgetMicrosVal,
+		Cadence:      cadenceVal,
+		Facilitator:  facilitatorVal,
 		Key:          keyVal,
 		Kind:         kindVal,
 		Name:         nameVal,
 		Outputs:      outputsVal,
 		Participants: participantsVal,
+		People:       peopleVal,
+		Scope:        scopeVal,
 		SkipWhen:     skipWhenVal,
 		Timebox:      timeboxVal,
 		state:        attr.ValueStateKnown,
@@ -981,6 +1167,42 @@ func NewRitualsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`budget_micros expected to be basetypes.Int64Value, was: %T`, budgetMicrosAttribute))
 	}
 
+	cadenceAttribute, ok := attributes["cadence"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cadence is missing from object`)
+
+		return NewRitualsValueUnknown(), diags
+	}
+
+	cadenceVal, ok := cadenceAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cadence expected to be basetypes.ObjectValue, was: %T`, cadenceAttribute))
+	}
+
+	facilitatorAttribute, ok := attributes["facilitator"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`facilitator is missing from object`)
+
+		return NewRitualsValueUnknown(), diags
+	}
+
+	facilitatorVal, ok := facilitatorAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`facilitator expected to be basetypes.ObjectValue, was: %T`, facilitatorAttribute))
+	}
+
 	keyAttribute, ok := attributes["key"]
 
 	if !ok {
@@ -1071,6 +1293,42 @@ func NewRitualsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`participants expected to be basetypes.ListValue, was: %T`, participantsAttribute))
 	}
 
+	peopleAttribute, ok := attributes["people"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`people is missing from object`)
+
+		return NewRitualsValueUnknown(), diags
+	}
+
+	peopleVal, ok := peopleAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`people expected to be basetypes.ObjectValue, was: %T`, peopleAttribute))
+	}
+
+	scopeAttribute, ok := attributes["scope"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope is missing from object`)
+
+		return NewRitualsValueUnknown(), diags
+	}
+
+	scopeVal, ok := scopeAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope expected to be basetypes.ObjectValue, was: %T`, scopeAttribute))
+	}
+
 	skipWhenAttribute, ok := attributes["skip_when"]
 
 	if !ok {
@@ -1113,11 +1371,15 @@ func NewRitualsValue(attributeTypes map[string]attr.Type, attributes map[string]
 
 	return RitualsValue{
 		BudgetMicros: budgetMicrosVal,
+		Cadence:      cadenceVal,
+		Facilitator:  facilitatorVal,
 		Key:          keyVal,
 		Kind:         kindVal,
 		Name:         nameVal,
 		Outputs:      outputsVal,
 		Participants: participantsVal,
+		People:       peopleVal,
+		Scope:        scopeVal,
 		SkipWhen:     skipWhenVal,
 		Timebox:      timeboxVal,
 		state:        attr.ValueStateKnown,
@@ -1193,23 +1455,33 @@ var _ basetypes.ObjectValuable = RitualsValue{}
 
 type RitualsValue struct {
 	BudgetMicros basetypes.Int64Value  `tfsdk:"budget_micros"`
+	Cadence      basetypes.ObjectValue `tfsdk:"cadence"`
+	Facilitator  basetypes.ObjectValue `tfsdk:"facilitator"`
 	Key          basetypes.StringValue `tfsdk:"key"`
 	Kind         basetypes.StringValue `tfsdk:"kind"`
 	Name         basetypes.StringValue `tfsdk:"name"`
 	Outputs      basetypes.ListValue   `tfsdk:"outputs"`
 	Participants basetypes.ListValue   `tfsdk:"participants"`
+	People       basetypes.ObjectValue `tfsdk:"people"`
+	Scope        basetypes.ObjectValue `tfsdk:"scope"`
 	SkipWhen     basetypes.StringValue `tfsdk:"skip_when"`
 	Timebox      basetypes.ObjectValue `tfsdk:"timebox"`
 	state        attr.ValueState
 }
 
 func (v RitualsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 8)
+	attrTypes := make(map[string]tftypes.Type, 12)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["budget_micros"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["cadence"] = basetypes.ObjectType{
+		AttrTypes: CadenceValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["facilitator"] = basetypes.ObjectType{
+		AttrTypes: FacilitatorValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1218,6 +1490,12 @@ func (v RitualsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	}.TerraformType(ctx)
 	attrTypes["participants"] = basetypes.ListType{
 		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["people"] = basetypes.ObjectType{
+		AttrTypes: PeopleValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["scope"] = basetypes.ObjectType{
+		AttrTypes: ScopeValue{}.AttributeTypes(ctx),
 	}.TerraformType(ctx)
 	attrTypes["skip_when"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["timebox"] = basetypes.ObjectType{
@@ -1228,7 +1506,7 @@ func (v RitualsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 8)
+		vals := make(map[string]tftypes.Value, 12)
 
 		val, err = v.BudgetMicros.ToTerraformValue(ctx)
 
@@ -1237,6 +1515,22 @@ func (v RitualsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["budget_micros"] = val
+
+		val, err = v.Cadence.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cadence"] = val
+
+		val, err = v.Facilitator.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["facilitator"] = val
 
 		val, err = v.Key.ToTerraformValue(ctx)
 
@@ -1277,6 +1571,22 @@ func (v RitualsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["participants"] = val
+
+		val, err = v.People.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["people"] = val
+
+		val, err = v.Scope.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope"] = val
 
 		val, err = v.SkipWhen.ToTerraformValue(ctx)
 
@@ -1323,6 +1633,90 @@ func (v RitualsValue) String() string {
 func (v RitualsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var cadence basetypes.ObjectValue
+
+	if v.Cadence.IsNull() {
+		cadence = types.ObjectNull(
+			CadenceValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Cadence.IsUnknown() {
+		cadence = types.ObjectUnknown(
+			CadenceValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Cadence.IsNull() && !v.Cadence.IsUnknown() {
+		cadence = types.ObjectValueMust(
+			CadenceValue{}.AttributeTypes(ctx),
+			v.Cadence.Attributes(),
+		)
+	}
+
+	var facilitator basetypes.ObjectValue
+
+	if v.Facilitator.IsNull() {
+		facilitator = types.ObjectNull(
+			FacilitatorValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Facilitator.IsUnknown() {
+		facilitator = types.ObjectUnknown(
+			FacilitatorValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Facilitator.IsNull() && !v.Facilitator.IsUnknown() {
+		facilitator = types.ObjectValueMust(
+			FacilitatorValue{}.AttributeTypes(ctx),
+			v.Facilitator.Attributes(),
+		)
+	}
+
+	var people basetypes.ObjectValue
+
+	if v.People.IsNull() {
+		people = types.ObjectNull(
+			PeopleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.People.IsUnknown() {
+		people = types.ObjectUnknown(
+			PeopleValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.People.IsNull() && !v.People.IsUnknown() {
+		people = types.ObjectValueMust(
+			PeopleValue{}.AttributeTypes(ctx),
+			v.People.Attributes(),
+		)
+	}
+
+	var scope basetypes.ObjectValue
+
+	if v.Scope.IsNull() {
+		scope = types.ObjectNull(
+			ScopeValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Scope.IsUnknown() {
+		scope = types.ObjectUnknown(
+			ScopeValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Scope.IsNull() && !v.Scope.IsUnknown() {
+		scope = types.ObjectValueMust(
+			ScopeValue{}.AttributeTypes(ctx),
+			v.Scope.Attributes(),
+		)
+	}
+
 	var timebox basetypes.ObjectValue
 
 	if v.Timebox.IsNull() {
@@ -1359,14 +1753,26 @@ func (v RitualsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
 			"budget_micros": basetypes.Int64Type{},
-			"key":           basetypes.StringType{},
-			"kind":          basetypes.StringType{},
-			"name":          basetypes.StringType{},
+			"cadence": basetypes.ObjectType{
+				AttrTypes: CadenceValue{}.AttributeTypes(ctx),
+			},
+			"facilitator": basetypes.ObjectType{
+				AttrTypes: FacilitatorValue{}.AttributeTypes(ctx),
+			},
+			"key":  basetypes.StringType{},
+			"kind": basetypes.StringType{},
+			"name": basetypes.StringType{},
 			"outputs": basetypes.ListType{
 				ElemType: types.StringType,
 			},
 			"participants": basetypes.ListType{
 				ElemType: types.StringType,
+			},
+			"people": basetypes.ObjectType{
+				AttrTypes: PeopleValue{}.AttributeTypes(ctx),
+			},
+			"scope": basetypes.ObjectType{
+				AttrTypes: ScopeValue{}.AttributeTypes(ctx),
 			},
 			"skip_when": basetypes.StringType{},
 			"timebox": basetypes.ObjectType{
@@ -1390,14 +1796,26 @@ func (v RitualsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
 			"budget_micros": basetypes.Int64Type{},
-			"key":           basetypes.StringType{},
-			"kind":          basetypes.StringType{},
-			"name":          basetypes.StringType{},
+			"cadence": basetypes.ObjectType{
+				AttrTypes: CadenceValue{}.AttributeTypes(ctx),
+			},
+			"facilitator": basetypes.ObjectType{
+				AttrTypes: FacilitatorValue{}.AttributeTypes(ctx),
+			},
+			"key":  basetypes.StringType{},
+			"kind": basetypes.StringType{},
+			"name": basetypes.StringType{},
 			"outputs": basetypes.ListType{
 				ElemType: types.StringType,
 			},
 			"participants": basetypes.ListType{
 				ElemType: types.StringType,
+			},
+			"people": basetypes.ObjectType{
+				AttrTypes: PeopleValue{}.AttributeTypes(ctx),
+			},
+			"scope": basetypes.ObjectType{
+				AttrTypes: ScopeValue{}.AttributeTypes(ctx),
 			},
 			"skip_when": basetypes.StringType{},
 			"timebox": basetypes.ObjectType{
@@ -1408,14 +1826,26 @@ func (v RitualsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 
 	attributeTypes := map[string]attr.Type{
 		"budget_micros": basetypes.Int64Type{},
-		"key":           basetypes.StringType{},
-		"kind":          basetypes.StringType{},
-		"name":          basetypes.StringType{},
+		"cadence": basetypes.ObjectType{
+			AttrTypes: CadenceValue{}.AttributeTypes(ctx),
+		},
+		"facilitator": basetypes.ObjectType{
+			AttrTypes: FacilitatorValue{}.AttributeTypes(ctx),
+		},
+		"key":  basetypes.StringType{},
+		"kind": basetypes.StringType{},
+		"name": basetypes.StringType{},
 		"outputs": basetypes.ListType{
 			ElemType: types.StringType,
 		},
 		"participants": basetypes.ListType{
 			ElemType: types.StringType,
+		},
+		"people": basetypes.ObjectType{
+			AttrTypes: PeopleValue{}.AttributeTypes(ctx),
+		},
+		"scope": basetypes.ObjectType{
+			AttrTypes: ScopeValue{}.AttributeTypes(ctx),
 		},
 		"skip_when": basetypes.StringType{},
 		"timebox": basetypes.ObjectType{
@@ -1435,11 +1865,15 @@ func (v RitualsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		attributeTypes,
 		map[string]attr.Value{
 			"budget_micros": v.BudgetMicros,
+			"cadence":       cadence,
+			"facilitator":   facilitator,
 			"key":           v.Key,
 			"kind":          v.Kind,
 			"name":          v.Name,
 			"outputs":       outputsVal,
 			"participants":  participantsVal,
+			"people":        people,
+			"scope":         scope,
 			"skip_when":     v.SkipWhen,
 			"timebox":       timebox,
 		})
@@ -1466,6 +1900,14 @@ func (v RitualsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Cadence.Equal(other.Cadence) {
+		return false
+	}
+
+	if !v.Facilitator.Equal(other.Facilitator) {
+		return false
+	}
+
 	if !v.Key.Equal(other.Key) {
 		return false
 	}
@@ -1483,6 +1925,14 @@ func (v RitualsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Participants.Equal(other.Participants) {
+		return false
+	}
+
+	if !v.People.Equal(other.People) {
+		return false
+	}
+
+	if !v.Scope.Equal(other.Scope) {
 		return false
 	}
 
@@ -1508,19 +1958,1913 @@ func (v RitualsValue) Type(ctx context.Context) attr.Type {
 func (v RitualsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"budget_micros": basetypes.Int64Type{},
-		"key":           basetypes.StringType{},
-		"kind":          basetypes.StringType{},
-		"name":          basetypes.StringType{},
+		"cadence": basetypes.ObjectType{
+			AttrTypes: CadenceValue{}.AttributeTypes(ctx),
+		},
+		"facilitator": basetypes.ObjectType{
+			AttrTypes: FacilitatorValue{}.AttributeTypes(ctx),
+		},
+		"key":  basetypes.StringType{},
+		"kind": basetypes.StringType{},
+		"name": basetypes.StringType{},
 		"outputs": basetypes.ListType{
 			ElemType: types.StringType,
 		},
 		"participants": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+		"people": basetypes.ObjectType{
+			AttrTypes: PeopleValue{}.AttributeTypes(ctx),
+		},
+		"scope": basetypes.ObjectType{
+			AttrTypes: ScopeValue{}.AttributeTypes(ctx),
+		},
 		"skip_when": basetypes.StringType{},
 		"timebox": basetypes.ObjectType{
 			AttrTypes: TimeboxValue{}.AttributeTypes(ctx),
 		},
+	}
+}
+
+var _ basetypes.ObjectTypable = CadenceType{}
+
+type CadenceType struct {
+	basetypes.ObjectType
+}
+
+func (t CadenceType) Equal(o attr.Type) bool {
+	other, ok := o.(CadenceType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CadenceType) String() string {
+	return "CadenceType"
+}
+
+func (t CadenceType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	atAttribute, ok := attributes["at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`at is missing from object`)
+
+		return nil, diags
+	}
+
+	atVal, ok := atAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`at expected to be basetypes.StringValue, was: %T`, atAttribute))
+	}
+
+	boundaryAttribute, ok := attributes["boundary"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`boundary is missing from object`)
+
+		return nil, diags
+	}
+
+	boundaryVal, ok := boundaryAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`boundary expected to be basetypes.StringValue, was: %T`, boundaryAttribute))
+	}
+
+	dayAttribute, ok := attributes["day"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`day is missing from object`)
+
+		return nil, diags
+	}
+
+	dayVal, ok := dayAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`day expected to be basetypes.StringValue, was: %T`, dayAttribute))
+	}
+
+	daysAttribute, ok := attributes["days"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`days is missing from object`)
+
+		return nil, diags
+	}
+
+	daysVal, ok := daysAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`days expected to be basetypes.ListValue, was: %T`, daysAttribute))
+	}
+
+	everyAttribute, ok := attributes["every"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`every is missing from object`)
+
+		return nil, diags
+	}
+
+	everyVal, ok := everyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`every expected to be basetypes.StringValue, was: %T`, everyAttribute))
+	}
+
+	weekAttribute, ok := attributes["week"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`week is missing from object`)
+
+		return nil, diags
+	}
+
+	weekVal, ok := weekAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`week expected to be basetypes.StringValue, was: %T`, weekAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CadenceValue{
+		At:       atVal,
+		Boundary: boundaryVal,
+		Day:      dayVal,
+		Days:     daysVal,
+		Every:    everyVal,
+		Week:     weekVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCadenceValueNull() CadenceValue {
+	return CadenceValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCadenceValueUnknown() CadenceValue {
+	return CadenceValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCadenceValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CadenceValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CadenceValue Attribute Value",
+				"While creating a CadenceValue value, a missing attribute value was detected. "+
+					"A CadenceValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CadenceValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CadenceValue Attribute Type",
+				"While creating a CadenceValue value, an invalid attribute value was detected. "+
+					"A CadenceValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CadenceValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CadenceValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CadenceValue Attribute Value",
+				"While creating a CadenceValue value, an extra attribute value was detected. "+
+					"A CadenceValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CadenceValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCadenceValueUnknown(), diags
+	}
+
+	atAttribute, ok := attributes["at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`at is missing from object`)
+
+		return NewCadenceValueUnknown(), diags
+	}
+
+	atVal, ok := atAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`at expected to be basetypes.StringValue, was: %T`, atAttribute))
+	}
+
+	boundaryAttribute, ok := attributes["boundary"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`boundary is missing from object`)
+
+		return NewCadenceValueUnknown(), diags
+	}
+
+	boundaryVal, ok := boundaryAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`boundary expected to be basetypes.StringValue, was: %T`, boundaryAttribute))
+	}
+
+	dayAttribute, ok := attributes["day"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`day is missing from object`)
+
+		return NewCadenceValueUnknown(), diags
+	}
+
+	dayVal, ok := dayAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`day expected to be basetypes.StringValue, was: %T`, dayAttribute))
+	}
+
+	daysAttribute, ok := attributes["days"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`days is missing from object`)
+
+		return NewCadenceValueUnknown(), diags
+	}
+
+	daysVal, ok := daysAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`days expected to be basetypes.ListValue, was: %T`, daysAttribute))
+	}
+
+	everyAttribute, ok := attributes["every"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`every is missing from object`)
+
+		return NewCadenceValueUnknown(), diags
+	}
+
+	everyVal, ok := everyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`every expected to be basetypes.StringValue, was: %T`, everyAttribute))
+	}
+
+	weekAttribute, ok := attributes["week"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`week is missing from object`)
+
+		return NewCadenceValueUnknown(), diags
+	}
+
+	weekVal, ok := weekAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`week expected to be basetypes.StringValue, was: %T`, weekAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCadenceValueUnknown(), diags
+	}
+
+	return CadenceValue{
+		At:       atVal,
+		Boundary: boundaryVal,
+		Day:      dayVal,
+		Days:     daysVal,
+		Every:    everyVal,
+		Week:     weekVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCadenceValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CadenceValue {
+	object, diags := NewCadenceValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCadenceValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CadenceType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCadenceValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCadenceValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCadenceValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCadenceValueMust(CadenceValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CadenceType) ValueType(ctx context.Context) attr.Value {
+	return CadenceValue{}
+}
+
+var _ basetypes.ObjectValuable = CadenceValue{}
+
+type CadenceValue struct {
+	At       basetypes.StringValue `tfsdk:"at"`
+	Boundary basetypes.StringValue `tfsdk:"boundary"`
+	Day      basetypes.StringValue `tfsdk:"day"`
+	Days     basetypes.ListValue   `tfsdk:"days"`
+	Every    basetypes.StringValue `tfsdk:"every"`
+	Week     basetypes.StringValue `tfsdk:"week"`
+	state    attr.ValueState
+}
+
+func (v CadenceValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 6)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["boundary"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["day"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["days"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["every"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["week"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 6)
+
+		val, err = v.At.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["at"] = val
+
+		val, err = v.Boundary.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["boundary"] = val
+
+		val, err = v.Day.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["day"] = val
+
+		val, err = v.Days.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["days"] = val
+
+		val, err = v.Every.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["every"] = val
+
+		val, err = v.Week.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["week"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CadenceValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CadenceValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CadenceValue) String() string {
+	return "CadenceValue"
+}
+
+func (v CadenceValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var daysVal basetypes.ListValue
+	switch {
+	case v.Days.IsUnknown():
+		daysVal = types.ListUnknown(types.StringType)
+	case v.Days.IsNull():
+		daysVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		daysVal, d = types.ListValue(types.StringType, v.Days.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"at":       basetypes.StringType{},
+			"boundary": basetypes.StringType{},
+			"day":      basetypes.StringType{},
+			"days": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"every": basetypes.StringType{},
+			"week":  basetypes.StringType{},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"at":       basetypes.StringType{},
+		"boundary": basetypes.StringType{},
+		"day":      basetypes.StringType{},
+		"days": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"every": basetypes.StringType{},
+		"week":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"at":       v.At,
+			"boundary": v.Boundary,
+			"day":      v.Day,
+			"days":     daysVal,
+			"every":    v.Every,
+			"week":     v.Week,
+		})
+
+	return objVal, diags
+}
+
+func (v CadenceValue) Equal(o attr.Value) bool {
+	other, ok := o.(CadenceValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.At.Equal(other.At) {
+		return false
+	}
+
+	if !v.Boundary.Equal(other.Boundary) {
+		return false
+	}
+
+	if !v.Day.Equal(other.Day) {
+		return false
+	}
+
+	if !v.Days.Equal(other.Days) {
+		return false
+	}
+
+	if !v.Every.Equal(other.Every) {
+		return false
+	}
+
+	if !v.Week.Equal(other.Week) {
+		return false
+	}
+
+	return true
+}
+
+func (v CadenceValue) Type(ctx context.Context) attr.Type {
+	return CadenceType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CadenceValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"at":       basetypes.StringType{},
+		"boundary": basetypes.StringType{},
+		"day":      basetypes.StringType{},
+		"days": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"every": basetypes.StringType{},
+		"week":  basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = FacilitatorType{}
+
+type FacilitatorType struct {
+	basetypes.ObjectType
+}
+
+func (t FacilitatorType) Equal(o attr.Type) bool {
+	other, ok := o.(FacilitatorType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t FacilitatorType) String() string {
+	return "FacilitatorType"
+}
+
+func (t FacilitatorType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	positionAttribute, ok := attributes["position"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`position is missing from object`)
+
+		return nil, diags
+	}
+
+	positionVal, ok := positionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`position expected to be basetypes.StringValue, was: %T`, positionAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return FacilitatorValue{
+		Position: positionVal,
+		Value:    valueVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFacilitatorValueNull() FacilitatorValue {
+	return FacilitatorValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewFacilitatorValueUnknown() FacilitatorValue {
+	return FacilitatorValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewFacilitatorValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (FacilitatorValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing FacilitatorValue Attribute Value",
+				"While creating a FacilitatorValue value, a missing attribute value was detected. "+
+					"A FacilitatorValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FacilitatorValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid FacilitatorValue Attribute Type",
+				"While creating a FacilitatorValue value, an invalid attribute value was detected. "+
+					"A FacilitatorValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FacilitatorValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("FacilitatorValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra FacilitatorValue Attribute Value",
+				"While creating a FacilitatorValue value, an extra attribute value was detected. "+
+					"A FacilitatorValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra FacilitatorValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewFacilitatorValueUnknown(), diags
+	}
+
+	positionAttribute, ok := attributes["position"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`position is missing from object`)
+
+		return NewFacilitatorValueUnknown(), diags
+	}
+
+	positionVal, ok := positionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`position expected to be basetypes.StringValue, was: %T`, positionAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewFacilitatorValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewFacilitatorValueUnknown(), diags
+	}
+
+	return FacilitatorValue{
+		Position: positionVal,
+		Value:    valueVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFacilitatorValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) FacilitatorValue {
+	object, diags := NewFacilitatorValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewFacilitatorValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t FacilitatorType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewFacilitatorValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewFacilitatorValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewFacilitatorValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewFacilitatorValueMust(FacilitatorValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t FacilitatorType) ValueType(ctx context.Context) attr.Value {
+	return FacilitatorValue{}
+}
+
+var _ basetypes.ObjectValuable = FacilitatorValue{}
+
+type FacilitatorValue struct {
+	Position basetypes.StringValue `tfsdk:"position"`
+	Value    basetypes.StringValue `tfsdk:"value"`
+	state    attr.ValueState
+}
+
+func (v FacilitatorValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["position"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Position.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["position"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v FacilitatorValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v FacilitatorValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v FacilitatorValue) String() string {
+	return "FacilitatorValue"
+}
+
+func (v FacilitatorValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"position": basetypes.StringType{},
+		"value":    basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"position": v.Position,
+			"value":    v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v FacilitatorValue) Equal(o attr.Value) bool {
+	other, ok := o.(FacilitatorValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Position.Equal(other.Position) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v FacilitatorValue) Type(ctx context.Context) attr.Type {
+	return FacilitatorType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v FacilitatorValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"position": basetypes.StringType{},
+		"value":    basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = PeopleType{}
+
+type PeopleType struct {
+	basetypes.ObjectType
+}
+
+func (t PeopleType) Equal(o attr.Type) bool {
+	other, ok := o.(PeopleType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t PeopleType) String() string {
+	return "PeopleType"
+}
+
+func (t PeopleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	approversAttribute, ok := attributes["approvers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approvers is missing from object`)
+
+		return nil, diags
+	}
+
+	approversVal, ok := approversAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approvers expected to be basetypes.ListValue, was: %T`, approversAttribute))
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return nil, diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	usersAttribute, ok := attributes["users"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`users is missing from object`)
+
+		return nil, diags
+	}
+
+	usersVal, ok := usersAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`users expected to be basetypes.ListValue, was: %T`, usersAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return PeopleValue{
+		Approvers: approversVal,
+		Mode:      modeVal,
+		Users:     usersVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewPeopleValueNull() PeopleValue {
+	return PeopleValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewPeopleValueUnknown() PeopleValue {
+	return PeopleValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewPeopleValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (PeopleValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing PeopleValue Attribute Value",
+				"While creating a PeopleValue value, a missing attribute value was detected. "+
+					"A PeopleValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("PeopleValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid PeopleValue Attribute Type",
+				"While creating a PeopleValue value, an invalid attribute value was detected. "+
+					"A PeopleValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("PeopleValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("PeopleValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra PeopleValue Attribute Value",
+				"While creating a PeopleValue value, an extra attribute value was detected. "+
+					"A PeopleValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra PeopleValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewPeopleValueUnknown(), diags
+	}
+
+	approversAttribute, ok := attributes["approvers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approvers is missing from object`)
+
+		return NewPeopleValueUnknown(), diags
+	}
+
+	approversVal, ok := approversAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approvers expected to be basetypes.ListValue, was: %T`, approversAttribute))
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return NewPeopleValueUnknown(), diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	usersAttribute, ok := attributes["users"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`users is missing from object`)
+
+		return NewPeopleValueUnknown(), diags
+	}
+
+	usersVal, ok := usersAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`users expected to be basetypes.ListValue, was: %T`, usersAttribute))
+	}
+
+	if diags.HasError() {
+		return NewPeopleValueUnknown(), diags
+	}
+
+	return PeopleValue{
+		Approvers: approversVal,
+		Mode:      modeVal,
+		Users:     usersVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewPeopleValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) PeopleValue {
+	object, diags := NewPeopleValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewPeopleValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t PeopleType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewPeopleValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewPeopleValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewPeopleValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewPeopleValueMust(PeopleValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t PeopleType) ValueType(ctx context.Context) attr.Value {
+	return PeopleValue{}
+}
+
+var _ basetypes.ObjectValuable = PeopleValue{}
+
+type PeopleValue struct {
+	Approvers basetypes.ListValue   `tfsdk:"approvers"`
+	Mode      basetypes.StringValue `tfsdk:"mode"`
+	Users     basetypes.ListValue   `tfsdk:"users"`
+	state     attr.ValueState
+}
+
+func (v PeopleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["approvers"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["users"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Approvers.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["approvers"] = val
+
+		val, err = v.Mode.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mode"] = val
+
+		val, err = v.Users.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["users"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v PeopleValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v PeopleValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v PeopleValue) String() string {
+	return "PeopleValue"
+}
+
+func (v PeopleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var approversVal basetypes.ListValue
+	switch {
+	case v.Approvers.IsUnknown():
+		approversVal = types.ListUnknown(types.StringType)
+	case v.Approvers.IsNull():
+		approversVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		approversVal, d = types.ListValue(types.StringType, v.Approvers.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"approvers": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"mode": basetypes.StringType{},
+			"users": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var usersVal basetypes.ListValue
+	switch {
+	case v.Users.IsUnknown():
+		usersVal = types.ListUnknown(types.StringType)
+	case v.Users.IsNull():
+		usersVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		usersVal, d = types.ListValue(types.StringType, v.Users.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"approvers": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"mode": basetypes.StringType{},
+			"users": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"approvers": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"mode": basetypes.StringType{},
+		"users": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"approvers": approversVal,
+			"mode":      v.Mode,
+			"users":     usersVal,
+		})
+
+	return objVal, diags
+}
+
+func (v PeopleValue) Equal(o attr.Value) bool {
+	other, ok := o.(PeopleValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Approvers.Equal(other.Approvers) {
+		return false
+	}
+
+	if !v.Mode.Equal(other.Mode) {
+		return false
+	}
+
+	if !v.Users.Equal(other.Users) {
+		return false
+	}
+
+	return true
+}
+
+func (v PeopleValue) Type(ctx context.Context) attr.Type {
+	return PeopleType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v PeopleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"approvers": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"mode": basetypes.StringType{},
+		"users": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = ScopeType{}
+
+type ScopeType struct {
+	basetypes.ObjectType
+}
+
+func (t ScopeType) Equal(o attr.Type) bool {
+	other, ok := o.(ScopeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ScopeType) String() string {
+	return "ScopeType"
+}
+
+func (t ScopeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	squadAttribute, ok := attributes["squad"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`squad is missing from object`)
+
+		return nil, diags
+	}
+
+	squadVal, ok := squadAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`squad expected to be basetypes.StringValue, was: %T`, squadAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ScopeValue{
+		Squad: squadVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopeValueNull() ScopeValue {
+	return ScopeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewScopeValueUnknown() ScopeValue {
+	return ScopeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewScopeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ScopeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ScopeValue Attribute Value",
+				"While creating a ScopeValue value, a missing attribute value was detected. "+
+					"A ScopeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ScopeValue Attribute Type",
+				"While creating a ScopeValue value, an invalid attribute value was detected. "+
+					"A ScopeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ScopeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ScopeValue Attribute Value",
+				"While creating a ScopeValue value, an extra attribute value was detected. "+
+					"A ScopeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ScopeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewScopeValueUnknown(), diags
+	}
+
+	squadAttribute, ok := attributes["squad"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`squad is missing from object`)
+
+		return NewScopeValueUnknown(), diags
+	}
+
+	squadVal, ok := squadAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`squad expected to be basetypes.StringValue, was: %T`, squadAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewScopeValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewScopeValueUnknown(), diags
+	}
+
+	return ScopeValue{
+		Squad: squadVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ScopeValue {
+	object, diags := NewScopeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewScopeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ScopeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewScopeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewScopeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewScopeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewScopeValueMust(ScopeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ScopeType) ValueType(ctx context.Context) attr.Value {
+	return ScopeValue{}
+}
+
+var _ basetypes.ObjectValuable = ScopeValue{}
+
+type ScopeValue struct {
+	Squad basetypes.StringValue `tfsdk:"squad"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
+}
+
+func (v ScopeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["squad"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Squad.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["squad"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ScopeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ScopeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ScopeValue) String() string {
+	return "ScopeValue"
+}
+
+func (v ScopeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"squad": basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"squad": v.Squad,
+			"value": v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v ScopeValue) Equal(o attr.Value) bool {
+	other, ok := o.(ScopeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Squad.Equal(other.Squad) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v ScopeValue) Type(ctx context.Context) attr.Type {
+	return ScopeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ScopeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"squad": basetypes.StringType{},
+		"value": basetypes.StringType{},
 	}
 }
 

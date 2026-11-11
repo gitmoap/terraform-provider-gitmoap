@@ -94,6 +94,174 @@ func RepositoryIssueSettingsResourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
+			"on_branch_created": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"to": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						MarkdownDescription: "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"triage",
+								"todo",
+								"in_progress",
+								"in_review",
+								"blocked",
+								"done",
+								"cancelled",
+							),
+						},
+					},
+					"value": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "One of `disabled`, `restore`, instead of the other fields.",
+						MarkdownDescription: "One of `disabled`, `restore`, instead of the other fields.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"disabled",
+								"restore",
+							),
+						},
+					},
+				},
+				CustomType: OnBranchCreatedType{
+					ObjectType: types.ObjectType{
+						AttrTypes: OnBranchCreatedValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+				MarkdownDescription: "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+			},
+			"on_mr_closed": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"to": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						MarkdownDescription: "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"triage",
+								"todo",
+								"in_progress",
+								"in_review",
+								"blocked",
+								"done",
+								"cancelled",
+							),
+						},
+					},
+					"value": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "One of `disabled`, `restore`, instead of the other fields.",
+						MarkdownDescription: "One of `disabled`, `restore`, instead of the other fields.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"disabled",
+								"restore",
+							),
+						},
+					},
+				},
+				CustomType: OnMrClosedType{
+					ObjectType: types.ObjectType{
+						AttrTypes: OnMrClosedValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+				MarkdownDescription: "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+			},
+			"on_mr_merged": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"to": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						MarkdownDescription: "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"triage",
+								"todo",
+								"in_progress",
+								"in_review",
+								"blocked",
+								"done",
+								"cancelled",
+							),
+						},
+					},
+					"value": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "One of `disabled`, `restore`, instead of the other fields.",
+						MarkdownDescription: "One of `disabled`, `restore`, instead of the other fields.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"disabled",
+								"restore",
+							),
+						},
+					},
+				},
+				CustomType: OnMrMergedType{
+					ObjectType: types.ObjectType{
+						AttrTypes: OnMrMergedValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+				MarkdownDescription: "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+			},
+			"on_mr_opened": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"to": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						MarkdownDescription: "The fixed category behind a status. A status also has a *name*, which the team owns and may\nrename freely; the category is the part the platform reasons about. A team can call a status\n\"Ready for QA\" and the platform still knows it is `in_review` — so a board can place it in a\ncolumn, a merge can move it, and a progress rollup can count it as not done.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"triage",
+								"todo",
+								"in_progress",
+								"in_review",
+								"blocked",
+								"done",
+								"cancelled",
+							),
+						},
+					},
+					"value": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "One of `disabled`, `restore`, instead of the other fields.",
+						MarkdownDescription: "One of `disabled`, `restore`, instead of the other fields.",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"disabled",
+								"restore",
+							),
+						},
+					},
+				},
+				CustomType: OnMrOpenedType{
+					ObjectType: types.ObjectType{
+						AttrTypes: OnMrOpenedValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+				MarkdownDescription: "Where an automation moves a work item when its event happens: nowhere (`disabled`), back to\nwhere it was (`restore`), or into a status category (`{\"to\": \"in_progress\"}`).\n\nSet `value` to `disabled`, `restore`, or set the other fields.",
+			},
 			"override_group_settings": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
@@ -204,6 +372,25 @@ func RepositoryIssueSettingsResourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
+			"transitions": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"table": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "JSON: set it with `jsonencode()`.",
+						MarkdownDescription: "JSON: set it with `jsonencode()`.",
+					},
+				},
+				CustomType: TransitionsType{
+					ObjectType: types.ObjectType{
+						AttrTypes: TransitionsValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Which status categories a work item may move to from each category, as a map from a category to\nthe categories it may move to. A category not listed may move anywhere.",
+				MarkdownDescription: "Which status categories a work item may move to from each category, as a map from a category to\nthe categories it may move to. A category not listed may move anywhere.",
+			},
 		},
 		Description:         "Changes what the repository stores and returns it: only the fields you send change, a field sent as null is cleared so it is inherited again, and the stored values apply only while override_group_settings is on. A status set needs one unarchived open status marked as the default and at least one unarchived done status, and an existing status cannot change category — add a new status and archive the old one. Maintainers and above may do this; an empty body is refused. The token needs issue_settings:manage and issue_settings:read.",
 		MarkdownDescription: "Changes what the repository stores and returns it: only the fields you send change, a field sent as `null` is cleared so it is inherited again, and the stored values apply only while `override_group_settings` is on. A status set needs one unarchived open status marked as the default and at least one unarchived done status, and an existing status cannot change category — add a new status and archive the old one. Maintainers and above may do this; an empty body is refused.\n\nThe token needs `issue_settings:manage` and `issue_settings:read`.",
@@ -211,24 +398,1545 @@ func RepositoryIssueSettingsResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type RepositoryIssueSettingsModel struct {
-	AnchorDriftAction              types.String `tfsdk:"anchor_drift_action"`
-	AutoCloseOnVerified            types.Bool   `tfsdk:"auto_close_on_verified"`
-	AutoReopenOnOrphanedClose      types.Bool   `tfsdk:"auto_reopen_on_orphaned_close"`
-	AutoReopenOnRegression         types.Bool   `tfsdk:"auto_reopen_on_regression"`
-	BindingChangeResetsEvidence    types.Bool   `tfsdk:"binding_change_resets_evidence"`
-	BlockedByBlocksClose           types.Bool   `tfsdk:"blocked_by_blocks_close"`
-	CloseOnCommitKeyword           types.Bool   `tfsdk:"close_on_commit_keyword"`
-	ClosingBranches                types.List   `tfsdk:"closing_branches"`
-	DefaultAssigneeFromCodeowners  types.Bool   `tfsdk:"default_assignee_from_codeowners"`
-	DefaultIssueType               types.String `tfsdk:"default_issue_type"`
-	OverrideGroupSettings          types.Bool   `tfsdk:"override_group_settings"`
-	PublicIssueFiling              types.Bool   `tfsdk:"public_issue_filing"`
-	RepoId                         types.String `tfsdk:"repo_id"`
-	RequireVerifiedCriteriaToClose types.Bool   `tfsdk:"require_verified_criteria_to_close"`
-	Statuses                       types.List   `tfsdk:"statuses"`
-	TodoIgnorePaths                types.List   `tfsdk:"todo_ignore_paths"`
-	TodoPolicy                     types.String `tfsdk:"todo_policy"`
-	TodoPromoteType                types.String `tfsdk:"todo_promote_type"`
+	AnchorDriftAction              types.String         `tfsdk:"anchor_drift_action"`
+	AutoCloseOnVerified            types.Bool           `tfsdk:"auto_close_on_verified"`
+	AutoReopenOnOrphanedClose      types.Bool           `tfsdk:"auto_reopen_on_orphaned_close"`
+	AutoReopenOnRegression         types.Bool           `tfsdk:"auto_reopen_on_regression"`
+	BindingChangeResetsEvidence    types.Bool           `tfsdk:"binding_change_resets_evidence"`
+	BlockedByBlocksClose           types.Bool           `tfsdk:"blocked_by_blocks_close"`
+	CloseOnCommitKeyword           types.Bool           `tfsdk:"close_on_commit_keyword"`
+	ClosingBranches                types.List           `tfsdk:"closing_branches"`
+	DefaultAssigneeFromCodeowners  types.Bool           `tfsdk:"default_assignee_from_codeowners"`
+	DefaultIssueType               types.String         `tfsdk:"default_issue_type"`
+	OnBranchCreated                OnBranchCreatedValue `tfsdk:"on_branch_created"`
+	OnMrClosed                     OnMrClosedValue      `tfsdk:"on_mr_closed"`
+	OnMrMerged                     OnMrMergedValue      `tfsdk:"on_mr_merged"`
+	OnMrOpened                     OnMrOpenedValue      `tfsdk:"on_mr_opened"`
+	OverrideGroupSettings          types.Bool           `tfsdk:"override_group_settings"`
+	PublicIssueFiling              types.Bool           `tfsdk:"public_issue_filing"`
+	RepoId                         types.String         `tfsdk:"repo_id"`
+	RequireVerifiedCriteriaToClose types.Bool           `tfsdk:"require_verified_criteria_to_close"`
+	Statuses                       types.List           `tfsdk:"statuses"`
+	TodoIgnorePaths                types.List           `tfsdk:"todo_ignore_paths"`
+	TodoPolicy                     types.String         `tfsdk:"todo_policy"`
+	TodoPromoteType                types.String         `tfsdk:"todo_promote_type"`
+	Transitions                    TransitionsValue     `tfsdk:"transitions"`
+}
+
+var _ basetypes.ObjectTypable = OnBranchCreatedType{}
+
+type OnBranchCreatedType struct {
+	basetypes.ObjectType
+}
+
+func (t OnBranchCreatedType) Equal(o attr.Type) bool {
+	other, ok := o.(OnBranchCreatedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OnBranchCreatedType) String() string {
+	return "OnBranchCreatedType"
+}
+
+func (t OnBranchCreatedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OnBranchCreatedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnBranchCreatedValueNull() OnBranchCreatedValue {
+	return OnBranchCreatedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOnBranchCreatedValueUnknown() OnBranchCreatedValue {
+	return OnBranchCreatedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOnBranchCreatedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OnBranchCreatedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OnBranchCreatedValue Attribute Value",
+				"While creating a OnBranchCreatedValue value, a missing attribute value was detected. "+
+					"A OnBranchCreatedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnBranchCreatedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OnBranchCreatedValue Attribute Type",
+				"While creating a OnBranchCreatedValue value, an invalid attribute value was detected. "+
+					"A OnBranchCreatedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnBranchCreatedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OnBranchCreatedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OnBranchCreatedValue Attribute Value",
+				"While creating a OnBranchCreatedValue value, an extra attribute value was detected. "+
+					"A OnBranchCreatedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OnBranchCreatedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOnBranchCreatedValueUnknown(), diags
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewOnBranchCreatedValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewOnBranchCreatedValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOnBranchCreatedValueUnknown(), diags
+	}
+
+	return OnBranchCreatedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnBranchCreatedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OnBranchCreatedValue {
+	object, diags := NewOnBranchCreatedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOnBranchCreatedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OnBranchCreatedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOnBranchCreatedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOnBranchCreatedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOnBranchCreatedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOnBranchCreatedValueMust(OnBranchCreatedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OnBranchCreatedType) ValueType(ctx context.Context) attr.Value {
+	return OnBranchCreatedValue{}
+}
+
+var _ basetypes.ObjectValuable = OnBranchCreatedValue{}
+
+type OnBranchCreatedValue struct {
+	To    basetypes.StringValue `tfsdk:"to"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
+}
+
+func (v OnBranchCreatedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OnBranchCreatedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OnBranchCreatedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OnBranchCreatedValue) String() string {
+	return "OnBranchCreatedValue"
+}
+
+func (v OnBranchCreatedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"to":    v.To,
+			"value": v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v OnBranchCreatedValue) Equal(o attr.Value) bool {
+	other, ok := o.(OnBranchCreatedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v OnBranchCreatedValue) Type(ctx context.Context) attr.Type {
+	return OnBranchCreatedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OnBranchCreatedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = OnMrClosedType{}
+
+type OnMrClosedType struct {
+	basetypes.ObjectType
+}
+
+func (t OnMrClosedType) Equal(o attr.Type) bool {
+	other, ok := o.(OnMrClosedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OnMrClosedType) String() string {
+	return "OnMrClosedType"
+}
+
+func (t OnMrClosedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OnMrClosedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnMrClosedValueNull() OnMrClosedValue {
+	return OnMrClosedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOnMrClosedValueUnknown() OnMrClosedValue {
+	return OnMrClosedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOnMrClosedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OnMrClosedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OnMrClosedValue Attribute Value",
+				"While creating a OnMrClosedValue value, a missing attribute value was detected. "+
+					"A OnMrClosedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnMrClosedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OnMrClosedValue Attribute Type",
+				"While creating a OnMrClosedValue value, an invalid attribute value was detected. "+
+					"A OnMrClosedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnMrClosedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OnMrClosedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OnMrClosedValue Attribute Value",
+				"While creating a OnMrClosedValue value, an extra attribute value was detected. "+
+					"A OnMrClosedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OnMrClosedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOnMrClosedValueUnknown(), diags
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewOnMrClosedValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewOnMrClosedValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOnMrClosedValueUnknown(), diags
+	}
+
+	return OnMrClosedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnMrClosedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OnMrClosedValue {
+	object, diags := NewOnMrClosedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOnMrClosedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OnMrClosedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOnMrClosedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOnMrClosedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOnMrClosedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOnMrClosedValueMust(OnMrClosedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OnMrClosedType) ValueType(ctx context.Context) attr.Value {
+	return OnMrClosedValue{}
+}
+
+var _ basetypes.ObjectValuable = OnMrClosedValue{}
+
+type OnMrClosedValue struct {
+	To    basetypes.StringValue `tfsdk:"to"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
+}
+
+func (v OnMrClosedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OnMrClosedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OnMrClosedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OnMrClosedValue) String() string {
+	return "OnMrClosedValue"
+}
+
+func (v OnMrClosedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"to":    v.To,
+			"value": v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v OnMrClosedValue) Equal(o attr.Value) bool {
+	other, ok := o.(OnMrClosedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v OnMrClosedValue) Type(ctx context.Context) attr.Type {
+	return OnMrClosedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OnMrClosedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = OnMrMergedType{}
+
+type OnMrMergedType struct {
+	basetypes.ObjectType
+}
+
+func (t OnMrMergedType) Equal(o attr.Type) bool {
+	other, ok := o.(OnMrMergedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OnMrMergedType) String() string {
+	return "OnMrMergedType"
+}
+
+func (t OnMrMergedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OnMrMergedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnMrMergedValueNull() OnMrMergedValue {
+	return OnMrMergedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOnMrMergedValueUnknown() OnMrMergedValue {
+	return OnMrMergedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOnMrMergedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OnMrMergedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OnMrMergedValue Attribute Value",
+				"While creating a OnMrMergedValue value, a missing attribute value was detected. "+
+					"A OnMrMergedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnMrMergedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OnMrMergedValue Attribute Type",
+				"While creating a OnMrMergedValue value, an invalid attribute value was detected. "+
+					"A OnMrMergedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnMrMergedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OnMrMergedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OnMrMergedValue Attribute Value",
+				"While creating a OnMrMergedValue value, an extra attribute value was detected. "+
+					"A OnMrMergedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OnMrMergedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOnMrMergedValueUnknown(), diags
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewOnMrMergedValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewOnMrMergedValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOnMrMergedValueUnknown(), diags
+	}
+
+	return OnMrMergedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnMrMergedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OnMrMergedValue {
+	object, diags := NewOnMrMergedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOnMrMergedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OnMrMergedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOnMrMergedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOnMrMergedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOnMrMergedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOnMrMergedValueMust(OnMrMergedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OnMrMergedType) ValueType(ctx context.Context) attr.Value {
+	return OnMrMergedValue{}
+}
+
+var _ basetypes.ObjectValuable = OnMrMergedValue{}
+
+type OnMrMergedValue struct {
+	To    basetypes.StringValue `tfsdk:"to"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
+}
+
+func (v OnMrMergedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OnMrMergedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OnMrMergedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OnMrMergedValue) String() string {
+	return "OnMrMergedValue"
+}
+
+func (v OnMrMergedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"to":    v.To,
+			"value": v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v OnMrMergedValue) Equal(o attr.Value) bool {
+	other, ok := o.(OnMrMergedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v OnMrMergedValue) Type(ctx context.Context) attr.Type {
+	return OnMrMergedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OnMrMergedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = OnMrOpenedType{}
+
+type OnMrOpenedType struct {
+	basetypes.ObjectType
+}
+
+func (t OnMrOpenedType) Equal(o attr.Type) bool {
+	other, ok := o.(OnMrOpenedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OnMrOpenedType) String() string {
+	return "OnMrOpenedType"
+}
+
+func (t OnMrOpenedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return nil, diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OnMrOpenedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnMrOpenedValueNull() OnMrOpenedValue {
+	return OnMrOpenedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOnMrOpenedValueUnknown() OnMrOpenedValue {
+	return OnMrOpenedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOnMrOpenedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OnMrOpenedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OnMrOpenedValue Attribute Value",
+				"While creating a OnMrOpenedValue value, a missing attribute value was detected. "+
+					"A OnMrOpenedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnMrOpenedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OnMrOpenedValue Attribute Type",
+				"While creating a OnMrOpenedValue value, an invalid attribute value was detected. "+
+					"A OnMrOpenedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OnMrOpenedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OnMrOpenedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OnMrOpenedValue Attribute Value",
+				"While creating a OnMrOpenedValue value, an extra attribute value was detected. "+
+					"A OnMrOpenedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OnMrOpenedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOnMrOpenedValueUnknown(), diags
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewOnMrOpenedValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	valueAttribute, ok := attributes["value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value is missing from object`)
+
+		return NewOnMrOpenedValueUnknown(), diags
+	}
+
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOnMrOpenedValueUnknown(), diags
+	}
+
+	return OnMrOpenedValue{
+		To:    toVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOnMrOpenedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OnMrOpenedValue {
+	object, diags := NewOnMrOpenedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOnMrOpenedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OnMrOpenedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOnMrOpenedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOnMrOpenedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOnMrOpenedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOnMrOpenedValueMust(OnMrOpenedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OnMrOpenedType) ValueType(ctx context.Context) attr.Value {
+	return OnMrOpenedValue{}
+}
+
+var _ basetypes.ObjectValuable = OnMrOpenedValue{}
+
+type OnMrOpenedValue struct {
+	To    basetypes.StringValue `tfsdk:"to"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
+}
+
+func (v OnMrOpenedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		val, err = v.Value.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OnMrOpenedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OnMrOpenedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OnMrOpenedValue) String() string {
+	return "OnMrOpenedValue"
+}
+
+func (v OnMrOpenedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"to":    v.To,
+			"value": v.Value,
+		})
+
+	return objVal, diags
+}
+
+func (v OnMrOpenedValue) Equal(o attr.Value) bool {
+	other, ok := o.(OnMrOpenedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	if !v.Value.Equal(other.Value) {
+		return false
+	}
+
+	return true
+}
+
+func (v OnMrOpenedValue) Type(ctx context.Context) attr.Type {
+	return OnMrOpenedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OnMrOpenedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"to":    basetypes.StringType{},
+		"value": basetypes.StringType{},
+	}
 }
 
 var _ basetypes.ObjectTypable = StatusesType{}
@@ -827,5 +2535,329 @@ func (v StatusesValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 		"is_default": basetypes.BoolType{},
 		"name":       basetypes.StringType{},
 		"status_id":  basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = TransitionsType{}
+
+type TransitionsType struct {
+	basetypes.ObjectType
+}
+
+func (t TransitionsType) Equal(o attr.Type) bool {
+	other, ok := o.(TransitionsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t TransitionsType) String() string {
+	return "TransitionsType"
+}
+
+func (t TransitionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	tableAttribute, ok := attributes["table"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`table is missing from object`)
+
+		return nil, diags
+	}
+
+	tableVal, ok := tableAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`table expected to be basetypes.StringValue, was: %T`, tableAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return TransitionsValue{
+		Table: tableVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewTransitionsValueNull() TransitionsValue {
+	return TransitionsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewTransitionsValueUnknown() TransitionsValue {
+	return TransitionsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewTransitionsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (TransitionsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing TransitionsValue Attribute Value",
+				"While creating a TransitionsValue value, a missing attribute value was detected. "+
+					"A TransitionsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("TransitionsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid TransitionsValue Attribute Type",
+				"While creating a TransitionsValue value, an invalid attribute value was detected. "+
+					"A TransitionsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("TransitionsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("TransitionsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra TransitionsValue Attribute Value",
+				"While creating a TransitionsValue value, an extra attribute value was detected. "+
+					"A TransitionsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra TransitionsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewTransitionsValueUnknown(), diags
+	}
+
+	tableAttribute, ok := attributes["table"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`table is missing from object`)
+
+		return NewTransitionsValueUnknown(), diags
+	}
+
+	tableVal, ok := tableAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`table expected to be basetypes.StringValue, was: %T`, tableAttribute))
+	}
+
+	if diags.HasError() {
+		return NewTransitionsValueUnknown(), diags
+	}
+
+	return TransitionsValue{
+		Table: tableVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewTransitionsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) TransitionsValue {
+	object, diags := NewTransitionsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewTransitionsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t TransitionsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewTransitionsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewTransitionsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewTransitionsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewTransitionsValueMust(TransitionsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t TransitionsType) ValueType(ctx context.Context) attr.Value {
+	return TransitionsValue{}
+}
+
+var _ basetypes.ObjectValuable = TransitionsValue{}
+
+type TransitionsValue struct {
+	Table basetypes.StringValue `tfsdk:"table"`
+	state attr.ValueState
+}
+
+func (v TransitionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["table"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.Table.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["table"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v TransitionsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v TransitionsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v TransitionsValue) String() string {
+	return "TransitionsValue"
+}
+
+func (v TransitionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"table": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"table": v.Table,
+		})
+
+	return objVal, diags
+}
+
+func (v TransitionsValue) Equal(o attr.Value) bool {
+	other, ok := o.(TransitionsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Table.Equal(other.Table) {
+		return false
+	}
+
+	return true
+}
+
+func (v TransitionsValue) Type(ctx context.Context) attr.Type {
+	return TransitionsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v TransitionsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"table": basetypes.StringType{},
 	}
 }

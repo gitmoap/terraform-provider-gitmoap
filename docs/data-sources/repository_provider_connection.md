@@ -43,6 +43,7 @@ data "gitmoap_repository_provider_connection" "api" {
 - `auth_mode` (String) How a connection authenticates to its provider's cloud: `static_credentials` (stored
 credentials, the default) or `oidc_federation` (nothing stored; each run assumes a cloud role
 with a short-lived identity token gitmoap issues).
+- `config_overrides` (String) JSON: set it with `jsonencode()`.
 - `created_at` (String)
 - `created_by` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
 client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--created_by))
@@ -50,6 +51,8 @@ client needs to draw and link them, so a page of records names its actors withou
 of `environment_ids` may use it, and a connection bound only to environments since deleted
 is usable by no step.
 - `environment_ids` (List of String) The environments a bound connection may be used to deploy to. Empty when it is unbound.
+- `federation_target` (Attributes) The cloud role an OIDC-federated connection assumes, identified by `cloud`. `aws` is the only
+cloud supported. (see [below for nested schema](#nestedatt--federation_target))
 - `last_rotated_at` (String)
 - `name` (String)
 - `protected` (Boolean) Whether only a run on a protected branch or tag may use the connection.
@@ -76,3 +79,14 @@ and so which page it links to: a person's profile, a service account's page or a
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+
+<a id="nestedatt--federation_target"></a>
+### Nested Schema for `federation_target`
+
+Read-Only:
+
+- `audience` (String) The audience of the identity token. Defaults to `sts.amazonaws.com`.
+- `cloud` (String)
+- `region` (String)
+- `role_arn` (String)

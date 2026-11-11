@@ -55,6 +55,9 @@ client needs to draw and link them, so a page of records names its actors withou
 - `enabled` (Boolean)
 - `levels` (Attributes List) (see [below for nested schema](#nestedatt--levels))
 - `name` (String)
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--scope))
 - `slug` (String)
 - `updated_at` (String)
 - `version` (Number) The scorecard's revision, incremented on every change. Send it with an update to have the
@@ -65,6 +68,10 @@ update refused with a `409` if someone changed the scorecard since you read it.
 
 Read-Only:
 
+- `annotations` (String) Annotations a service must carry, as key–value pairs. Every entry must match; a service with
+extra annotations still matches.
+
+JSON: set it with `jsonencode()`.
 - `kinds` (List of String)
 - `lifecycles` (List of String)
 
@@ -74,9 +81,26 @@ Read-Only:
 
 Read-Only:
 
+- `config` (String) The check's own parameters, such as `{"days": 90}` for `released_within`. An unknown
+parameter is refused with a `400` rather than ignored.
+
+JSON: set it with `jsonencode()`.
 - `creates_work_item` (Boolean) Whether a failure opens a work item in the owning group's backlog. Off by default, and it
 takes effect only while the scorecard's campaign is active.
 - `key` (String)
+- `rule` (Attributes) How a check decides its answer.
+
+`type` says which applies: `derived`; `evidence`, with `binding`; `attested`, with `renew_after_days`. (see [below for nested schema](#nestedatt--checks--rule))
+
+<a id="nestedatt--checks--rule"></a>
+### Nested Schema for `checks.rule`
+
+Read-Only:
+
+- `binding` (String)
+- `renew_after_days` (Number)
+- `type` (String)
+
 
 
 <a id="nestedatt--created_by"></a>
@@ -105,3 +129,12 @@ Read-Only:
 
 - `name` (String)
 - `required_check_keys` (List of String)
+
+
+<a id="nestedatt--scope"></a>
+### Nested Schema for `scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)

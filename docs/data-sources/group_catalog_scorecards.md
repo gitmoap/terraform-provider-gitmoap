@@ -51,5 +51,16 @@ Read-Only:
 - `enabled` (Boolean)
 - `level_count` (Number)
 - `name` (String)
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--items--scope))
 - `scorecard_id` (String)
 - `slug` (String)
+
+<a id="nestedatt--items--scope"></a>
+### Nested Schema for `items.scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)

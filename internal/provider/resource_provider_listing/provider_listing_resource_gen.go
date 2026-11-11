@@ -92,6 +92,95 @@ func ProviderListingResourceSchema(ctx context.Context) schema.Schema {
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"provider_info": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"categories": schema.ListAttribute{
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"created_at": schema.StringAttribute{
+						Computed: true,
+					},
+					"description": schema.StringAttribute{
+						Computed: true,
+					},
+					"featured_rank": schema.Int64Attribute{
+						Computed:            true,
+						Description:         "Where gitmoap features the provider: lower numbers are placed higher. Absent when it is not\nfeatured.",
+						MarkdownDescription: "Where gitmoap features the provider: lower numbers are placed higher. Absent when it is not\nfeatured.",
+					},
+					"id": schema.StringAttribute{
+						Computed: true,
+					},
+					"install_count": schema.Int64Attribute{
+						Computed:            true,
+						Description:         "How many organizations have installed the provider. Absent for providers gitmoap builds\nitself.",
+						MarkdownDescription: "How many organizations have installed the provider. Absent for providers gitmoap builds\nitself.",
+					},
+					"keywords": schema.ListAttribute{
+						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"latest_version": schema.StringAttribute{
+						Computed: true,
+					},
+					"lifecycle_state": schema.StringAttribute{
+						Computed:            true,
+						Description:         "Lifecycle state of a published `ProviderVersionManifest`. `Active` is the\ndefault; `Deprecated` still runs but the trigger-time validator surfaces a\nwarning; `Sunset` runs only inside its grace window, after which a trigger\nreferencing it fails validation.",
+						MarkdownDescription: "Lifecycle state of a published `ProviderVersionManifest`. `Active` is the\ndefault; `Deprecated` still runs but the trigger-time validator surfaces a\nwarning; `Sunset` runs only inside its grace window, after which a trigger\nreferencing it fails validation.",
+					},
+					"name": schema.StringAttribute{
+						Computed: true,
+					},
+					"namespace_verified": schema.BoolAttribute{
+						Computed:            true,
+						Description:         "Whether the provider's publisher has verified its namespace. `false` for providers gitmoap\nbuilds itself, which have no publisher.",
+						MarkdownDescription: "Whether the provider's publisher has verified its namespace. `false` for providers gitmoap\nbuilds itself, which have no publisher.",
+					},
+					"publisher_id": schema.StringAttribute{
+						Computed: true,
+					},
+					"signed": schema.BoolAttribute{
+						Computed:            true,
+						Description:         "Whether the latest version's images are signed by gitmoap, as platform and verified\nproviders' are.",
+						MarkdownDescription: "Whether the latest version's images are signed by gitmoap, as platform and verified\nproviders' are.",
+					},
+					"tier": schema.StringAttribute{
+						Computed:            true,
+						Description:         "How a pipeline provider is distributed and how much it is vouched for.",
+						MarkdownDescription: "How a pipeline provider is distributed and how much it is vouched for.",
+					},
+					"updated_at": schema.StringAttribute{
+						Computed: true,
+					},
+					"visibility": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"kind": schema.StringAttribute{
+								Computed: true,
+							},
+							"owning_group_id": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+						CustomType: VisibilityType{
+							ObjectType: types.ObjectType{
+								AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.\n\n`kind` says which applies: `public`; `private`, with `owning_group_id`.",
+						MarkdownDescription: "Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.\n\n`kind` says which applies: `public`; `private`, with `owning_group_id`.",
+					},
+				},
+				CustomType: ProviderInfoType{
+					ObjectType: types.ObjectType{
+						AttrTypes: ProviderInfoValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "One provider as it appears in the marketplace grid. The README, examples and changelog are not included — they load with the provider's detail page.",
+				MarkdownDescription: "One provider as it appears in the marketplace grid. The README, examples and changelog are not included — they load with the provider's detail page.",
+			},
 			"publisher": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"display_name": schema.StringAttribute{
@@ -176,17 +265,18 @@ func ProviderListingResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type ProviderListingModel struct {
-	Categories        types.List     `tfsdk:"categories"`
-	Examples          types.List     `tfsdk:"examples"`
-	HomepageUrl       types.String   `tfsdk:"homepage_url"`
-	InstallCount      types.Int64    `tfsdk:"install_count"`
-	Keywords          types.List     `tfsdk:"keywords"`
-	NamespaceVerified types.Bool     `tfsdk:"namespace_verified"`
-	ProviderId        types.String   `tfsdk:"provider_id"`
-	Publisher         PublisherValue `tfsdk:"publisher"`
-	Readme            types.String   `tfsdk:"readme"`
-	RepositoryUrl     types.String   `tfsdk:"repository_url"`
-	Versions          types.List     `tfsdk:"versions"`
+	Categories        types.List        `tfsdk:"categories"`
+	Examples          types.List        `tfsdk:"examples"`
+	HomepageUrl       types.String      `tfsdk:"homepage_url"`
+	InstallCount      types.Int64       `tfsdk:"install_count"`
+	Keywords          types.List        `tfsdk:"keywords"`
+	NamespaceVerified types.Bool        `tfsdk:"namespace_verified"`
+	ProviderId        types.String      `tfsdk:"provider_id"`
+	ProviderInfo      ProviderInfoValue `tfsdk:"provider_info"`
+	Publisher         PublisherValue    `tfsdk:"publisher"`
+	Readme            types.String      `tfsdk:"readme"`
+	RepositoryUrl     types.String      `tfsdk:"repository_url"`
+	Versions          types.List        `tfsdk:"versions"`
 }
 
 var _ basetypes.ObjectTypable = ExamplesType{}
@@ -704,6 +794,1651 @@ func (v ExamplesValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 		"description": basetypes.StringType{},
 		"snippet":     basetypes.StringType{},
 		"title":       basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ProviderInfoType{}
+
+type ProviderInfoType struct {
+	basetypes.ObjectType
+}
+
+func (t ProviderInfoType) Equal(o attr.Type) bool {
+	other, ok := o.(ProviderInfoType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ProviderInfoType) String() string {
+	return "ProviderInfoType"
+}
+
+func (t ProviderInfoType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	categoriesAttribute, ok := attributes["categories"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`categories is missing from object`)
+
+		return nil, diags
+	}
+
+	categoriesVal, ok := categoriesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`categories expected to be basetypes.ListValue, was: %T`, categoriesAttribute))
+	}
+
+	createdAtAttribute, ok := attributes["created_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`created_at is missing from object`)
+
+		return nil, diags
+	}
+
+	createdAtVal, ok := createdAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`created_at expected to be basetypes.StringValue, was: %T`, createdAtAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return nil, diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	featuredRankAttribute, ok := attributes["featured_rank"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`featured_rank is missing from object`)
+
+		return nil, diags
+	}
+
+	featuredRankVal, ok := featuredRankAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`featured_rank expected to be basetypes.Int64Value, was: %T`, featuredRankAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	installCountAttribute, ok := attributes["install_count"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`install_count is missing from object`)
+
+		return nil, diags
+	}
+
+	installCountVal, ok := installCountAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`install_count expected to be basetypes.Int64Value, was: %T`, installCountAttribute))
+	}
+
+	keywordsAttribute, ok := attributes["keywords"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`keywords is missing from object`)
+
+		return nil, diags
+	}
+
+	keywordsVal, ok := keywordsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`keywords expected to be basetypes.ListValue, was: %T`, keywordsAttribute))
+	}
+
+	latestVersionAttribute, ok := attributes["latest_version"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`latest_version is missing from object`)
+
+		return nil, diags
+	}
+
+	latestVersionVal, ok := latestVersionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`latest_version expected to be basetypes.StringValue, was: %T`, latestVersionAttribute))
+	}
+
+	lifecycleStateAttribute, ok := attributes["lifecycle_state"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`lifecycle_state is missing from object`)
+
+		return nil, diags
+	}
+
+	lifecycleStateVal, ok := lifecycleStateAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`lifecycle_state expected to be basetypes.StringValue, was: %T`, lifecycleStateAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	namespaceVerifiedAttribute, ok := attributes["namespace_verified"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`namespace_verified is missing from object`)
+
+		return nil, diags
+	}
+
+	namespaceVerifiedVal, ok := namespaceVerifiedAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`namespace_verified expected to be basetypes.BoolValue, was: %T`, namespaceVerifiedAttribute))
+	}
+
+	publisherIdAttribute, ok := attributes["publisher_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`publisher_id is missing from object`)
+
+		return nil, diags
+	}
+
+	publisherIdVal, ok := publisherIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`publisher_id expected to be basetypes.StringValue, was: %T`, publisherIdAttribute))
+	}
+
+	signedAttribute, ok := attributes["signed"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`signed is missing from object`)
+
+		return nil, diags
+	}
+
+	signedVal, ok := signedAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`signed expected to be basetypes.BoolValue, was: %T`, signedAttribute))
+	}
+
+	tierAttribute, ok := attributes["tier"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tier is missing from object`)
+
+		return nil, diags
+	}
+
+	tierVal, ok := tierAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tier expected to be basetypes.StringValue, was: %T`, tierAttribute))
+	}
+
+	updatedAtAttribute, ok := attributes["updated_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`updated_at is missing from object`)
+
+		return nil, diags
+	}
+
+	updatedAtVal, ok := updatedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`updated_at expected to be basetypes.StringValue, was: %T`, updatedAtAttribute))
+	}
+
+	visibilityAttribute, ok := attributes["visibility"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`visibility is missing from object`)
+
+		return nil, diags
+	}
+
+	visibilityVal, ok := visibilityAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`visibility expected to be basetypes.ObjectValue, was: %T`, visibilityAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ProviderInfoValue{
+		Categories:        categoriesVal,
+		CreatedAt:         createdAtVal,
+		Description:       descriptionVal,
+		FeaturedRank:      featuredRankVal,
+		Id:                idVal,
+		InstallCount:      installCountVal,
+		Keywords:          keywordsVal,
+		LatestVersion:     latestVersionVal,
+		LifecycleState:    lifecycleStateVal,
+		Name:              nameVal,
+		NamespaceVerified: namespaceVerifiedVal,
+		PublisherId:       publisherIdVal,
+		Signed:            signedVal,
+		Tier:              tierVal,
+		UpdatedAt:         updatedAtVal,
+		Visibility:        visibilityVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProviderInfoValueNull() ProviderInfoValue {
+	return ProviderInfoValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewProviderInfoValueUnknown() ProviderInfoValue {
+	return ProviderInfoValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewProviderInfoValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ProviderInfoValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ProviderInfoValue Attribute Value",
+				"While creating a ProviderInfoValue value, a missing attribute value was detected. "+
+					"A ProviderInfoValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProviderInfoValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ProviderInfoValue Attribute Type",
+				"While creating a ProviderInfoValue value, an invalid attribute value was detected. "+
+					"A ProviderInfoValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProviderInfoValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ProviderInfoValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ProviderInfoValue Attribute Value",
+				"While creating a ProviderInfoValue value, an extra attribute value was detected. "+
+					"A ProviderInfoValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ProviderInfoValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	categoriesAttribute, ok := attributes["categories"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`categories is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	categoriesVal, ok := categoriesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`categories expected to be basetypes.ListValue, was: %T`, categoriesAttribute))
+	}
+
+	createdAtAttribute, ok := attributes["created_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`created_at is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	createdAtVal, ok := createdAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`created_at expected to be basetypes.StringValue, was: %T`, createdAtAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	featuredRankAttribute, ok := attributes["featured_rank"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`featured_rank is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	featuredRankVal, ok := featuredRankAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`featured_rank expected to be basetypes.Int64Value, was: %T`, featuredRankAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	installCountAttribute, ok := attributes["install_count"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`install_count is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	installCountVal, ok := installCountAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`install_count expected to be basetypes.Int64Value, was: %T`, installCountAttribute))
+	}
+
+	keywordsAttribute, ok := attributes["keywords"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`keywords is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	keywordsVal, ok := keywordsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`keywords expected to be basetypes.ListValue, was: %T`, keywordsAttribute))
+	}
+
+	latestVersionAttribute, ok := attributes["latest_version"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`latest_version is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	latestVersionVal, ok := latestVersionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`latest_version expected to be basetypes.StringValue, was: %T`, latestVersionAttribute))
+	}
+
+	lifecycleStateAttribute, ok := attributes["lifecycle_state"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`lifecycle_state is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	lifecycleStateVal, ok := lifecycleStateAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`lifecycle_state expected to be basetypes.StringValue, was: %T`, lifecycleStateAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	namespaceVerifiedAttribute, ok := attributes["namespace_verified"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`namespace_verified is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	namespaceVerifiedVal, ok := namespaceVerifiedAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`namespace_verified expected to be basetypes.BoolValue, was: %T`, namespaceVerifiedAttribute))
+	}
+
+	publisherIdAttribute, ok := attributes["publisher_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`publisher_id is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	publisherIdVal, ok := publisherIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`publisher_id expected to be basetypes.StringValue, was: %T`, publisherIdAttribute))
+	}
+
+	signedAttribute, ok := attributes["signed"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`signed is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	signedVal, ok := signedAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`signed expected to be basetypes.BoolValue, was: %T`, signedAttribute))
+	}
+
+	tierAttribute, ok := attributes["tier"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tier is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	tierVal, ok := tierAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tier expected to be basetypes.StringValue, was: %T`, tierAttribute))
+	}
+
+	updatedAtAttribute, ok := attributes["updated_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`updated_at is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	updatedAtVal, ok := updatedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`updated_at expected to be basetypes.StringValue, was: %T`, updatedAtAttribute))
+	}
+
+	visibilityAttribute, ok := attributes["visibility"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`visibility is missing from object`)
+
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	visibilityVal, ok := visibilityAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`visibility expected to be basetypes.ObjectValue, was: %T`, visibilityAttribute))
+	}
+
+	if diags.HasError() {
+		return NewProviderInfoValueUnknown(), diags
+	}
+
+	return ProviderInfoValue{
+		Categories:        categoriesVal,
+		CreatedAt:         createdAtVal,
+		Description:       descriptionVal,
+		FeaturedRank:      featuredRankVal,
+		Id:                idVal,
+		InstallCount:      installCountVal,
+		Keywords:          keywordsVal,
+		LatestVersion:     latestVersionVal,
+		LifecycleState:    lifecycleStateVal,
+		Name:              nameVal,
+		NamespaceVerified: namespaceVerifiedVal,
+		PublisherId:       publisherIdVal,
+		Signed:            signedVal,
+		Tier:              tierVal,
+		UpdatedAt:         updatedAtVal,
+		Visibility:        visibilityVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProviderInfoValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ProviderInfoValue {
+	object, diags := NewProviderInfoValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewProviderInfoValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ProviderInfoType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewProviderInfoValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewProviderInfoValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewProviderInfoValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewProviderInfoValueMust(ProviderInfoValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ProviderInfoType) ValueType(ctx context.Context) attr.Value {
+	return ProviderInfoValue{}
+}
+
+var _ basetypes.ObjectValuable = ProviderInfoValue{}
+
+type ProviderInfoValue struct {
+	Categories        basetypes.ListValue   `tfsdk:"categories"`
+	CreatedAt         basetypes.StringValue `tfsdk:"created_at"`
+	Description       basetypes.StringValue `tfsdk:"description"`
+	FeaturedRank      basetypes.Int64Value  `tfsdk:"featured_rank"`
+	Id                basetypes.StringValue `tfsdk:"id"`
+	InstallCount      basetypes.Int64Value  `tfsdk:"install_count"`
+	Keywords          basetypes.ListValue   `tfsdk:"keywords"`
+	LatestVersion     basetypes.StringValue `tfsdk:"latest_version"`
+	LifecycleState    basetypes.StringValue `tfsdk:"lifecycle_state"`
+	Name              basetypes.StringValue `tfsdk:"name"`
+	NamespaceVerified basetypes.BoolValue   `tfsdk:"namespace_verified"`
+	PublisherId       basetypes.StringValue `tfsdk:"publisher_id"`
+	Signed            basetypes.BoolValue   `tfsdk:"signed"`
+	Tier              basetypes.StringValue `tfsdk:"tier"`
+	UpdatedAt         basetypes.StringValue `tfsdk:"updated_at"`
+	Visibility        basetypes.ObjectValue `tfsdk:"visibility"`
+	state             attr.ValueState
+}
+
+func (v ProviderInfoValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 16)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["categories"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["created_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["featured_rank"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["install_count"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["keywords"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["latest_version"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["lifecycle_state"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["namespace_verified"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["publisher_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["signed"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["tier"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["updated_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["visibility"] = basetypes.ObjectType{
+		AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 16)
+
+		val, err = v.Categories.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["categories"] = val
+
+		val, err = v.CreatedAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["created_at"] = val
+
+		val, err = v.Description.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["description"] = val
+
+		val, err = v.FeaturedRank.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["featured_rank"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.InstallCount.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["install_count"] = val
+
+		val, err = v.Keywords.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["keywords"] = val
+
+		val, err = v.LatestVersion.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["latest_version"] = val
+
+		val, err = v.LifecycleState.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["lifecycle_state"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.NamespaceVerified.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["namespace_verified"] = val
+
+		val, err = v.PublisherId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["publisher_id"] = val
+
+		val, err = v.Signed.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["signed"] = val
+
+		val, err = v.Tier.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["tier"] = val
+
+		val, err = v.UpdatedAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["updated_at"] = val
+
+		val, err = v.Visibility.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["visibility"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ProviderInfoValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ProviderInfoValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ProviderInfoValue) String() string {
+	return "ProviderInfoValue"
+}
+
+func (v ProviderInfoValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var visibility basetypes.ObjectValue
+
+	if v.Visibility.IsNull() {
+		visibility = types.ObjectNull(
+			VisibilityValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Visibility.IsUnknown() {
+		visibility = types.ObjectUnknown(
+			VisibilityValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Visibility.IsNull() && !v.Visibility.IsUnknown() {
+		visibility = types.ObjectValueMust(
+			VisibilityValue{}.AttributeTypes(ctx),
+			v.Visibility.Attributes(),
+		)
+	}
+
+	var categoriesVal basetypes.ListValue
+	switch {
+	case v.Categories.IsUnknown():
+		categoriesVal = types.ListUnknown(types.StringType)
+	case v.Categories.IsNull():
+		categoriesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		categoriesVal, d = types.ListValue(types.StringType, v.Categories.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"categories": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"created_at":    basetypes.StringType{},
+			"description":   basetypes.StringType{},
+			"featured_rank": basetypes.Int64Type{},
+			"id":            basetypes.StringType{},
+			"install_count": basetypes.Int64Type{},
+			"keywords": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"latest_version":     basetypes.StringType{},
+			"lifecycle_state":    basetypes.StringType{},
+			"name":               basetypes.StringType{},
+			"namespace_verified": basetypes.BoolType{},
+			"publisher_id":       basetypes.StringType{},
+			"signed":             basetypes.BoolType{},
+			"tier":               basetypes.StringType{},
+			"updated_at":         basetypes.StringType{},
+			"visibility": basetypes.ObjectType{
+				AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
+	var keywordsVal basetypes.ListValue
+	switch {
+	case v.Keywords.IsUnknown():
+		keywordsVal = types.ListUnknown(types.StringType)
+	case v.Keywords.IsNull():
+		keywordsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		keywordsVal, d = types.ListValue(types.StringType, v.Keywords.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"categories": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"created_at":    basetypes.StringType{},
+			"description":   basetypes.StringType{},
+			"featured_rank": basetypes.Int64Type{},
+			"id":            basetypes.StringType{},
+			"install_count": basetypes.Int64Type{},
+			"keywords": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"latest_version":     basetypes.StringType{},
+			"lifecycle_state":    basetypes.StringType{},
+			"name":               basetypes.StringType{},
+			"namespace_verified": basetypes.BoolType{},
+			"publisher_id":       basetypes.StringType{},
+			"signed":             basetypes.BoolType{},
+			"tier":               basetypes.StringType{},
+			"updated_at":         basetypes.StringType{},
+			"visibility": basetypes.ObjectType{
+				AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"categories": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"created_at":    basetypes.StringType{},
+		"description":   basetypes.StringType{},
+		"featured_rank": basetypes.Int64Type{},
+		"id":            basetypes.StringType{},
+		"install_count": basetypes.Int64Type{},
+		"keywords": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"latest_version":     basetypes.StringType{},
+		"lifecycle_state":    basetypes.StringType{},
+		"name":               basetypes.StringType{},
+		"namespace_verified": basetypes.BoolType{},
+		"publisher_id":       basetypes.StringType{},
+		"signed":             basetypes.BoolType{},
+		"tier":               basetypes.StringType{},
+		"updated_at":         basetypes.StringType{},
+		"visibility": basetypes.ObjectType{
+			AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"categories":         categoriesVal,
+			"created_at":         v.CreatedAt,
+			"description":        v.Description,
+			"featured_rank":      v.FeaturedRank,
+			"id":                 v.Id,
+			"install_count":      v.InstallCount,
+			"keywords":           keywordsVal,
+			"latest_version":     v.LatestVersion,
+			"lifecycle_state":    v.LifecycleState,
+			"name":               v.Name,
+			"namespace_verified": v.NamespaceVerified,
+			"publisher_id":       v.PublisherId,
+			"signed":             v.Signed,
+			"tier":               v.Tier,
+			"updated_at":         v.UpdatedAt,
+			"visibility":         visibility,
+		})
+
+	return objVal, diags
+}
+
+func (v ProviderInfoValue) Equal(o attr.Value) bool {
+	other, ok := o.(ProviderInfoValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Categories.Equal(other.Categories) {
+		return false
+	}
+
+	if !v.CreatedAt.Equal(other.CreatedAt) {
+		return false
+	}
+
+	if !v.Description.Equal(other.Description) {
+		return false
+	}
+
+	if !v.FeaturedRank.Equal(other.FeaturedRank) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.InstallCount.Equal(other.InstallCount) {
+		return false
+	}
+
+	if !v.Keywords.Equal(other.Keywords) {
+		return false
+	}
+
+	if !v.LatestVersion.Equal(other.LatestVersion) {
+		return false
+	}
+
+	if !v.LifecycleState.Equal(other.LifecycleState) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.NamespaceVerified.Equal(other.NamespaceVerified) {
+		return false
+	}
+
+	if !v.PublisherId.Equal(other.PublisherId) {
+		return false
+	}
+
+	if !v.Signed.Equal(other.Signed) {
+		return false
+	}
+
+	if !v.Tier.Equal(other.Tier) {
+		return false
+	}
+
+	if !v.UpdatedAt.Equal(other.UpdatedAt) {
+		return false
+	}
+
+	if !v.Visibility.Equal(other.Visibility) {
+		return false
+	}
+
+	return true
+}
+
+func (v ProviderInfoValue) Type(ctx context.Context) attr.Type {
+	return ProviderInfoType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ProviderInfoValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"categories": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"created_at":    basetypes.StringType{},
+		"description":   basetypes.StringType{},
+		"featured_rank": basetypes.Int64Type{},
+		"id":            basetypes.StringType{},
+		"install_count": basetypes.Int64Type{},
+		"keywords": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"latest_version":     basetypes.StringType{},
+		"lifecycle_state":    basetypes.StringType{},
+		"name":               basetypes.StringType{},
+		"namespace_verified": basetypes.BoolType{},
+		"publisher_id":       basetypes.StringType{},
+		"signed":             basetypes.BoolType{},
+		"tier":               basetypes.StringType{},
+		"updated_at":         basetypes.StringType{},
+		"visibility": basetypes.ObjectType{
+			AttrTypes: VisibilityValue{}.AttributeTypes(ctx),
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = VisibilityType{}
+
+type VisibilityType struct {
+	basetypes.ObjectType
+}
+
+func (t VisibilityType) Equal(o attr.Type) bool {
+	other, ok := o.(VisibilityType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t VisibilityType) String() string {
+	return "VisibilityType"
+}
+
+func (t VisibilityType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	owningGroupIdAttribute, ok := attributes["owning_group_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owning_group_id is missing from object`)
+
+		return nil, diags
+	}
+
+	owningGroupIdVal, ok := owningGroupIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owning_group_id expected to be basetypes.StringValue, was: %T`, owningGroupIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return VisibilityValue{
+		Kind:          kindVal,
+		OwningGroupId: owningGroupIdVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewVisibilityValueNull() VisibilityValue {
+	return VisibilityValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewVisibilityValueUnknown() VisibilityValue {
+	return VisibilityValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewVisibilityValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (VisibilityValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing VisibilityValue Attribute Value",
+				"While creating a VisibilityValue value, a missing attribute value was detected. "+
+					"A VisibilityValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("VisibilityValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid VisibilityValue Attribute Type",
+				"While creating a VisibilityValue value, an invalid attribute value was detected. "+
+					"A VisibilityValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("VisibilityValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("VisibilityValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra VisibilityValue Attribute Value",
+				"While creating a VisibilityValue value, an extra attribute value was detected. "+
+					"A VisibilityValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra VisibilityValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	owningGroupIdAttribute, ok := attributes["owning_group_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owning_group_id is missing from object`)
+
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	owningGroupIdVal, ok := owningGroupIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owning_group_id expected to be basetypes.StringValue, was: %T`, owningGroupIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewVisibilityValueUnknown(), diags
+	}
+
+	return VisibilityValue{
+		Kind:          kindVal,
+		OwningGroupId: owningGroupIdVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewVisibilityValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) VisibilityValue {
+	object, diags := NewVisibilityValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewVisibilityValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t VisibilityType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewVisibilityValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewVisibilityValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewVisibilityValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewVisibilityValueMust(VisibilityValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t VisibilityType) ValueType(ctx context.Context) attr.Value {
+	return VisibilityValue{}
+}
+
+var _ basetypes.ObjectValuable = VisibilityValue{}
+
+type VisibilityValue struct {
+	Kind          basetypes.StringValue `tfsdk:"kind"`
+	OwningGroupId basetypes.StringValue `tfsdk:"owning_group_id"`
+	state         attr.ValueState
+}
+
+func (v VisibilityValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["owning_group_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.OwningGroupId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["owning_group_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v VisibilityValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v VisibilityValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v VisibilityValue) String() string {
+	return "VisibilityValue"
+}
+
+func (v VisibilityValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"kind":            basetypes.StringType{},
+		"owning_group_id": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"kind":            v.Kind,
+			"owning_group_id": v.OwningGroupId,
+		})
+
+	return objVal, diags
+}
+
+func (v VisibilityValue) Equal(o attr.Value) bool {
+	other, ok := o.(VisibilityValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.OwningGroupId.Equal(other.OwningGroupId) {
+		return false
+	}
+
+	return true
+}
+
+func (v VisibilityValue) Type(ctx context.Context) attr.Type {
+	return VisibilityType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v VisibilityValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"kind":            basetypes.StringType{},
+		"owning_group_id": basetypes.StringType{},
 	}
 }
 

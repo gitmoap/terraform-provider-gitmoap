@@ -81,6 +81,8 @@ from pathlib import Path
 
 import yaml
 
+from unions import marks_in, rewrite_unions
+
 # --------------------------------------------------------------------------------------------------
 # Policy: the choices a person would want to revisit. Everything below this section is mechanics.
 # --------------------------------------------------------------------------------------------------
@@ -142,6 +144,8 @@ CREATE_PATH_PARAMS = {
     "catalog_scorecard": ["group_id"],
     "catalog_environment_variable": ["environment_id", "name"],
     "catalog_service": ["group_id"],
+    "group_access_grant": ["group_id"],
+    "group_approval_rule": ["group_id"],
     "group_ai_org_conventions": ["group_id"],
     "group_ai_org_squad_memory": ["group_id", "squad_key"],
     "group_approval_policy": ["group_id"],
@@ -171,6 +175,8 @@ CREATE_PATH_PARAMS = {
     "group_wiki_page": ["group_id"],
     "provider_listing": ["provider_id"],
     "repository_approval_policy": ["repo_id"],
+    "repository_access_grant": ["repo_id"],
+    "repository_approval_rule": ["repo_id"],
     "repository_branch": ["repo_id"],
     "repository_branch_rule": ["repo_id"],
     "repository_catalog_environment": ["repo_id"],
@@ -205,13 +211,18 @@ CREATE_PATH_PARAMS = {
 # the renamed attribute to its API field by hand.
 RENAME_NESTED: dict[str, dict[str, str]] = {
     "data source ai_agent_memory": {"history.updated_by": "history_updated_by"},
-    "data source group_access": {"entries.source.at": "source_at"},
+    "data source group_access": {"entries.limited_to.subject": "limited_to_subject", "entries.limited_to.subject.principal": "subject_principal", "entries.limited_to.subject.team": "subject_team", "entries.source.at": "source_at"},
     "data source group_ai_org_conventions": {"history.updated_by": "history_updated_by"},
     "data source group_ai_org_squad_memory": {"history.updated_by": "history_updated_by"},
-    "data source group_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "data source group_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "data source group_issue_blueprint": {"facets.binding.binding": "criterion"},
+    "data source group_issue_blueprints": {"group_issue_blueprints.facets.binding.binding": "criterion"},
     "data source provider_submission": {"manifest.capabilities": "manifest_capabilities", "mirror_result.capabilities": "mirror_result_capabilities"},
-    "data source repository_access": {"entries.source.at": "source_at"},
-    "data source repository_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "data source repository_access": {"entries.limited_to.subject": "limited_to_subject", "entries.limited_to.subject.principal": "subject_principal", "entries.limited_to.subject.team": "subject_team", "entries.source.at": "source_at"},
+    "data source repository_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "data source repository_catalog_resolve": {"resolved.service.owner": "service_owner", "resolved.service.owner.actor": "owner_actor"},
+    "data source repository_issue_blueprint": {"facets.binding.binding": "criterion"},
+    "data source repository_issue_blueprints": {"repository_issue_blueprints.facets.binding.binding": "criterion"},
     "data source repository_pipeline": {"diagnostics.warnings.target": "warnings_target"},
     "data source repository_pipeline_component_version": {"body.outputs.source": "outputs_source"},
     "data source repository_pipeline_file": {
@@ -225,9 +236,31 @@ RENAME_NESTED: dict[str, dict[str, str]] = {
     "resource ai_agent_memory": {"history.updated_by": "history_updated_by"},
     "resource group_ai_org_conventions": {"history.updated_by": "history_updated_by"},
     "resource group_ai_org_squad_memory": {"history.updated_by": "history_updated_by"},
-    "resource group_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.defined_at": "rules_here_defined_at"},
-    "resource repository_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "resource group_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "resource group_issue_blueprint": {"facets.binding.binding": "criterion"},
+    "resource repository_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "resource repository_issue_blueprint": {"facets.binding.binding": "criterion"},
 }
+
+# Root attributes whose name Terraform reserves, renamed: name -> new name. The provider maps the
+# new name back to the API's field.
+RESERVED_RENAMES = {
+    "lifecycle": "lifecycle_stage",
+    "provider": "provider_info",
+}
+
+# Objects created under their owner and changed at a path of their own, which the API lists only as
+# part of one of the owner's responses: path of the object -> (that response's path, after the
+# owner's, and the field listing the objects).
+LISTED_IN = {
+    "/approval-rules/{rule_id}": ("/approval-policy", "rules_here"),
+    "/access/grants/{grant_id}": ("/access", "entries"),
+}
+
+# Grants are made for a list of subjects, and answered with the grants made. A grant resource is one
+# grant: in the copy of the spec the generator reads, these take one subject, and answer with the
+# grant. The grant override translates.
+SINGLE_GRANT = {"/groups/{group_id}/access/grants", "/repositories/{repo_id}/access/grants"}
 
 # Path parameters whose attribute the script can't find by name, by resource or data source:
 # parameter -> attribute path (dots for nested attributes). The rest match an attribute of the same
@@ -240,6 +273,9 @@ PATH_PARAM_ATTRIBUTES: dict[str, dict[str, str]] = {
 # --------------------------------------------------------------------------------------------------
 # Reading the spec, mirroring how tfplugingen-openapi interprets it
 # --------------------------------------------------------------------------------------------------
+
+# The name each renamed attribute had, by id of its attribute in the code spec.
+ORIGINAL_NAMES: dict[int, str] = {}
 
 SCALARS = {"string", "integer", "number", "boolean"}
 STRINGABLE = {"integer", "number", "boolean"}
@@ -665,9 +701,14 @@ def discover_resources(spec: Spec, report: Report) -> list[ResourceShape]:
         if creators:
             parent = path.rsplit("/", 1)[0]
             read_is_list = False
-            if not read:
+            listed = LISTED_IN.get(path) if not read else None
+            if not read and not listed:
                 if not spec.op(parent, "get"):
-                    report.skip(f"resource at {path}", "no GET on the item or its collection")
+                    report.problem(
+                        f"resource at {path}",
+                        "has no GET, and neither has its collection, so it can't be read back. "
+                        "Fix: add where its owner lists it to LISTED_IN, or exclude it in EXCLUDED_PATHS",
+                    )
                     continue
                 read, read_is_list = (parent, "get"), True
             if not delete:
@@ -678,7 +719,13 @@ def discover_resources(spec: Spec, report: Report) -> list[ResourceShape]:
             last = path.rsplit("/", 1)[1]
             for creator in creators:
                 name = name_from_path(f"{creator}/{last}" if len(creators) > 1 else path)
-                shapes.append(ResourceShape(name, (creator, "post"), read, update, delete, read_is_list))
+                creator_read = read
+                if listed:
+                    creator_read, read_is_list = (creator.removesuffix(parent) + listed[0], "get"), True
+                    if not spec.op(*creator_read):
+                        report.problem(f"resource {name}", f"LISTED_IN reads it from {creator_read[0]}, which has no GET. Fix: correct LISTED_IN")
+                        continue
+                shapes.append(ResourceShape(name, (creator, "post"), creator_read, update, delete, read_is_list))
         elif read and has_json_body(spec, path, "put"):
             shapes.append(ResourceShape(name_from_path(path), (path, "put"), read, (path, "put"), delete))
         elif has_json_body(spec, path, "put") and delete and spec.op(path.rsplit("/", 1)[0], "get"):
@@ -686,6 +733,11 @@ def discover_resources(spec: Spec, report: Report) -> list[ResourceShape]:
             shapes.append(ResourceShape(name_from_path(path), (path, "put"), parent_read, (path, "put"), delete, read_is_list=True))
         elif updater:
             report.skip(f"resource at {path}", "can be updated but not created through the API")
+    for path in sorted(LISTED_IN):
+        if path not in spec.paths:
+            report.problem(f"path {path}", "is in LISTED_IN but isn't in the spec any more. Fix: remove it from LISTED_IN")
+        elif spec.op(path, "get"):
+            report.problem(f"path {path}", "is in LISTED_IN but can be read directly now. Fix: remove it from LISTED_IN")
     return shapes
 
 
@@ -735,6 +787,16 @@ def schema_section(ignores: set[str], aliases: dict[str, str]) -> dict:
 
 def location_entry(location: tuple[str, str] | None) -> dict | None:
     return {"path": location[0], "method": location[1].upper()} if location else None
+
+
+def reserved(what: str, attribute: str, ignores: dict, report: Report) -> None:
+    """Keep a root attribute whose name Terraform reserves, to rename it, if RESERVED_RENAMES says
+    how; ignore it otherwise."""
+    name = tf_identifier(attribute)
+    if name not in RESERVED_ROOT_ATTRIBUTES or name in RESERVED_RENAMES:
+        return
+    ignores[attribute] = "reserved Terraform attribute name"
+    report.problem(what, f"has a field named {name}, which Terraform reserves. Fix: add {json.dumps(name)}: \"<new name>\" to RESERVED_RENAMES")
 
 
 def build_resource(spec: Spec, shape: ResourceShape, report: Report) -> dict | None:
@@ -793,8 +855,7 @@ def build_resource(spec: Spec, shape: ResourceShape, report: Report) -> dict | N
 
     for name in {*properties, *(n for loc, n in params if loc == "path")}:
         attribute = aliases.get(name, name)
-        if tf_identifier(attribute) in RESERVED_ROOT_ATTRIBUTES:
-            ignores[attribute] = "reserved Terraform attribute name"
+        reserved(what, attribute, ignores, report)
 
     blocked = []
     for location, reason in sorted(ignores.items()):
@@ -849,10 +910,10 @@ def build_data_sources(spec: Spec, report: Report) -> dict[str, dict]:
         ignores |= PAGINATION_FIELDS & set(properties)
 
         aliases = item_alias(spec, path, "get", properties)
+        found: dict[str, str] = {}
         for param_name in {*properties, *(n for loc, n in params if loc in ("path", "query"))}:
-            attribute = aliases.get(param_name, param_name)
-            if tf_identifier(attribute) in RESERVED_ROOT_ATTRIBUTES:
-                ignores.add(attribute)
+            reserved(f"data source {name}", aliases.get(param_name, param_name), found, report)
+        ignores |= set(found)
 
         entry = {"read": location_entry((path, "get"))}
         section = schema_section(ignores, aliases)
@@ -881,6 +942,33 @@ def merge_known_allof(spec: Spec, report: Report) -> int:
         except UnsupportedSchema as error:
             report.problem(f"schema {name}", f"is in FLATTEN_ALLOF but can't be merged any more: {error}")
     return merged
+
+
+def patch_single_grants(spec: Spec, report: Report) -> int:
+    """Make the operations in SINGLE_GRANT take one subject and answer with the grant."""
+    patched = 0
+    for path in sorted(SINGLE_GRANT):
+        op = spec.op(path, "post")
+        request = spec.request_schema(op) if op else None
+        response = spec.response_schema(op) if op else None
+        try:
+            request_properties = spec.effective(request).get("properties") or {} if request else {}
+            response_properties = spec.effective(response).get("properties") or {} if response else {}
+        except UnsupportedSchema:
+            request_properties = response_properties = {}
+        subjects, grants = request_properties.get("subjects"), response_properties.get("grants")
+        if not subjects or not grants:
+            report.problem(f"path {path}", "is in SINGLE_GRANT but doesn't take subjects and answer with grants any more. Fix: remove it from SINGLE_GRANT")
+            continue
+        properties = {name: value for name, value in request_properties.items() if name != "subjects"}
+        properties["subject"] = {**spec.deref(spec.deref(subjects)["items"]), "description": "Who receives the role."}
+        required = ["subject" if name == "subjects" else name for name in spec.effective(request).get("required") or []]
+        spec.deref(op["requestBody"])["content"]["application/json"]["schema"] = {"type": "object", "properties": properties, "required": required}
+        for code, answer in op["responses"].items():
+            if code.startswith("2") and "application/json" in (spec.deref(answer).get("content") or {}):
+                spec.deref(answer)["content"]["application/json"]["schema"] = spec.deref(grants)["items"]
+        patched += 1
+    return patched
 
 
 def report_unmerged_allof(spec: Spec, report: Report) -> None:
@@ -1015,15 +1103,18 @@ def add_descriptions(spec: Spec, config: dict, code_spec: dict) -> None:
 
 # String attributes that hold a credential, wherever they appear. The spec marks only some of them
 # (format: password); Terraform shows the rest in plans and outputs unless they're sensitive.
-SECRET_NAMES = {"secret", "token", "client_secret", "password", "private_key", "refresh_token", "api_token"}
+SECRET_NAMES = {"secret", "token", "client_secret", "password", "private_key", "refresh_token", "api_token", "credentials"}
 
 
 def mark_secrets(code_spec: dict) -> int:
     def visit(attributes: list[dict]) -> int:
         marked = 0
+        flagged = any(a["name"] == "secret" and attribute_type(a) == "bool" for a in attributes)
         for attribute in attributes:
             body = attribute[attribute_type(attribute)]
-            if attribute_type(attribute) == "string" and attribute["name"] in SECRET_NAMES and not body.get("sensitive"):
+            # A variable's value, next to the flag saying whether it's a secret, may be one.
+            named = attribute["name"] in SECRET_NAMES or (flagged and attribute["name"] == "value")
+            if attribute_type(attribute) == "string" and named and not body.get("sensitive"):
                 body["sensitive"] = True
                 marked += 1
             marked += visit(body.get("attributes") or body.get("nested_object", {}).get("attributes", []))
@@ -1062,6 +1153,87 @@ def fix_api_filled_nested(code_spec: dict) -> int:
         return changed
 
     return sum(visit(resource["schema"]["attributes"]) for resource in code_spec.get("resources", []))
+
+
+def fix_reserved_names(code_spec: dict) -> dict[str, dict[str, str]]:
+    """Rename root attributes in RESERVED_RENAMES. Returns, for each resource and data source, the
+    API field behind each renamed attribute."""
+    fields: dict[str, dict[str, str]] = {}
+    for kind, key in (("resource", "resources"), ("data source", "datasources")):
+        for entry in code_spec.get(key, []):
+            for attribute in entry["schema"]["attributes"]:
+                if attribute["name"] in RESERVED_RENAMES:
+                    ORIGINAL_NAMES[id(attribute)] = attribute["name"]
+                    attribute["name"] = RESERVED_RENAMES[attribute["name"]]
+                    fields.setdefault(f"{kind} {entry['name']}", {})[attribute["name"]] = ORIGINAL_NAMES[id(attribute)]
+    return fields
+
+
+def fix_update_only(spec: Spec, config: dict, code_spec: dict) -> dict[str, list[str]]:
+    """Make the fields only an update takes settable. The generator takes what can be set from the
+    create request, so they come out read-only; the provider sets them with an update after
+    creating. A version, which an update sends back to detect a concurrent change, stays read-only."""
+    found: dict[str, list[str]] = {}
+    for resource in code_spec.get("resources", []):
+        entry = config["resources"][resource["name"]]
+        if "update" not in entry or entry["update"] == entry["create"]:
+            continue
+        created = {tf_identifier(name) for name in root_request_properties(spec, entry["create"])}
+        attributes = {attribute["name"]: attribute for attribute in resource["schema"]["attributes"]}
+        for name in sorted(root_request_properties(spec, entry["update"])):
+            attribute = attributes.get(tf_identifier(name))
+            if tf_identifier(name) in created or tf_identifier(name) == "version" or attribute is None:
+                continue
+            body = attribute[attribute_type(attribute)]
+            if body.get("computed_optional_required") == "computed":
+                body["computed_optional_required"] = "computed_optional"
+                found.setdefault(resource["name"], []).append(attribute["name"])
+    return found
+
+
+def root_request_properties(spec: Spec, location: dict) -> dict:
+    op = spec.op(location["path"], location["method"].lower())
+    request = spec.request_schema(op) if op else None
+    return spec.root_properties(request) if request else {}
+
+
+def write_only_paths(attributes: list[dict]) -> list[str]:
+    """The sensitive arguments, at the root or in an object: each gets a write-only twin."""
+    found = []
+    for attribute in attributes:
+        body = attribute[attribute_type(attribute)]
+        settable = body.get("computed_optional_required") in ("required", "computed_optional", "optional")
+        if attribute_type(attribute) == "string" and body.get("sensitive") and settable:
+            found.append(attribute["name"])
+        if attribute_type(attribute) == "single_nested" and settable:
+            found += [f"{attribute['name']}.{name}" for name in write_only_paths(body.get("attributes", [])) if "." not in name]
+    return found
+
+
+def final_path(attributes: list[dict], path: tuple) -> str | None:
+    """The attribute path, after renaming, of a path in the API's names."""
+    names = []
+    for segment in path:
+        attribute = next((a for a in attributes if ORIGINAL_NAMES.get(id(a), a["name"]) == segment), None)
+        if attribute is None:
+            return None
+        names.append(attribute["name"])
+        body = attribute[attribute_type(attribute)]
+        attributes = body.get("attributes") or body.get("nested_object", {}).get("attributes", [])
+    return ".".join(names)
+
+
+def transforms(spec: Spec, bodies: list, attributes: list[dict], prefix: tuple = ()) -> dict[str, str]:
+    """Where the provider translates a value the union rewrite changed, by attribute path."""
+    found = {}
+    for body in bodies:
+        if body is None:
+            continue
+        for path, kind in marks_in(spec, body, prefix).items():
+            final = final_path(attributes, path)
+            if final:
+                found[final] = kind
+    return found
 
 
 def path_attribute(spec: Spec, name: str, param: dict) -> dict:
@@ -1138,6 +1310,7 @@ def fix_nested_names(code_spec: dict, report: Report) -> tuple[int, dict[str, di
                 report.problem(what, f"RENAME_NESTED renames {path} to {new_name}, which is already the name of an attribute next to it")
                 continue
             originals[id(attribute)] = attribute["name"]
+            ORIGINAL_NAMES[id(attribute)] = attribute["name"]
             attribute["name"] = new_name
             kept[path] = new_name
             renamed += 1
@@ -1185,7 +1358,7 @@ def has_attribute_path(attributes: list[dict], dotted: str) -> bool:
 def param_attribute(param: str, names: set[str], aliases: dict[str, str], entry_name: str) -> str | None:
     """The root attribute a parameter fills, found by name."""
     candidates = [tf_identifier(aliases[param])] if param in aliases else []
-    candidates.append(tf_identifier(param))
+    candidates.append(RESERVED_RENAMES.get(tf_identifier(param), tf_identifier(param)))
     if "_" in param:
         stem, suffix = param.rsplit("_", 1)
         candidates.append(f"{ABBREVIATIONS.get(stem, stem)}_{suffix}")
@@ -1224,10 +1397,15 @@ def body_fields(spec: Spec, location: dict, names: set[str]) -> dict[str, str]:
     op = spec.op(location["path"], location["method"].lower())
     request = spec.request_schema(op) if op else None
     properties = spec.root_properties(request) if request else {}
-    return {tf_identifier(name): name for name in properties if tf_identifier(name) in names}
+    found = {}
+    for name in properties:
+        attribute = RESERVED_RENAMES.get(tf_identifier(name), tf_identifier(name))
+        if attribute in names:
+            found[attribute] = name
+    return found
 
 
-def paging(spec: Spec, location: dict, what: str, report: Report) -> dict | None:
+def paging(spec: Spec, location: dict, what: str, report: Report, items: str | None = None) -> dict | None:
     """How to read every page of a list, if it has pages."""
     path, method = location["path"], location["method"].lower()
     query = {name: param for (where, name), param in spec.parameters(path, method).items() if where == "query"}
@@ -1246,6 +1424,8 @@ def paging(spec: Spec, location: dict, what: str, report: Report) -> dict | None
                 arrays.append(name)
         except UnsupportedSchema:
             continue
+    if items:
+        arrays = [items]
     if len(arrays) != 1:
         report.warn(what, f"pages through {', '.join(arrays)} at once, so the provider only reads the first page")
         return None
@@ -1285,7 +1465,7 @@ def operation_entry(location: dict, **extra) -> dict:
     return {"method": location["method"], "path": location["path"], **{key: value for key, value in extra.items() if value}}
 
 
-def resource_api(spec: Spec, name: str, entry: dict, attributes: list[dict], renames: dict, report: Report) -> dict:
+def resource_api(spec: Spec, name: str, entry: dict, attributes: list[dict], renames: dict, report: Report, update_only: list[str]) -> dict:
     what = f"resource {name}"
     names = {attribute["name"] for attribute in attributes}
     locations = {key: entry[key] for key in ("create", "read", "update", "delete") if key in entry}
@@ -1309,7 +1489,13 @@ def resource_api(spec: Spec, name: str, entry: dict, attributes: list[dict], ren
     read_path = entry["read"]["path"]
     identity = path_params(entry["create"]["path"]) + path_params(item_path)
     api["identity"] = list(dict.fromkeys(params[param] for param in identity if param in params))
-    if item_path.startswith(read_path + "/"):
+    listed = LISTED_IN.get(item_path)
+    if listed:
+        # Read from the list its owner keeps of them, in another response.
+        own = [param for param in path_params(item_path) if param not in path_params(entry["create"]["path"]) and param in params]
+        api["match"] = {params[param]: params[param] for param in own}
+        api["read"] = operation_entry(entry["read"], items=listed[1], pages=paging(spec, entry["read"], what, report, items=listed[1]))
+    elif item_path.startswith(read_path + "/"):
         # A list read: the item whose fields equal the object's identity is the object. Fields are
         # JSON paths, in the item as the Response override leaves it.
         own = [param for param in path_params(item_path) if param not in path_params(read_path) and param in params]
@@ -1323,6 +1509,20 @@ def resource_api(spec: Spec, name: str, entry: dict, attributes: list[dict], ren
         api["replace"] = sorted(replace)
     if renames:
         api["renames"] = renames
+    ops = {key: spec.op(entry[key]["path"], entry[key]["method"].lower()) for key in ("create", "read", "update") if key in entry}
+    bodies = [spec.request_schema(ops["create"]), spec.response_schema(ops["create"])]
+    if "match" not in api:
+        bodies.append(spec.response_schema(ops["read"]))
+    if "update" in ops:
+        bodies.append(spec.request_schema(ops["update"]))
+    found = transforms(spec, bodies, attributes)
+    if found:
+        api["transforms"] = found
+    if update_only:
+        api["update_only"] = update_only
+    write_only = write_only_paths(attributes)
+    if write_only:
+        api["write_only"] = write_only
     return api
 
 
@@ -1353,10 +1553,13 @@ def data_source_api(spec: Spec, name: str, entry: dict, attributes: list[dict], 
             report.problem(what, f"its response is an array, but it has no {tf_identifier(name)} attribute to hold it")
     if renames:
         api["renames"] = renames
+    found = transforms(spec, [spec.response_schema(spec.op(path, method))], attributes, (api["root"],) if "root" in api else ())
+    if found:
+        api["transforms"] = found
     return api
 
 
-def build_api_map(spec: Spec, config: dict, code_spec: dict, renames: dict[str, dict[str, str]], report: Report) -> dict:
+def build_api_map(spec: Spec, config: dict, code_spec: dict, renames: dict[str, dict[str, str]], update_only: dict[str, list[str]], report: Report) -> dict:
     api_map = {"resources": {}, "data_sources": {}}
     for kind, config_key, spec_key, build in (
         ("resource", "resources", "resources", resource_api),
@@ -1364,7 +1567,11 @@ def build_api_map(spec: Spec, config: dict, code_spec: dict, renames: dict[str, 
     ):
         generated = {entry["name"]: entry["schema"]["attributes"] for entry in code_spec.get(spec_key, [])}
         for name, entry in config[config_key].items():
-            if name in generated:
+            if name not in generated:
+                continue
+            if kind == "resource":
+                api_map[config_key][name] = build(spec, name, entry, generated[name], renames.get(f"{kind} {name}", {}), report, update_only.get(name, []))
+            else:
                 api_map[config_key][name] = build(spec, name, entry, generated[name], renames.get(f"{kind} {name}", {}), report)
     for what in sorted(PATH_PARAM_ATTRIBUTES):
         kind, _, name = what.rpartition(" ")
@@ -1442,7 +1649,9 @@ def main() -> int:
     doc = json.loads(text) if args.spec.suffix == ".json" else yaml.safe_load(text)
     spec = Spec(doc)
     report = Report()
+    rewritten = rewrite_unions(spec)
     merged = merge_known_allof(spec, report)
+    grants = patch_single_grants(spec, report)
 
     resources: dict[str, dict] = {}
     for shape in discover_resources(spec, report):
@@ -1476,11 +1685,15 @@ def main() -> int:
         return 1
     check_output(config, code_spec, report)
     fixed = fix_create_path_params(spec, config, code_spec, report)
+    update_only = fix_update_only(spec, config, code_spec)
     relaxed = fix_api_filled_nested(code_spec)
     secrets = mark_secrets(code_spec)
     add_descriptions(spec, config, code_spec)
+    reserved_fields = fix_reserved_names(code_spec)
     renamed, renamed_fields = fix_nested_names(code_spec, report)
-    api_map = build_api_map(spec, config, code_spec, renamed_fields, report)
+    for what, fields in reserved_fields.items():
+        renamed_fields.setdefault(what, {}).update(fields)
+    api_map = build_api_map(spec, config, code_spec, renamed_fields, update_only, report)
     report_unmerged_allof(spec, report)
     args.code_spec.write_text(json.dumps(code_spec, indent="\t") + "\n")
     args.api_map.write_text(json.dumps(api_map, indent="\t", sort_keys=True) + "\n")
@@ -1489,6 +1702,11 @@ def main() -> int:
     print(
         f"wrote {args.code_spec}: merged {merged} allOf schemas, made {fixed} create path parameters required and force replacement, "
         f"made {relaxed} attributes the API fills in optional, marked {secrets} secrets sensitive, renamed {renamed} nested attributes",
+        file=sys.stderr,
+    )
+    print(
+        f"rewrote the spec's unions for Terraform: {', '.join(f'{count} {how}' for how, count in sorted(rewritten.items()))}; "
+        f"made {grants} grant operations take one subject; made {sum(map(len, update_only.values()))} update-only fields settable",
         file=sys.stderr,
     )
     print(f"wrote {args.api_map}: the operations behind each resource and data source", file=sys.stderr)

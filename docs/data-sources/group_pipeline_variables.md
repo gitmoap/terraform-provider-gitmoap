@@ -50,7 +50,7 @@ client needs to draw and link them, so a page of records names its actors withou
 rule protects, building a commit in that ref's history.
 - `secret` (Boolean)
 - `updated_at` (String)
-- `value` (String) The variable's value. Absent for a secret, whose value can be written but never read back.
+- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back.
 
 <a id="nestedatt--variables--created_by"></a>
 ### Nested Schema for `variables.created_by`

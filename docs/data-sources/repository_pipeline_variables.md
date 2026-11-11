@@ -49,7 +49,7 @@ ref receives neither this value nor a value the same name has further up.
 - `shadowed` (Boolean) `true` when a group further up also declares this name, so removing this declaration would
 uncover that one rather than remove the variable.
 - `source` (Attributes) The group or repository that declared a variable. (see [below for nested schema](#nestedatt--variables--source))
-- `value` (String)
+- `value` (String, Sensitive)
 
 <a id="nestedatt--variables--source"></a>
 ### Nested Schema for `variables.source`

@@ -105,6 +105,80 @@ func CatalogServiceDependenciesDataSourceSchema(ctx context.Context) schema.Sche
 								"orphaned_at": schema.StringAttribute{
 									Computed: true,
 								},
+								"owner": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"actor": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"avatar_url": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The principal's picture, when one is known. Absent otherwise: a client derives the\ndeterministic avatar URL itself.",
+													MarkdownDescription: "The principal's picture, when one is known. Absent otherwise: a client derives the\ndeterministic avatar URL itself.",
+												},
+												"email": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
+													MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
+												},
+												"id": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
+													MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
+												},
+												"kind": schema.StringAttribute{
+													Computed:            true,
+													Description:         "A person, a service account or an AI organization's agent — which of the three a principal is,\nand so which page it links to: a person's profile, a service account's page or an agent's page.",
+													MarkdownDescription: "A person, a service account or an AI organization's agent — which of the three a principal is,\nand so which page it links to: a person's profile, a service account's page or an agent's page.",
+												},
+												"username": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The name to show: a person's or service account's username, or an agent's handle (which\nalways ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the\ncaller may not see who it was. A closed account whose work stays is `closed-` and twelve hex\ndigits, a shape no open account may take, with an address under `.invalid`.",
+													MarkdownDescription: "The name to show: a person's or service account's username, or an agent's handle (which\nalways ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the\ncaller may not see who it was. A closed account whose work stays is `closed-` and twelve hex\ndigits, a shape no open account may take, with an address under `.invalid`.",
+												},
+											},
+											CustomType: ActorType{
+												ObjectType: types.ObjectType{
+													AttrTypes: ActorValue{}.AttributeTypes(ctx),
+												},
+											},
+											Computed:            true,
+											Description:         "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
+											MarkdownDescription: "Who did something — a person, a service account or an AI organization's agent — with what a\nclient needs to draw and link them, so a page of records names its actors without a lookup each.",
+										},
+										"full_path": schema.StringAttribute{
+											Computed: true,
+										},
+										"group_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"kind": schema.StringAttribute{
+											Computed: true,
+										},
+										"organization": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The full path of the organization's top-level group, such as `acme`.",
+											MarkdownDescription: "The full path of the organization's top-level group, such as `acme`.",
+										},
+										"principal_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"slug": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The team's slug, such as `backend`.",
+											MarkdownDescription: "The team's slug, such as `backend`.",
+										},
+										"team_id": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+									CustomType: OwnerType{
+										ObjectType: types.ObjectType{
+											AttrTypes: OwnerValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Who owns a service: a group, a team, or a person or service account. A service may also have no\nowner, which the `has_owner` scorecard check surfaces.\n\n`kind` says which applies: `group`, with `full_path`, `group_id`; `principal`, with `actor`, `principal_id`; `team`, with `organization`, `slug`, `team_id`.",
+									MarkdownDescription: "Who owns a service: a group, a team, or a person or service account. A service may also have no\nowner, which the `has_owner` scorecard check surfaces.\n\n`kind` says which applies: `group`, with `full_path`, `group_id`; `principal`, with `actor`, `principal_id`; `team`, with `organization`, `slug`, `team_id`.",
+								},
 								"service_id": schema.StringAttribute{
 									Computed: true,
 								},
@@ -1658,6 +1732,24 @@ func (t ToType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (
 			fmt.Sprintf(`orphaned_at expected to be basetypes.StringValue, was: %T`, orphanedAtAttribute))
 	}
 
+	ownerAttribute, ok := attributes["owner"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owner is missing from object`)
+
+		return nil, diags
+	}
+
+	ownerVal, ok := ownerAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owner expected to be basetypes.ObjectValue, was: %T`, ownerAttribute))
+	}
+
 	serviceIdAttribute, ok := attributes["service_id"]
 
 	if !ok {
@@ -1723,6 +1815,7 @@ func (t ToType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (
 		Kind:        kindVal,
 		Lifecycle:   lifecycleVal,
 		OrphanedAt:  orphanedAtVal,
+		Owner:       ownerVal,
 		ServiceId:   serviceIdVal,
 		Slug:        slugVal,
 		Source:      sourceVal,
@@ -1901,6 +1994,24 @@ func NewToValue(attributeTypes map[string]attr.Type, attributes map[string]attr.
 			fmt.Sprintf(`orphaned_at expected to be basetypes.StringValue, was: %T`, orphanedAtAttribute))
 	}
 
+	ownerAttribute, ok := attributes["owner"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owner is missing from object`)
+
+		return NewToValueUnknown(), diags
+	}
+
+	ownerVal, ok := ownerAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owner expected to be basetypes.ObjectValue, was: %T`, ownerAttribute))
+	}
+
 	serviceIdAttribute, ok := attributes["service_id"]
 
 	if !ok {
@@ -1966,6 +2077,7 @@ func NewToValue(attributeTypes map[string]attr.Type, attributes map[string]attr.
 		Kind:        kindVal,
 		Lifecycle:   lifecycleVal,
 		OrphanedAt:  orphanedAtVal,
+		Owner:       ownerVal,
 		ServiceId:   serviceIdVal,
 		Slug:        slugVal,
 		Source:      sourceVal,
@@ -2047,6 +2159,7 @@ type ToValue struct {
 	Kind        basetypes.StringValue `tfsdk:"kind"`
 	Lifecycle   basetypes.StringValue `tfsdk:"lifecycle"`
 	OrphanedAt  basetypes.StringValue `tfsdk:"orphaned_at"`
+	Owner       basetypes.ObjectValue `tfsdk:"owner"`
 	ServiceId   basetypes.StringValue `tfsdk:"service_id"`
 	Slug        basetypes.StringValue `tfsdk:"slug"`
 	Source      basetypes.StringValue `tfsdk:"source"`
@@ -2054,7 +2167,7 @@ type ToValue struct {
 }
 
 func (v ToValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 9)
+	attrTypes := make(map[string]tftypes.Type, 10)
 
 	var val tftypes.Value
 	var err error
@@ -2065,6 +2178,9 @@ func (v ToValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
 	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["lifecycle"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["orphaned_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["owner"] = basetypes.ObjectType{
+		AttrTypes: OwnerValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["service_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["slug"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["source"] = basetypes.StringType{}.TerraformType(ctx)
@@ -2073,7 +2189,7 @@ func (v ToValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 9)
+		vals := make(map[string]tftypes.Value, 10)
 
 		val, err = v.DisplayName.ToTerraformValue(ctx)
 
@@ -2122,6 +2238,14 @@ func (v ToValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
 		}
 
 		vals["orphaned_at"] = val
+
+		val, err = v.Owner.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["owner"] = val
 
 		val, err = v.ServiceId.ToTerraformValue(ctx)
 
@@ -2176,6 +2300,27 @@ func (v ToValue) String() string {
 func (v ToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var owner basetypes.ObjectValue
+
+	if v.Owner.IsNull() {
+		owner = types.ObjectNull(
+			OwnerValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Owner.IsUnknown() {
+		owner = types.ObjectUnknown(
+			OwnerValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Owner.IsNull() && !v.Owner.IsUnknown() {
+		owner = types.ObjectValueMust(
+			OwnerValue{}.AttributeTypes(ctx),
+			v.Owner.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"display_name": basetypes.StringType{},
 		"external":     basetypes.BoolType{},
@@ -2183,9 +2328,12 @@ func (v ToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag
 		"kind":         basetypes.StringType{},
 		"lifecycle":    basetypes.StringType{},
 		"orphaned_at":  basetypes.StringType{},
-		"service_id":   basetypes.StringType{},
-		"slug":         basetypes.StringType{},
-		"source":       basetypes.StringType{},
+		"owner": basetypes.ObjectType{
+			AttrTypes: OwnerValue{}.AttributeTypes(ctx),
+		},
+		"service_id": basetypes.StringType{},
+		"slug":       basetypes.StringType{},
+		"source":     basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -2205,6 +2353,7 @@ func (v ToValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag
 			"kind":         v.Kind,
 			"lifecycle":    v.Lifecycle,
 			"orphaned_at":  v.OrphanedAt,
+			"owner":        owner,
 			"service_id":   v.ServiceId,
 			"slug":         v.Slug,
 			"source":       v.Source,
@@ -2252,6 +2401,10 @@ func (v ToValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Owner.Equal(other.Owner) {
+		return false
+	}
+
 	if !v.ServiceId.Equal(other.ServiceId) {
 		return false
 	}
@@ -2283,8 +2436,1291 @@ func (v ToValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"kind":         basetypes.StringType{},
 		"lifecycle":    basetypes.StringType{},
 		"orphaned_at":  basetypes.StringType{},
-		"service_id":   basetypes.StringType{},
+		"owner": basetypes.ObjectType{
+			AttrTypes: OwnerValue{}.AttributeTypes(ctx),
+		},
+		"service_id": basetypes.StringType{},
+		"slug":       basetypes.StringType{},
+		"source":     basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = OwnerType{}
+
+type OwnerType struct {
+	basetypes.ObjectType
+}
+
+func (t OwnerType) Equal(o attr.Type) bool {
+	other, ok := o.(OwnerType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OwnerType) String() string {
+	return "OwnerType"
+}
+
+func (t OwnerType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	actorAttribute, ok := attributes["actor"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`actor is missing from object`)
+
+		return nil, diags
+	}
+
+	actorVal, ok := actorAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`actor expected to be basetypes.ObjectValue, was: %T`, actorAttribute))
+	}
+
+	fullPathAttribute, ok := attributes["full_path"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`full_path is missing from object`)
+
+		return nil, diags
+	}
+
+	fullPathVal, ok := fullPathAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`full_path expected to be basetypes.StringValue, was: %T`, fullPathAttribute))
+	}
+
+	groupIdAttribute, ok := attributes["group_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group_id is missing from object`)
+
+		return nil, diags
+	}
+
+	groupIdVal, ok := groupIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group_id expected to be basetypes.StringValue, was: %T`, groupIdAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	organizationAttribute, ok := attributes["organization"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`organization is missing from object`)
+
+		return nil, diags
+	}
+
+	organizationVal, ok := organizationAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`organization expected to be basetypes.StringValue, was: %T`, organizationAttribute))
+	}
+
+	principalIdAttribute, ok := attributes["principal_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`principal_id is missing from object`)
+
+		return nil, diags
+	}
+
+	principalIdVal, ok := principalIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`principal_id expected to be basetypes.StringValue, was: %T`, principalIdAttribute))
+	}
+
+	slugAttribute, ok := attributes["slug"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`slug is missing from object`)
+
+		return nil, diags
+	}
+
+	slugVal, ok := slugAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`slug expected to be basetypes.StringValue, was: %T`, slugAttribute))
+	}
+
+	teamIdAttribute, ok := attributes["team_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`team_id is missing from object`)
+
+		return nil, diags
+	}
+
+	teamIdVal, ok := teamIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`team_id expected to be basetypes.StringValue, was: %T`, teamIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OwnerValue{
+		Actor:        actorVal,
+		FullPath:     fullPathVal,
+		GroupId:      groupIdVal,
+		Kind:         kindVal,
+		Organization: organizationVal,
+		PrincipalId:  principalIdVal,
+		Slug:         slugVal,
+		TeamId:       teamIdVal,
+		state:        attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOwnerValueNull() OwnerValue {
+	return OwnerValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOwnerValueUnknown() OwnerValue {
+	return OwnerValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOwnerValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OwnerValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OwnerValue Attribute Value",
+				"While creating a OwnerValue value, a missing attribute value was detected. "+
+					"A OwnerValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OwnerValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OwnerValue Attribute Type",
+				"While creating a OwnerValue value, an invalid attribute value was detected. "+
+					"A OwnerValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OwnerValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OwnerValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OwnerValue Attribute Value",
+				"While creating a OwnerValue value, an extra attribute value was detected. "+
+					"A OwnerValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OwnerValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOwnerValueUnknown(), diags
+	}
+
+	actorAttribute, ok := attributes["actor"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`actor is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	actorVal, ok := actorAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`actor expected to be basetypes.ObjectValue, was: %T`, actorAttribute))
+	}
+
+	fullPathAttribute, ok := attributes["full_path"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`full_path is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	fullPathVal, ok := fullPathAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`full_path expected to be basetypes.StringValue, was: %T`, fullPathAttribute))
+	}
+
+	groupIdAttribute, ok := attributes["group_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`group_id is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	groupIdVal, ok := groupIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`group_id expected to be basetypes.StringValue, was: %T`, groupIdAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	organizationAttribute, ok := attributes["organization"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`organization is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	organizationVal, ok := organizationAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`organization expected to be basetypes.StringValue, was: %T`, organizationAttribute))
+	}
+
+	principalIdAttribute, ok := attributes["principal_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`principal_id is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	principalIdVal, ok := principalIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`principal_id expected to be basetypes.StringValue, was: %T`, principalIdAttribute))
+	}
+
+	slugAttribute, ok := attributes["slug"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`slug is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	slugVal, ok := slugAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`slug expected to be basetypes.StringValue, was: %T`, slugAttribute))
+	}
+
+	teamIdAttribute, ok := attributes["team_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`team_id is missing from object`)
+
+		return NewOwnerValueUnknown(), diags
+	}
+
+	teamIdVal, ok := teamIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`team_id expected to be basetypes.StringValue, was: %T`, teamIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOwnerValueUnknown(), diags
+	}
+
+	return OwnerValue{
+		Actor:        actorVal,
+		FullPath:     fullPathVal,
+		GroupId:      groupIdVal,
+		Kind:         kindVal,
+		Organization: organizationVal,
+		PrincipalId:  principalIdVal,
+		Slug:         slugVal,
+		TeamId:       teamIdVal,
+		state:        attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOwnerValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OwnerValue {
+	object, diags := NewOwnerValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOwnerValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OwnerType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOwnerValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOwnerValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOwnerValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOwnerValueMust(OwnerValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OwnerType) ValueType(ctx context.Context) attr.Value {
+	return OwnerValue{}
+}
+
+var _ basetypes.ObjectValuable = OwnerValue{}
+
+type OwnerValue struct {
+	Actor        basetypes.ObjectValue `tfsdk:"actor"`
+	FullPath     basetypes.StringValue `tfsdk:"full_path"`
+	GroupId      basetypes.StringValue `tfsdk:"group_id"`
+	Kind         basetypes.StringValue `tfsdk:"kind"`
+	Organization basetypes.StringValue `tfsdk:"organization"`
+	PrincipalId  basetypes.StringValue `tfsdk:"principal_id"`
+	Slug         basetypes.StringValue `tfsdk:"slug"`
+	TeamId       basetypes.StringValue `tfsdk:"team_id"`
+	state        attr.ValueState
+}
+
+func (v OwnerValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 8)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["actor"] = basetypes.ObjectType{
+		AttrTypes: ActorValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["full_path"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["group_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["organization"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["principal_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["slug"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["team_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 8)
+
+		val, err = v.Actor.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["actor"] = val
+
+		val, err = v.FullPath.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["full_path"] = val
+
+		val, err = v.GroupId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["group_id"] = val
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.Organization.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["organization"] = val
+
+		val, err = v.PrincipalId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["principal_id"] = val
+
+		val, err = v.Slug.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["slug"] = val
+
+		val, err = v.TeamId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["team_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OwnerValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OwnerValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OwnerValue) String() string {
+	return "OwnerValue"
+}
+
+func (v OwnerValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var actor basetypes.ObjectValue
+
+	if v.Actor.IsNull() {
+		actor = types.ObjectNull(
+			ActorValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Actor.IsUnknown() {
+		actor = types.ObjectUnknown(
+			ActorValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Actor.IsNull() && !v.Actor.IsUnknown() {
+		actor = types.ObjectValueMust(
+			ActorValue{}.AttributeTypes(ctx),
+			v.Actor.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"actor": basetypes.ObjectType{
+			AttrTypes: ActorValue{}.AttributeTypes(ctx),
+		},
+		"full_path":    basetypes.StringType{},
+		"group_id":     basetypes.StringType{},
+		"kind":         basetypes.StringType{},
+		"organization": basetypes.StringType{},
+		"principal_id": basetypes.StringType{},
 		"slug":         basetypes.StringType{},
-		"source":       basetypes.StringType{},
+		"team_id":      basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"actor":        actor,
+			"full_path":    v.FullPath,
+			"group_id":     v.GroupId,
+			"kind":         v.Kind,
+			"organization": v.Organization,
+			"principal_id": v.PrincipalId,
+			"slug":         v.Slug,
+			"team_id":      v.TeamId,
+		})
+
+	return objVal, diags
+}
+
+func (v OwnerValue) Equal(o attr.Value) bool {
+	other, ok := o.(OwnerValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Actor.Equal(other.Actor) {
+		return false
+	}
+
+	if !v.FullPath.Equal(other.FullPath) {
+		return false
+	}
+
+	if !v.GroupId.Equal(other.GroupId) {
+		return false
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.Organization.Equal(other.Organization) {
+		return false
+	}
+
+	if !v.PrincipalId.Equal(other.PrincipalId) {
+		return false
+	}
+
+	if !v.Slug.Equal(other.Slug) {
+		return false
+	}
+
+	if !v.TeamId.Equal(other.TeamId) {
+		return false
+	}
+
+	return true
+}
+
+func (v OwnerValue) Type(ctx context.Context) attr.Type {
+	return OwnerType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OwnerValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"actor": basetypes.ObjectType{
+			AttrTypes: ActorValue{}.AttributeTypes(ctx),
+		},
+		"full_path":    basetypes.StringType{},
+		"group_id":     basetypes.StringType{},
+		"kind":         basetypes.StringType{},
+		"organization": basetypes.StringType{},
+		"principal_id": basetypes.StringType{},
+		"slug":         basetypes.StringType{},
+		"team_id":      basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ActorType{}
+
+type ActorType struct {
+	basetypes.ObjectType
+}
+
+func (t ActorType) Equal(o attr.Type) bool {
+	other, ok := o.(ActorType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ActorType) String() string {
+	return "ActorType"
+}
+
+func (t ActorType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	avatarUrlAttribute, ok := attributes["avatar_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`avatar_url is missing from object`)
+
+		return nil, diags
+	}
+
+	avatarUrlVal, ok := avatarUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`avatar_url expected to be basetypes.StringValue, was: %T`, avatarUrlAttribute))
+	}
+
+	emailAttribute, ok := attributes["email"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`email is missing from object`)
+
+		return nil, diags
+	}
+
+	emailVal, ok := emailAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`email expected to be basetypes.StringValue, was: %T`, emailAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	usernameAttribute, ok := attributes["username"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`username is missing from object`)
+
+		return nil, diags
+	}
+
+	usernameVal, ok := usernameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`username expected to be basetypes.StringValue, was: %T`, usernameAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ActorValue{
+		AvatarUrl: avatarUrlVal,
+		Email:     emailVal,
+		Id:        idVal,
+		Kind:      kindVal,
+		Username:  usernameVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewActorValueNull() ActorValue {
+	return ActorValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewActorValueUnknown() ActorValue {
+	return ActorValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewActorValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ActorValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ActorValue Attribute Value",
+				"While creating a ActorValue value, a missing attribute value was detected. "+
+					"A ActorValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ActorValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ActorValue Attribute Type",
+				"While creating a ActorValue value, an invalid attribute value was detected. "+
+					"A ActorValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ActorValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ActorValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ActorValue Attribute Value",
+				"While creating a ActorValue value, an extra attribute value was detected. "+
+					"A ActorValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ActorValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewActorValueUnknown(), diags
+	}
+
+	avatarUrlAttribute, ok := attributes["avatar_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`avatar_url is missing from object`)
+
+		return NewActorValueUnknown(), diags
+	}
+
+	avatarUrlVal, ok := avatarUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`avatar_url expected to be basetypes.StringValue, was: %T`, avatarUrlAttribute))
+	}
+
+	emailAttribute, ok := attributes["email"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`email is missing from object`)
+
+		return NewActorValueUnknown(), diags
+	}
+
+	emailVal, ok := emailAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`email expected to be basetypes.StringValue, was: %T`, emailAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewActorValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewActorValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	usernameAttribute, ok := attributes["username"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`username is missing from object`)
+
+		return NewActorValueUnknown(), diags
+	}
+
+	usernameVal, ok := usernameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`username expected to be basetypes.StringValue, was: %T`, usernameAttribute))
+	}
+
+	if diags.HasError() {
+		return NewActorValueUnknown(), diags
+	}
+
+	return ActorValue{
+		AvatarUrl: avatarUrlVal,
+		Email:     emailVal,
+		Id:        idVal,
+		Kind:      kindVal,
+		Username:  usernameVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewActorValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ActorValue {
+	object, diags := NewActorValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewActorValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ActorType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewActorValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewActorValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewActorValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewActorValueMust(ActorValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ActorType) ValueType(ctx context.Context) attr.Value {
+	return ActorValue{}
+}
+
+var _ basetypes.ObjectValuable = ActorValue{}
+
+type ActorValue struct {
+	AvatarUrl basetypes.StringValue `tfsdk:"avatar_url"`
+	Email     basetypes.StringValue `tfsdk:"email"`
+	Id        basetypes.StringValue `tfsdk:"id"`
+	Kind      basetypes.StringValue `tfsdk:"kind"`
+	Username  basetypes.StringValue `tfsdk:"username"`
+	state     attr.ValueState
+}
+
+func (v ActorValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["avatar_url"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["email"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["username"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.AvatarUrl.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["avatar_url"] = val
+
+		val, err = v.Email.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["email"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.Username.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["username"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ActorValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ActorValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ActorValue) String() string {
+	return "ActorValue"
+}
+
+func (v ActorValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"avatar_url": basetypes.StringType{},
+		"email":      basetypes.StringType{},
+		"id":         basetypes.StringType{},
+		"kind":       basetypes.StringType{},
+		"username":   basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"avatar_url": v.AvatarUrl,
+			"email":      v.Email,
+			"id":         v.Id,
+			"kind":       v.Kind,
+			"username":   v.Username,
+		})
+
+	return objVal, diags
+}
+
+func (v ActorValue) Equal(o attr.Value) bool {
+	other, ok := o.(ActorValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.AvatarUrl.Equal(other.AvatarUrl) {
+		return false
+	}
+
+	if !v.Email.Equal(other.Email) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.Username.Equal(other.Username) {
+		return false
+	}
+
+	return true
+}
+
+func (v ActorValue) Type(ctx context.Context) attr.Type {
+	return ActorType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ActorValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"avatar_url": basetypes.StringType{},
+		"email":      basetypes.StringType{},
+		"id":         basetypes.StringType{},
+		"kind":       basetypes.StringType{},
+		"username":   basetypes.StringType{},
 	}
 }

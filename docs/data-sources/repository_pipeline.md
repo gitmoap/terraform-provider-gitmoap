@@ -54,6 +54,7 @@ when saving a published definition fails. Each problem carries a stable `code`. 
 - `status` (String) Whether a pipeline definition can run. A `draft` is saved even when it is invalid — problems are
 reported, not refused — and cannot be run; a `published` definition must be valid to be saved,
 and can be run.
+- `trigger_config` (Attributes) When a pipeline should run. (see [below for nested schema](#nestedatt--trigger_config))
 - `updated_at` (String) RFC 3339.
 
 <a id="nestedatt--component_instances"></a>
@@ -66,6 +67,9 @@ Read-Only:
 component.
 - `id` (String)
 - `name` (String) Display name, also put in front of the display names of the steps it expands into.
+- `params` (String) Values for the component's parameters, by parameter name.
+
+JSON: set it with `jsonencode()`.
 - `stage_map` (Map of String) Maps every stage slot the component declares to a stage of this pipeline, keeping the slots'
 order.
 - `version` (String)
@@ -201,10 +205,16 @@ list may only name approvers the environment also names. (see [below for nested 
 - `changes` (List of String) Path globs that decide whether this step runs: when none of them matches a path the push
 changed, the step is skipped. When absent and `service` is set, the service's own path globs
 apply.
+- `config` (String) The step's provider-specific configuration, checked against the capability's
+`config_schema` when the run starts.
+
+JSON: set it with `jsonencode()`.
 - `connection` (String)
 - `cpu` (String)
 - `environment` (String)
 - `id` (String)
+- `matrix` (Attributes) The dimensions a step's matrix expands over. Every combination of their values becomes one copy
+of the step, always in the same order: dimensions sorted by name, values in the order written. (see [below for nested schema](#nestedatt--stages--nodes--matrix))
 - `max_retries` (Number)
 - `memory` (String)
 - `name` (String)
@@ -222,8 +232,54 @@ allows unless `max_wait_seconds` sets a shorter limit. (see [below for nested sc
 
 Read-Only:
 
+- `approvers` (Attributes List) (see [below for nested schema](#nestedatt--stages--nodes--approval--approvers))
 - `required` (Number) Distinct approvals needed, 1–10. On a gated environment the larger of this and the
 environment's own count applies.
+
+<a id="nestedatt--stages--nodes--approval--approvers"></a>
+### Nested Schema for `stages.nodes.approval.approvers`
+
+Read-Only:
+
+- `anyone` (Boolean) Anyone who may approve merge requests in the repository.
+- `code_owners` (Boolean) The owners of the files the merge request changes.
+- `person` (String)
+- `role` (Attributes) Anyone whose role at a group or repository is at least `min`. (see [below for nested schema](#nestedatt--stages--nodes--approval--approvers--role))
+- `team` (String)
+
+<a id="nestedatt--stages--nodes--approval--approvers--role"></a>
+### Nested Schema for `stages.nodes.approval.approvers.role`
+
+Read-Only:
+
+- `at` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--stages--nodes--approval--approvers--role--at))
+- `direct_only` (Boolean) Count only access given on `at` itself — directly or through a team — and not access
+that reaches it from a group above.
+- `min` (String)
+
+<a id="nestedatt--stages--nodes--approval--approvers--role--at"></a>
+### Nested Schema for `stages.nodes.approval.approvers.role.at`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
+
+
+
+
+
+<a id="nestedatt--stages--nodes--matrix"></a>
+### Nested Schema for `stages.nodes.matrix`
+
+Read-Only:
+
+- `dimensions` (String) Each dimension's name and its list of values. The step's `config` reads the current value
+of a dimension with `{"$matrix": "<dimension>"}`.
+
+JSON: set it with `jsonencode()`.
 
 
 <a id="nestedatt--stages--nodes--resource_group"></a>
@@ -236,3 +292,52 @@ Read-Only:
 default) waits its turn, `skip` skips the step, and `cancel_previous` cancels the other run.
 `cancel_previous` is available on environments only, not on a step's resource group.
 - `name` (String)
+
+
+
+
+<a id="nestedatt--trigger_config"></a>
+### Nested Schema for `trigger_config`
+
+Read-Only:
+
+- `events` (Attributes List) (see [below for nested schema](#nestedatt--trigger_config--events))
+
+<a id="nestedatt--trigger_config--events"></a>
+### Nested Schema for `trigger_config.events`
+
+Read-Only:
+
+- `actions` (List of String) Absent = `opened`, `synchronized`, `reopened`. An unrecognised action is dropped
+rather than failing the whole definition.
+- `allow_pipeline_triggered` (Boolean) Opt in to being triggered by a push that a pipeline run itself made. Without this a
+pipeline that pushes cannot cause itself; with it, the depth cap still bounds the
+chain, because an opt-in with no bound is an unbounded loop with extra steps.
+- `branch_pattern` (String) Absent = every branch.
+- `build` (String) Which commit a merge-request trigger builds: `merge_result` (the default — the commit merging
+would produce) or `source` (the source branch's own tip).
+- `cron` (String) Five-field cron, UTC.
+- `params` (Attributes List) The typed inputs a person starting the run supplies. Supplied values are checked
+against these when the run starts, and a step's config reads one as
+`{"$context": "params.<name>"}`; a reference to a parameter not declared here is refused
+when the pipeline is saved. (see [below for nested schema](#nestedatt--trigger_config--events--params))
+- `paths` (List of String) Absent = no path constraint. Matches when **any** changed path matches **any**
+pattern; a `!`-prefixed entry removes an earlier match.
+- `tag_pattern` (String) Absent = every tag.
+- `type` (String)
+
+<a id="nestedatt--trigger_config--events--params"></a>
+### Nested Schema for `trigger_config.events.params`
+
+Read-Only:
+
+- `default` (String) Used when the caller supplies nothing.
+
+JSON: set it with `jsonencode()`.
+- `description` (String) Shown next to the field when a person starts the run.
+- `name` (String)
+- `options` (List of String) When non-empty, the only values accepted — a fixed choice rather than free text. Applies to
+`string` parameters; values are compared exactly.
+- `required` (Boolean) Whether a run may start without it. A required parameter with a `default` is satisfied by
+that default, so the two are not in conflict.
+- `type` (String) The type of a declared parameter's value: `string`, `number` or `boolean`.

@@ -32,6 +32,9 @@ data "gitmoap_issue_criterion_kinds" "example" {
 
 Read-Only:
 
+- `config_schema` (String) A JSON Schema over the fields — render a form from this.
+
+JSON: set it with `jsonencode()`.
 - `description` (String)
 - `evaluable` (Boolean) Whether the platform evaluates this kind from evidence (i.e. it is a real binding, not a
 manual checkbox).
@@ -47,6 +50,27 @@ rest bind to a predicate the platform evaluates from pipeline evidence.
 Read-Only:
 
 - `description` (String)
+- `field_type` (Attributes) The type of a criterion-kind field, which decides the form control that suits it.
+
+`type` says which applies: `text`; `glob`; `number`, with `max`, `min`; `choice`, with `options`. (see [below for nested schema](#nestedatt--kinds--fields--field_type))
 - `label` (String)
 - `name` (String)
 - `required` (Boolean)
+
+<a id="nestedatt--kinds--fields--field_type"></a>
+### Nested Schema for `kinds.fields.field_type`
+
+Read-Only:
+
+- `max` (Number)
+- `min` (Number)
+- `options` (Attributes List) (see [below for nested schema](#nestedatt--kinds--fields--field_type--options))
+- `type` (String)
+
+<a id="nestedatt--kinds--fields--field_type--options"></a>
+### Nested Schema for `kinds.fields.field_type.options`
+
+Read-Only:
+
+- `label` (String)
+- `value` (String)

@@ -175,6 +175,7 @@ def complete_examples() -> tuple[int, list[str]]:
     order = list(library)
     changed, unknown = 0, []
     paths = sorted(EXAMPLES.glob("resources/*/resource*.tf")) + sorted(EXAMPLES.glob("data-sources/*/data-source*.tf"))
+    paths += sorted(EXAMPLES.glob("ephemeral-resources/*/ephemeral-resource*.tf"))
     for path in paths:
         text = path.read_text()
         have = set(blocks(text))
@@ -211,6 +212,7 @@ def scenarios() -> list[dict]:
             "main": (directory / "main.tf").relative_to(REPO_ROOT).as_posix(),
             "resources": set(re.findall(r'^resource "gitmoap_([a-z0-9_]+)"', code, re.MULTILINE)),
             "data_sources": set(re.findall(r'^data "gitmoap_([a-z0-9_]+)"', code, re.MULTILINE)),
+            "ephemeral_resources": set(re.findall(r'^ephemeral "gitmoap_([a-z0-9_]+)"', code, re.MULTILINE)),
         })
     return found
 
@@ -260,12 +262,12 @@ def template(used_by: list[dict], is_resource: bool) -> str:
 
 def write_templates(found: list[dict]) -> int:
     wanted: dict[Path, str] = {}
-    for kind, key, is_resource in (("resources", "resources", True), ("data-sources", "data_sources", False)):
+    for kind, key, is_resource in (("resources", "resources", True), ("data-sources", "data_sources", False), ("ephemeral-resources", "ephemeral_resources", False)):
         names = sorted({name for scenario in found for name in scenario[key]})
         for name in names:
             used_by = sorted((scenario for scenario in found if name in scenario[key]), key=lambda scenario: scenario["title"])
             wanted[TEMPLATES / kind / f"{name}.md.tmpl"] = template(used_by, is_resource)
-    for kind in ("resources", "data-sources"):
+    for kind in ("resources", "data-sources", "ephemeral-resources"):
         for path in (TEMPLATES / kind).glob("*.md.tmpl"):
             if path not in wanted and path.read_text().startswith(GENERATED):
                 path.unlink()

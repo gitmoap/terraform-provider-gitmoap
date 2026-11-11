@@ -47,9 +47,17 @@ grows. `make generate` runs the whole chain:
 3. [tfplugindocs](https://github.com/hashicorp/terraform-plugin-docs) writes `docs/` from the
    schemas, `examples/` and `templates/`.
 
+Before the generator runs, the copy of the spec it reads is rewritten where Terraform has no type
+for the API's: a union of objects becomes one object with the fields of every form, a variant
+holding an empty object becomes a bool, a string-or-object union gets a `value` field, and a
+free-form object becomes a JSON string (`scripts/unions.py`). The JSON sent and received doesn't
+change; where a rewrite needs it, the provider translates.
+
 Every resource runs on one shared implementation, `internal/provider/rest_resource.go`, and every
-data source on `rest_data_source.go`. What one resource needs on top, because the API handles it
-differently, goes in an override: see `internal/provider/overrides.go`.
+data source on `rest_data_source.go`. It also gives every secret argument a write-only twin
+(`write_only.go`), and sets what only an update takes with an update right after creating. What one
+resource needs on top, because the API handles it differently, goes in an override: see
+`internal/provider/overrides.go`. The ephemeral resources are written by hand.
 
 Some corrections apply only to known cases, listed at the top of
 `scripts/generate_generator_config.py`. When the spec grows a new case of the same kind, the script

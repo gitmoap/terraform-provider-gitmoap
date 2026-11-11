@@ -39,12 +39,21 @@ type resourceAPI struct {
 	Replace []string
 	// Renames lists the attributes named differently from their JSON field.
 	Renames map[string]string
+	// Transforms lists the attributes whose values the provider translates: see values.go.
+	Transforms map[string]string
+	// UpdateOnly lists the attributes only the update operation takes, set by an update after
+	// creating.
+	UpdateOnly []string
+	// WriteOnly lists the sensitive attributes that get a write-only twin, <name>_wo, sent without
+	// being kept in the state, and <name>_wo_version, which sends it again when it changes.
+	WriteOnly []string
 }
 
 type dataSourceAPI struct {
 	Read   operation
 	Params map[string]string
 	// Root is the attribute that holds the response when it's an array.
-	Root    string
-	Renames map[string]string
+	Root       string
+	Renames    map[string]string
+	Transforms map[string]string
 }

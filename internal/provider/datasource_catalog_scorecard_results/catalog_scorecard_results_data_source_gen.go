@@ -70,6 +70,11 @@ func CatalogScorecardResultsDataSourceSchema(ctx context.Context) schema.Schema 
 						"check_key": schema.StringAttribute{
 							Computed: true,
 						},
+						"detail": schema.StringAttribute{
+							Computed:            true,
+							Description:         "JSON: set it with `jsonencode()`.",
+							MarkdownDescription: "JSON: set it with `jsonencode()`.",
+						},
 						"evaluated_at": schema.StringAttribute{
 							Computed: true,
 						},
@@ -137,6 +142,11 @@ func CatalogScorecardResultsDataSourceSchema(ctx context.Context) schema.Schema 
 				Attributes: map[string]schema.Attribute{
 					"scored": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
+							"by_level": schema.StringAttribute{
+								Computed:            true,
+								Description:         "Services at each named level. Absent levels are absent keys, not zeroes.\n\nJSON: set it with `jsonencode()`.",
+								MarkdownDescription: "Services at each named level. Absent levels are absent keys, not zeroes.\n\nJSON: set it with `jsonencode()`.",
+							},
 							"checks": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"expired": schema.Int64Attribute{
@@ -310,6 +320,24 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`check_key expected to be basetypes.StringValue, was: %T`, checkKeyAttribute))
 	}
 
+	detailAttribute, ok := attributes["detail"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`detail is missing from object`)
+
+		return nil, diags
+	}
+
+	detailVal, ok := detailAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`detail expected to be basetypes.StringValue, was: %T`, detailAttribute))
+	}
+
 	evaluatedAtAttribute, ok := attributes["evaluated_at"]
 
 	if !ok {
@@ -516,6 +544,7 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		AttestedAt:         attestedAtVal,
 		AttestedBy:         attestedByVal,
 		CheckKey:           checkKeyVal,
+		Detail:             detailVal,
 		EvaluatedAt:        evaluatedAtVal,
 		EvidenceAt:         evidenceAtVal,
 		EvidenceCommitSha:  evidenceCommitShaVal,
@@ -648,6 +677,24 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`check_key expected to be basetypes.StringValue, was: %T`, checkKeyAttribute))
 	}
 
+	detailAttribute, ok := attributes["detail"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`detail is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	detailVal, ok := detailAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`detail expected to be basetypes.StringValue, was: %T`, detailAttribute))
+	}
+
 	evaluatedAtAttribute, ok := attributes["evaluated_at"]
 
 	if !ok {
@@ -854,6 +901,7 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		AttestedAt:         attestedAtVal,
 		AttestedBy:         attestedByVal,
 		CheckKey:           checkKeyVal,
+		Detail:             detailVal,
 		EvaluatedAt:        evaluatedAtVal,
 		EvidenceAt:         evidenceAtVal,
 		EvidenceCommitSha:  evidenceCommitShaVal,
@@ -940,6 +988,7 @@ type ItemsValue struct {
 	AttestedAt         basetypes.StringValue  `tfsdk:"attested_at"`
 	AttestedBy         basetypes.ObjectValue  `tfsdk:"attested_by"`
 	CheckKey           basetypes.StringValue  `tfsdk:"check_key"`
+	Detail             basetypes.StringValue  `tfsdk:"detail"`
 	EvaluatedAt        basetypes.StringValue  `tfsdk:"evaluated_at"`
 	EvidenceAt         basetypes.StringValue  `tfsdk:"evidence_at"`
 	EvidenceCommitSha  basetypes.StringValue  `tfsdk:"evidence_commit_sha"`
@@ -955,7 +1004,7 @@ type ItemsValue struct {
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 14)
+	attrTypes := make(map[string]tftypes.Type, 15)
 
 	var val tftypes.Value
 	var err error
@@ -965,6 +1014,7 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		AttrTypes: AttestedByValue{}.AttributeTypes(ctx),
 	}.TerraformType(ctx)
 	attrTypes["check_key"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["detail"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["evaluated_at"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["evidence_at"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["evidence_commit_sha"] = basetypes.StringType{}.TerraformType(ctx)
@@ -981,7 +1031,7 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 14)
+		vals := make(map[string]tftypes.Value, 15)
 
 		val, err = v.AttestedAt.ToTerraformValue(ctx)
 
@@ -1006,6 +1056,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["check_key"] = val
+
+		val, err = v.Detail.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["detail"] = val
 
 		val, err = v.EvaluatedAt.ToTerraformValue(ctx)
 
@@ -1151,6 +1209,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			AttrTypes: AttestedByValue{}.AttributeTypes(ctx),
 		},
 		"check_key":            basetypes.StringType{},
+		"detail":               basetypes.StringType{},
 		"evaluated_at":         basetypes.StringType{},
 		"evidence_at":          basetypes.StringType{},
 		"evidence_commit_sha":  basetypes.StringType{},
@@ -1178,6 +1237,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"attested_at":          v.AttestedAt,
 			"attested_by":          attestedBy,
 			"check_key":            v.CheckKey,
+			"detail":               v.Detail,
 			"evaluated_at":         v.EvaluatedAt,
 			"evidence_at":          v.EvidenceAt,
 			"evidence_commit_sha":  v.EvidenceCommitSha,
@@ -1218,6 +1278,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.CheckKey.Equal(other.CheckKey) {
+		return false
+	}
+
+	if !v.Detail.Equal(other.Detail) {
 		return false
 	}
 
@@ -1283,6 +1347,7 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			AttrTypes: AttestedByValue{}.AttributeTypes(ctx),
 		},
 		"check_key":            basetypes.StringType{},
+		"detail":               basetypes.StringType{},
 		"evaluated_at":         basetypes.StringType{},
 		"evidence_at":          basetypes.StringType{},
 		"evidence_commit_sha":  basetypes.StringType{},
@@ -2299,6 +2364,24 @@ func (t ScoredType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 
 	attributes := in.Attributes()
 
+	byLevelAttribute, ok := attributes["by_level"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`by_level is missing from object`)
+
+		return nil, diags
+	}
+
+	byLevelVal, ok := byLevelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`by_level expected to be basetypes.StringValue, was: %T`, byLevelAttribute))
+	}
+
 	checksAttribute, ok := attributes["checks"]
 
 	if !ok {
@@ -2358,6 +2441,7 @@ func (t ScoredType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	}
 
 	return ScoredValue{
+		ByLevel:   byLevelVal,
 		Checks:    checksVal,
 		Total:     totalVal,
 		Unleveled: unleveledVal,
@@ -2428,6 +2512,24 @@ func NewScoredValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewScoredValueUnknown(), diags
 	}
 
+	byLevelAttribute, ok := attributes["by_level"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`by_level is missing from object`)
+
+		return NewScoredValueUnknown(), diags
+	}
+
+	byLevelVal, ok := byLevelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`by_level expected to be basetypes.StringValue, was: %T`, byLevelAttribute))
+	}
+
 	checksAttribute, ok := attributes["checks"]
 
 	if !ok {
@@ -2487,6 +2589,7 @@ func NewScoredValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	}
 
 	return ScoredValue{
+		ByLevel:   byLevelVal,
 		Checks:    checksVal,
 		Total:     totalVal,
 		Unleveled: unleveledVal,
@@ -2562,6 +2665,7 @@ func (t ScoredType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ScoredValue{}
 
 type ScoredValue struct {
+	ByLevel   basetypes.StringValue `tfsdk:"by_level"`
 	Checks    basetypes.ObjectValue `tfsdk:"checks"`
 	Total     basetypes.Int64Value  `tfsdk:"total"`
 	Unleveled basetypes.Int64Value  `tfsdk:"unleveled"`
@@ -2569,11 +2673,12 @@ type ScoredValue struct {
 }
 
 func (v ScoredValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["by_level"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["checks"] = basetypes.ObjectType{
 		AttrTypes: ChecksValue{}.AttributeTypes(ctx),
 	}.TerraformType(ctx)
@@ -2584,7 +2689,15 @@ func (v ScoredValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.ByLevel.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["by_level"] = val
 
 		val, err = v.Checks.ToTerraformValue(ctx)
 
@@ -2661,6 +2774,7 @@ func (v ScoredValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	}
 
 	attributeTypes := map[string]attr.Type{
+		"by_level": basetypes.StringType{},
 		"checks": basetypes.ObjectType{
 			AttrTypes: ChecksValue{}.AttributeTypes(ctx),
 		},
@@ -2679,6 +2793,7 @@ func (v ScoredValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"by_level":  v.ByLevel,
 			"checks":    checks,
 			"total":     v.Total,
 			"unleveled": v.Unleveled,
@@ -2700,6 +2815,10 @@ func (v ScoredValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.ByLevel.Equal(other.ByLevel) {
+		return false
 	}
 
 	if !v.Checks.Equal(other.Checks) {
@@ -2727,6 +2846,7 @@ func (v ScoredValue) Type(ctx context.Context) attr.Type {
 
 func (v ScoredValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"by_level": basetypes.StringType{},
 		"checks": basetypes.ObjectType{
 			AttrTypes: ChecksValue{}.AttributeTypes(ctx),
 		},

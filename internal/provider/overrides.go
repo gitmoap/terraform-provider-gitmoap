@@ -13,21 +13,20 @@ import (
 // its own override_*.go file. TestOverrides fails when one no longer matches what's generated.
 var (
 	resourceOverrides = map[string]resourceOverride{
-		"catalog_environment_variable": variableOverride,
-		"group_approval_policy":        approvalPolicyOverride,
-		"group_fork_settings":          forkSettingsOverride,
-		"group_iteration":              groupIterationOverride,
-		"group_label":                  labelOverride,
-		"group_pipeline_variable":      variableOverride,
-		"group_wiki_page":              wikiPageOverride,
-		"repository_approval_policy":   approvalPolicyOverride,
-		"repository_fork_settings":     forkSettingsOverride,
-		"repository_label":             labelOverride,
-		"repository_pipeline_variable": variableOverride,
-		"repository_wiki_page":         wikiPageOverride,
-		"service_account_token":        serviceAccountTokenOverride,
-		"team":                         teamOverride,
-		"team_member":                  teamMemberOverride,
+		"group_access_grant":         accessGrantOverride,
+		"group_approval_policy":      approvalPolicyOverride,
+		"group_fork_settings":        forkSettingsOverride,
+		"group_iteration":            groupIterationOverride,
+		"group_label":                labelOverride,
+		"group_wiki_page":            wikiPageOverride,
+		"repository_access_grant":    accessGrantOverride,
+		"repository_approval_policy": approvalPolicyOverride,
+		"repository_fork_settings":   forkSettingsOverride,
+		"repository_label":           labelOverride,
+		"repository_wiki_page":       wikiPageOverride,
+		"service_account_token":      serviceAccountTokenOverride,
+		"team":                       teamOverride,
+		"team_member":                teamMemberOverride,
 	}
 	dataSourceOverrides = map[string]dataSourceOverride{}
 )
@@ -83,6 +82,6 @@ func jsonAt(value tftypes.Value, path string) (any, bool) {
 	if !ok {
 		return nil, false
 	}
-	converted, set, err := toJSON(attribute, path, nil)
+	converted, set, err := toJSON(attribute, path, fields{})
 	return converted, set && err == nil
 }

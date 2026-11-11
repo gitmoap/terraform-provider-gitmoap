@@ -173,9 +173,11 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_catalog_scorecard"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_catalog_service"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_access_grant"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_ai_org_conventions"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_ai_org_squad_memory"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_approval_policy"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_approval_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_branch_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_catalog_environment"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_fork_settings"
@@ -202,7 +204,9 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_wiki_page"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_provider_listing"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_access_grant"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_approval_policy"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_approval_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_branch"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_branch_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_catalog_environment"
@@ -238,9 +242,11 @@ func resources() []func() resource.Resource {
 		newRestResource("catalog_scorecard", resource_catalog_scorecard.CatalogScorecardResourceSchema),
 		newRestResource("catalog_service", resource_catalog_service.CatalogServiceResourceSchema),
 		newRestResource("group", resource_group.GroupResourceSchema),
+		newRestResource("group_access_grant", resource_group_access_grant.GroupAccessGrantResourceSchema),
 		newRestResource("group_ai_org_conventions", resource_group_ai_org_conventions.GroupAiOrgConventionsResourceSchema),
 		newRestResource("group_ai_org_squad_memory", resource_group_ai_org_squad_memory.GroupAiOrgSquadMemoryResourceSchema),
 		newRestResource("group_approval_policy", resource_group_approval_policy.GroupApprovalPolicyResourceSchema),
+		newRestResource("group_approval_rule", resource_group_approval_rule.GroupApprovalRuleResourceSchema),
 		newRestResource("group_branch_rule", resource_group_branch_rule.GroupBranchRuleResourceSchema),
 		newRestResource("group_catalog_environment", resource_group_catalog_environment.GroupCatalogEnvironmentResourceSchema),
 		newRestResource("group_fork_settings", resource_group_fork_settings.GroupForkSettingsResourceSchema),
@@ -267,7 +273,9 @@ func resources() []func() resource.Resource {
 		newRestResource("group_wiki_page", resource_group_wiki_page.GroupWikiPageResourceSchema),
 		newRestResource("provider_listing", resource_provider_listing.ProviderListingResourceSchema),
 		newRestResource("repository", resource_repository.RepositoryResourceSchema),
+		newRestResource("repository_access_grant", resource_repository_access_grant.RepositoryAccessGrantResourceSchema),
 		newRestResource("repository_approval_policy", resource_repository_approval_policy.RepositoryApprovalPolicyResourceSchema),
+		newRestResource("repository_approval_rule", resource_repository_approval_rule.RepositoryApprovalRuleResourceSchema),
 		newRestResource("repository_branch", resource_repository_branch.RepositoryBranchResourceSchema),
 		newRestResource("repository_branch_rule", resource_repository_branch_rule.RepositoryBranchRuleResourceSchema),
 		newRestResource("repository_catalog_environment", resource_repository_catalog_environment.RepositoryCatalogEnvironmentResourceSchema),

@@ -20,25 +20,29 @@ const scenariosDir = "../../examples/scenarios"
 
 // How TestAccScenarios applies each scenario in examples/scenarios. A new scenario needs an entry.
 var scenarioTests = map[string]scenarioTest{
-	"access-for-people":               {skip: "it gives access to other people's accounts"},
-	"ci-service-account":              {},
-	"issue-types":                     {},
-	"organization-defaults":           {},
-	"protected-repository":            {},
-	"release":                         {repository: "api"},
-	"service-catalog":                 {},
-	"single-sign-on":                  {skip: "it would change how everyone in the test group signs in"},
-	"sprints-and-milestones":          {},
-	"team-of-people":                  {topLevel: true, reviewers: true},
-	"webhooks-with-generated-secrets": {},
-	"wiki-from-files":                 {},
+	"access-for-people":                {skip: "it gives access to other people's accounts"},
+	"ci-service-account":               {},
+	"issue-types":                      {},
+	"organization-defaults":            {},
+	"protected-repository":             {},
+	"release":                          {repository: "api"},
+	"reviews-and-access":               {topLevel: true},
+	"service-catalog":                  {},
+	"single-sign-on":                   {skip: "it would change how everyone in the test group signs in"},
+	"short-lived-token":                {serviceAccount: "reader"},
+	"sprints-and-milestones":           {},
+	"team-of-people":                   {topLevel: true, reviewers: true},
+	"webhooks-with-write-only-secrets": {variables: map[string]string{"webhook_secrets": `{ci = "tfacc-ci-secret", chat = "tfacc-chat-secret"}`}},
+	"wiki-from-files":                  {},
 }
 
 type scenarioTest struct {
-	skip       string
-	topLevel   bool   // it needs the organization's top-level group, as teams do
-	repository string // a repository it reads, which the test creates with a commit in it
-	reviewers  bool   // its reviewers variable takes the token's own username
+	skip           string
+	topLevel       bool              // it needs the organization's top-level group, as teams do
+	repository     string            // a repository it reads, which the test creates with a commit in it
+	reviewers      bool              // its reviewers variable takes the token's own username
+	serviceAccount string            // a service account it finds by name, which the test creates
+	variables      map[string]string // values for its variables, in HCL
 }
 
 var resourceBlock = regexp.MustCompile(`(?m)^resource "(\w+)" "(\w+)"`)
@@ -132,11 +136,18 @@ func runScenario(t *testing.T, terraform, cliConfig, name string, test scenarioT
 	applyOptions := []tfexec.ApplyOption{tfexec.Parallelism(3)}
 	planOptions := []tfexec.PlanOption{tfexec.Parallelism(3), tfexec.Out(planFile)}
 	destroyOptions := []tfexec.DestroyOption{tfexec.Parallelism(3)}
+	variables := map[string]string{}
+	for name, value := range test.variables {
+		variables[name] = value
+	}
 	if test.reviewers {
-		reviewers := tfexec.Var(fmt.Sprintf("reviewers=[%q]", tokenUsername(t)))
-		applyOptions = append(applyOptions, reviewers)
-		planOptions = append(planOptions, reviewers)
-		destroyOptions = append(destroyOptions, reviewers)
+		variables["reviewers"] = fmt.Sprintf("[%q]", tokenUsername(t))
+	}
+	for name, value := range variables {
+		variable := tfexec.Var(name + "=" + value)
+		applyOptions = append(applyOptions, variable)
+		planOptions = append(planOptions, variable)
+		destroyOptions = append(destroyOptions, variable)
 	}
 
 	// Whatever happens, destroy what was created.
@@ -168,6 +179,16 @@ resource "gitmoap_repository" "tfacc" {
   visibility      = "private"
 }
 `, test.repository)
+		}
+		if test.serviceAccount != "" {
+			dependsOn += ", gitmoap_group_service_account.tfacc"
+			setup += fmt.Sprintf(`
+resource "gitmoap_group_service_account" "tfacc" {
+  group_id     = gitmoap_group.tfacc.group_id
+  name         = %q
+  access_level = "reporter"
+}
+`, test.serviceAccount)
 		}
 		writeFile(t, filepath.Join(directory, "tfacc_setup.tf"), setup)
 		if err := tf.Init(ctx); err != nil {

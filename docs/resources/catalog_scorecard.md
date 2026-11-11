@@ -38,7 +38,7 @@ resource "gitmoap_catalog_scorecard" "production_ready" {
 
 The payments service is one folder of the services monorepo: the catalog knows where its code is,
 where it deploys, and what each environment gives it. Production only takes deploys from main,
-one at a time.
+one at a time, approved by a Maintainer other than whoever started them.
 
 ```terraform
 data "gitmoap_group_by_path" "acme" {
@@ -57,11 +57,12 @@ resource "gitmoap_repository" "services" {
 }
 
 resource "gitmoap_catalog_service" "payments" {
-  group_id     = local.group_id
-  slug         = "payments"
-  display_name = "Payments"
-  kind         = "service"
-  description  = "Takes card payments"
+  group_id        = local.group_id
+  slug            = "payments"
+  display_name    = "Payments"
+  kind            = "service"
+  description     = "Takes card payments"
+  lifecycle_stage = "production"
 
   repo_paths = [{
     repository_id = gitmoap_repository.services.repository_id
@@ -87,9 +88,16 @@ resource "gitmoap_group_catalog_environment" "production" {
   display_name = "Production"
   tier         = "production"
 
-  # Deploys come from main, one at a time.
+  # Deploys come from main, one at a time, once a Maintainer other than whoever started them
+  # approves.
   protection = {
-    allowed_refs = ["main"]
+    allowed_refs          = ["main"]
+    requires_approval     = true
+    required              = 1
+    prevent_self_approval = true
+    approvers = [
+      { role = { min = "maintainer", at = { group = local.group_id } } },
+    ]
   }
 
   concurrency = {
@@ -159,6 +167,9 @@ most 1,000.
 - `created_at` (String)
 - `created_by` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
 client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--created_by))
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--scope))
 - `scorecard_id` (String) The scorecard's id
 - `updated_at` (String)
 - `version` (Number) The scorecard's revision, incremented on every change. Send it with an update to have the
@@ -169,6 +180,10 @@ update refused with a `409` if someone changed the scorecard since you read it.
 
 Optional:
 
+- `annotations` (String) Annotations a service must carry, as key–value pairs. Every entry must match; a service with
+extra annotations still matches.
+
+JSON: set it with `jsonencode()`.
 - `kinds` (List of String)
 - `lifecycles` (List of String)
 
@@ -178,9 +193,26 @@ Optional:
 
 Optional:
 
+- `config` (String) The check's own parameters, such as `{"days": 90}` for `released_within`. An unknown
+parameter is refused with a `400` rather than ignored.
+
+JSON: set it with `jsonencode()`.
 - `creates_work_item` (Boolean) Whether a failure opens a work item in the owning group's backlog. Off by default, and it
 takes effect only while the scorecard's campaign is active.
 - `key` (String)
+- `rule` (Attributes) How a check decides its answer.
+
+`type` says which applies: `derived`; `evidence`, with `binding`; `attested`, with `renew_after_days`. (see [below for nested schema](#nestedatt--checks--rule))
+
+<a id="nestedatt--checks--rule"></a>
+### Nested Schema for `checks.rule`
+
+Optional:
+
+- `binding` (String)
+- `renew_after_days` (Number)
+- `type` (String)
+
 
 
 <a id="nestedatt--levels"></a>
@@ -209,6 +241,15 @@ and so which page it links to: a person's profile, a service account's page or a
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+
+<a id="nestedatt--scope"></a>
+### Nested Schema for `scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)
 
 ## Import
 

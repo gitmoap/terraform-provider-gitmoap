@@ -58,6 +58,14 @@ resource "gitmoap_group_milestone" "launch" {
   due_on      = "2027-03-31"
 }
 
+# Already behind us. Only an update can close a milestone: the provider creates it, then closes it.
+resource "gitmoap_group_milestone" "beta" {
+  group_id = data.gitmoap_group_by_path.acme.group_id
+  title    = "Private beta"
+  due_on   = "2026-12-15"
+  closed   = true
+}
+
 resource "gitmoap_group_iteration" "hardening" {
   group_id    = data.gitmoap_group_by_path.acme.group_id
   title       = "Hardening before launch"

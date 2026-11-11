@@ -483,3 +483,69 @@ resource "gitmoap_team_member" "test" {
 		importStep("gitmoap_team_member.test", "gitmoap_team_member"),
 	))
 }
+
+// Approval rules and grants are read back from lists their group keeps; a webhook's write-only
+// secret is sent again when its version changes, and never kept in the state.
+func TestAccRulesGrantsAndWriteOnly(t *testing.T) {
+	name := "tfacc-" + acctest.RandString(8)
+	config := func(required int, reason, secret string, version int) string {
+		return subgroupConfig(name, fmt.Sprintf(`
+resource "gitmoap_team" "test" {
+  group_id = data.gitmoap_group_by_path.test.group_id
+  name     = %[1]q
+  slug     = %[1]q
+}
+
+resource "gitmoap_group_access_grant" "test" {
+  group_id = gitmoap_group.test.group_id
+  subject  = { team = gitmoap_team.test.team_id }
+  role     = { builtin = "developer" }
+  reason   = %[3]q
+}
+
+resource "gitmoap_group_approval_rule" "test" {
+  group_id  = gitmoap_group.test.group_id
+  name      = "Reviewed"
+  required  = %[2]d
+  approvers = [{ team = gitmoap_team.test.team_id }, { code_owners = true }]
+}
+
+resource "gitmoap_group_webhook" "test" {
+  group_id          = gitmoap_group.test.group_id
+  url               = "https://example.com/gitmoap-webhook"
+  secret_wo         = %[4]q
+  secret_wo_version = %[5]d
+  events            = ["push"]
+  active            = false
+}
+`, name, required, reason, secret, version))
+	}
+	resource.Test(t, testCase(t,
+		resource.TestStep{
+			Config: config(1, "Reviews", "first-secret", 1),
+			ConfigStateChecks: []statecheck.StateCheck{
+				expect("gitmoap_group_access_grant.test", "grant_id", knownvalue.NotNull()),
+				expect("gitmoap_group_approval_rule.test", "rule_id", knownvalue.NotNull()),
+				expect("gitmoap_group_webhook.test", "secret", knownvalue.Null()),
+				expect("gitmoap_group_webhook.test", "secret_wo", knownvalue.Null()),
+			},
+		},
+		resource.TestStep{
+			Config: config(2, "Reviews payments", "second-secret", 2),
+			ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+				plancheck.ExpectResourceAction("gitmoap_group_access_grant.test", plancheck.ResourceActionUpdate),
+				plancheck.ExpectResourceAction("gitmoap_group_approval_rule.test", plancheck.ResourceActionUpdate),
+				plancheck.ExpectResourceAction("gitmoap_group_webhook.test", plancheck.ResourceActionUpdate),
+			}},
+			ConfigStateChecks: []statecheck.StateCheck{
+				expect("gitmoap_group_approval_rule.test", "required", knownvalue.Int64Exact(2)),
+				expect("gitmoap_group_webhook.test", "secret_wo", knownvalue.Null()),
+			},
+		},
+		// The access list grants are read back from leaves out where they're made, and when they
+		// last changed: only creating and changing one return them.
+		importStep("gitmoap_group_access_grant.test", "gitmoap_group_access_grant", "scope", "updated_at"),
+		importStep("gitmoap_group_approval_rule.test", "gitmoap_group_approval_rule"),
+		importStep("gitmoap_group_webhook.test", "gitmoap_group_webhook", "secret_wo_version"),
+	))
+}

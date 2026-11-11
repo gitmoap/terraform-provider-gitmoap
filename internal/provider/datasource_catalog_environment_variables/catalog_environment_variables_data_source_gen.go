@@ -77,6 +77,7 @@ func CatalogEnvironmentVariablesDataSourceSchema(ctx context.Context) schema.Sch
 						},
 						"value": schema.StringAttribute{
 							Computed:            true,
+							Sensitive:           true,
 							Description:         "The variable's value. Absent for a secret, whose value can be written but never read back.",
 							MarkdownDescription: "The variable's value. Absent for a secret, whose value can be written but never read back.",
 						},

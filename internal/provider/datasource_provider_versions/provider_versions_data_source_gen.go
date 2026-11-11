@@ -36,6 +36,11 @@ func ProviderVersionsDataSourceSchema(ctx context.Context) schema.Schema {
 									"capability_id": schema.StringAttribute{
 										Computed: true,
 									},
+									"config_schema": schema.StringAttribute{
+										Computed:            true,
+										Description:         "The JSON Schema a step's `config` must satisfy to use this capability.\n\nJSON: set it with `jsonencode()`.",
+										MarkdownDescription: "The JSON Schema a step's `config` must satisfy to use this capability.\n\nJSON: set it with `jsonencode()`.",
+									},
 									"default_timeout_seconds": schema.Int64Attribute{
 										Computed: true,
 									},
@@ -1352,6 +1357,24 @@ func (t CapabilitiesType) ValueFromObject(ctx context.Context, in basetypes.Obje
 			fmt.Sprintf(`capability_id expected to be basetypes.StringValue, was: %T`, capabilityIdAttribute))
 	}
 
+	configSchemaAttribute, ok := attributes["config_schema"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`config_schema is missing from object`)
+
+		return nil, diags
+	}
+
+	configSchemaVal, ok := configSchemaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config_schema expected to be basetypes.StringValue, was: %T`, configSchemaAttribute))
+	}
+
 	defaultTimeoutSecondsAttribute, ok := attributes["default_timeout_seconds"]
 
 	if !ok {
@@ -1558,6 +1581,7 @@ func (t CapabilitiesType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		Bindable:              bindableVal,
 		CacheEnabled:          cacheEnabledVal,
 		CapabilityId:          capabilityIdVal,
+		ConfigSchema:          configSchemaVal,
 		DefaultTimeoutSeconds: defaultTimeoutSecondsVal,
 		Description:           descriptionVal,
 		ImageDigest:           imageDigestVal,
@@ -1690,6 +1714,24 @@ func NewCapabilitiesValue(attributeTypes map[string]attr.Type, attributes map[st
 			fmt.Sprintf(`capability_id expected to be basetypes.StringValue, was: %T`, capabilityIdAttribute))
 	}
 
+	configSchemaAttribute, ok := attributes["config_schema"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`config_schema is missing from object`)
+
+		return NewCapabilitiesValueUnknown(), diags
+	}
+
+	configSchemaVal, ok := configSchemaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config_schema expected to be basetypes.StringValue, was: %T`, configSchemaAttribute))
+	}
+
 	defaultTimeoutSecondsAttribute, ok := attributes["default_timeout_seconds"]
 
 	if !ok {
@@ -1896,6 +1938,7 @@ func NewCapabilitiesValue(attributeTypes map[string]attr.Type, attributes map[st
 		Bindable:              bindableVal,
 		CacheEnabled:          cacheEnabledVal,
 		CapabilityId:          capabilityIdVal,
+		ConfigSchema:          configSchemaVal,
 		DefaultTimeoutSeconds: defaultTimeoutSecondsVal,
 		Description:           descriptionVal,
 		ImageDigest:           imageDigestVal,
@@ -1982,6 +2025,7 @@ type CapabilitiesValue struct {
 	Bindable              basetypes.ListValue   `tfsdk:"bindable"`
 	CacheEnabled          basetypes.BoolValue   `tfsdk:"cache_enabled"`
 	CapabilityId          basetypes.StringValue `tfsdk:"capability_id"`
+	ConfigSchema          basetypes.StringValue `tfsdk:"config_schema"`
 	DefaultTimeoutSeconds basetypes.Int64Value  `tfsdk:"default_timeout_seconds"`
 	Description           basetypes.StringValue `tfsdk:"description"`
 	ImageDigest           basetypes.StringValue `tfsdk:"image_digest"`
@@ -1997,7 +2041,7 @@ type CapabilitiesValue struct {
 }
 
 func (v CapabilitiesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 14)
+	attrTypes := make(map[string]tftypes.Type, 15)
 
 	var val tftypes.Value
 	var err error
@@ -2007,6 +2051,7 @@ func (v CapabilitiesValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 	}.TerraformType(ctx)
 	attrTypes["cache_enabled"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["capability_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["config_schema"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["default_timeout_seconds"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["image_digest"] = basetypes.StringType{}.TerraformType(ctx)
@@ -2029,7 +2074,7 @@ func (v CapabilitiesValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 14)
+		vals := make(map[string]tftypes.Value, 15)
 
 		val, err = v.Bindable.ToTerraformValue(ctx)
 
@@ -2054,6 +2099,14 @@ func (v CapabilitiesValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 		}
 
 		vals["capability_id"] = val
+
+		val, err = v.ConfigSchema.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["config_schema"] = val
 
 		val, err = v.DefaultTimeoutSeconds.ToTerraformValue(ctx)
 
@@ -2278,6 +2331,7 @@ func (v CapabilitiesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 			},
 			"cache_enabled":           basetypes.BoolType{},
 			"capability_id":           basetypes.StringType{},
+			"config_schema":           basetypes.StringType{},
 			"default_timeout_seconds": basetypes.Int64Type{},
 			"description":             basetypes.StringType{},
 			"image_digest":            basetypes.StringType{},
@@ -2304,6 +2358,7 @@ func (v CapabilitiesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 		},
 		"cache_enabled":           basetypes.BoolType{},
 		"capability_id":           basetypes.StringType{},
+		"config_schema":           basetypes.StringType{},
 		"default_timeout_seconds": basetypes.Int64Type{},
 		"description":             basetypes.StringType{},
 		"image_digest":            basetypes.StringType{},
@@ -2337,6 +2392,7 @@ func (v CapabilitiesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 			"bindable":                bindableVal,
 			"cache_enabled":           v.CacheEnabled,
 			"capability_id":           v.CapabilityId,
+			"config_schema":           v.ConfigSchema,
 			"default_timeout_seconds": v.DefaultTimeoutSeconds,
 			"description":             v.Description,
 			"image_digest":            v.ImageDigest,
@@ -2377,6 +2433,10 @@ func (v CapabilitiesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.CapabilityId.Equal(other.CapabilityId) {
+		return false
+	}
+
+	if !v.ConfigSchema.Equal(other.ConfigSchema) {
 		return false
 	}
 
@@ -2442,6 +2502,7 @@ func (v CapabilitiesValue) AttributeTypes(ctx context.Context) map[string]attr.T
 		},
 		"cache_enabled":           basetypes.BoolType{},
 		"capability_id":           basetypes.StringType{},
+		"config_schema":           basetypes.StringType{},
 		"default_timeout_seconds": basetypes.Int64Type{},
 		"description":             basetypes.StringType{},
 		"image_digest":            basetypes.StringType{},

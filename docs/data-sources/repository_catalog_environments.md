@@ -51,7 +51,18 @@ Read-Only:
 - `archived` (Boolean)
 - `display_name` (String)
 - `environment_id` (String)
+- `scope` (Attributes) A group or a repository, whichever a setting belongs to.
+
+Set one of `group` or `repo`. (see [below for nested schema](#nestedatt--items--scope))
 - `slug` (String)
 - `tier` (String) What kind of environment this is, whatever it is called: `development`, `testing`, `staging`
 or `production`. A `production` environment is protected by default.
 - `url` (String)
+
+<a id="nestedatt--items--scope"></a>
+### Nested Schema for `items.scope`
+
+Read-Only:
+
+- `group` (String)
+- `repo` (String)

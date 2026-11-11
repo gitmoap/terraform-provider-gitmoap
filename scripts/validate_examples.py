@@ -42,6 +42,7 @@ def examples() -> list[tuple[str, list[Path]]]:
     found = [(str(path.relative_to(REPO_ROOT)), [path]) for path in sorted(EXAMPLES.glob("provider/*.tf"))]
     found += [(str(path.relative_to(REPO_ROOT)), [path]) for path in sorted(EXAMPLES.glob("resources/*/resource*.tf"))]
     found += [(str(path.relative_to(REPO_ROOT)), [path]) for path in sorted(EXAMPLES.glob("data-sources/*/data-source*.tf"))]
+    found += [(str(path.relative_to(REPO_ROOT)), [path]) for path in sorted(EXAMPLES.glob("ephemeral-resources/*/ephemeral-resource*.tf"))]
     for directory in sorted((EXAMPLES / "scenarios").iterdir()):
         found.append((str(directory.relative_to(REPO_ROOT)), [path for path in sorted(directory.rglob("*")) if path.is_file()]))
     return found

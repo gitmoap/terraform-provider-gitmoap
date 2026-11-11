@@ -36,6 +36,10 @@ data "gitmoap_provider" "example" {
 
 - `auth_modes` (List of String) How connections to this provider may authenticate (e.g.
 `[static_credentials, oidc_federation]`). A connection using any other mode is refused.
+- `auth_schema` (String) The JSON Schema a connection's credentials must satisfy, exactly as the provider's
+`gitmoap-provider.yaml` declares it.
+
+JSON: set it with `jsonencode()`.
 - `categories` (List of String) The marketplace categories the provider is listed under, one to three. Empty for a provider
 with no marketplace listing.
 - `created_at` (String)
@@ -50,3 +54,14 @@ counted.
 - `publisher_id` (String)
 - `tier` (String) How a pipeline provider is distributed and how much it is vouched for.
 - `updated_at` (String)
+- `visibility` (Attributes) Who can see a provider in the catalog. `public` is listed for everyone; `private` is listed only for members of the organisation that owns it.
+
+`kind` says which applies: `public`; `private`, with `owning_group_id`. (see [below for nested schema](#nestedatt--visibility))
+
+<a id="nestedatt--visibility"></a>
+### Nested Schema for `visibility`
+
+Read-Only:
+
+- `kind` (String)
+- `owning_group_id` (String)

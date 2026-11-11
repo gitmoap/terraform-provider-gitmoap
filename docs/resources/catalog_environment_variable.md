@@ -38,7 +38,7 @@ resource "gitmoap_catalog_environment_variable" "api_url" {
 
 The payments service is one folder of the services monorepo: the catalog knows where its code is,
 where it deploys, and what each environment gives it. Production only takes deploys from main,
-one at a time.
+one at a time, approved by a Maintainer other than whoever started them.
 
 ```terraform
 data "gitmoap_group_by_path" "acme" {
@@ -57,11 +57,12 @@ resource "gitmoap_repository" "services" {
 }
 
 resource "gitmoap_catalog_service" "payments" {
-  group_id     = local.group_id
-  slug         = "payments"
-  display_name = "Payments"
-  kind         = "service"
-  description  = "Takes card payments"
+  group_id        = local.group_id
+  slug            = "payments"
+  display_name    = "Payments"
+  kind            = "service"
+  description     = "Takes card payments"
+  lifecycle_stage = "production"
 
   repo_paths = [{
     repository_id = gitmoap_repository.services.repository_id
@@ -87,9 +88,16 @@ resource "gitmoap_group_catalog_environment" "production" {
   display_name = "Production"
   tier         = "production"
 
-  # Deploys come from main, one at a time.
+  # Deploys come from main, one at a time, once a Maintainer other than whoever started them
+  # approves.
   protection = {
-    allowed_refs = ["main"]
+    allowed_refs          = ["main"]
+    requires_approval     = true
+    required              = 1
+    prevent_self_approval = true
+    approvers = [
+      { role = { min = "maintainer", at = { group = local.group_id } } },
+    ]
   }
 
   concurrency = {
@@ -137,12 +145,16 @@ resource "gitmoap_catalog_scorecard" "production_ready" {
 
 - `environment_id` (String) The environment's id
 - `name` (String)
-- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back.
 
 ### Optional
 
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
+
 - `secret` (Boolean) Whether the value is a secret. A secret's value can never be read back and is redacted from
 step logs; either way the step receives it as an environment variable. Defaults to `false`.
+- `value` (String, Sensitive) The variable's value. Absent for a secret, whose value can be written but never read back. Or set `value_wo`, to keep it out of the state.
+- `value_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sets `value` without keeping it in Terraform's plan or state: write-only, with Terraform 1.11 and later. Change `value_wo_version` to send it again.
+- `value_wo_version` (Number) A number to change when `value_wo` changes, to send it again: Terraform can't tell, since it doesn't keep it.
 
 ### Read-Only
 

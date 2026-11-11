@@ -41,6 +41,15 @@ data "gitmoap_repository_providers" "api" {
 
 Read-Only:
 
+- `allowed_versions` (Attributes) The set of versions a node may declare for a provider at a scope.
+
+`AnyPublished` (the default when unset) permits every catalogued version —
+the trust boundary is the catalog. `List`/`Range` let an org curate. The
+version a node *runs* is always an exact `ProviderVersion`; a `Range` only
+governs which exact versions are declarable, so reproducibility holds (no
+floating run-time versions).
+
+`kind` says which applies: `any_published`; `list`, with `versions`; `range`, with `max`, `min`. (see [below for nested schema](#nestedatt--items--allowed_versions))
 - `default_version` (String)
 - `enabled` (Boolean)
 - `inherited` (Boolean)
@@ -64,6 +73,17 @@ referencing it fails validation.
 When `true`, an unpinned node resolves to `latest_version` at trigger.
 - `update_available` (Boolean) Whether a newer version than the install's `default_version` is published
 — a pure semver compare that never mutates the install (D5 K6).
+
+<a id="nestedatt--items--allowed_versions"></a>
+### Nested Schema for `items.allowed_versions`
+
+Read-Only:
+
+- `kind` (String)
+- `max` (String)
+- `min` (String)
+- `versions` (List of String)
+
 
 <a id="nestedatt--items--installed_by"></a>
 ### Nested Schema for `items.installed_by`

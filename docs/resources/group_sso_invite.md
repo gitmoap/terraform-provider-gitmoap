@@ -46,6 +46,7 @@ variable "oidc_client_secret" {
   description = "The client secret of the gitmoap app in Okta."
   type        = string
   sensitive   = true
+  ephemeral   = true
 }
 
 locals {
@@ -63,9 +64,10 @@ resource "gitmoap_group_sso_connection" "okta" {
   protocol = "oidc"
 
   oidc = {
-    issuer_url    = "https://acme.okta.com"
-    client_id     = "0oa1b2c3d4e5f6g7h8i9"
-    client_secret = var.oidc_client_secret
+    issuer_url               = "https://acme.okta.com"
+    client_id                = "0oa1b2c3d4e5f6g7h8i9"
+    client_secret_wo         = var.oidc_client_secret
+    client_secret_wo_version = 1
   }
 
   attribute_mapping = {
@@ -113,6 +115,9 @@ resource "gitmoap_group_sso_invite" "contractor" {
 - `expires_at` (String) When the invite stops letting the address in — within a year. Omit it for an invite that
 waits until it is used or revoked.
 - `reason` (String)
+- `role` (Attributes) A role, as a grant names it: `{ "builtin": "developer" }` or `{ "custom": "<role id>" }`.
+
+Set one of `builtin` or `custom`. (see [below for nested schema](#nestedatt--role))
 
 ### Read-Only
 
@@ -121,6 +126,20 @@ waits until it is used or revoked.
 replaces it.
 - `invited_by` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
 client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--invited_by))
+
+<a id="nestedatt--role"></a>
+### Nested Schema for `role`
+
+Optional:
+
+- `builtin` (String)
+- `custom` (String)
+
+Read-Only:
+
+- `name` (String) The role's display name: a built-in name such as `Developer`, or the custom role's name.
+- `rank` (String)
+
 
 <a id="nestedatt--invited_by"></a>
 ### Nested Schema for `invited_by`

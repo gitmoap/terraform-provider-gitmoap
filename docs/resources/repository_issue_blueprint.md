@@ -42,12 +42,12 @@ types it may have as children, and which fields it accepts.
 
 ### Optional
 
+- `archived` (Boolean) Hidden from the type picker; items already filed keep their `type_profile`.
 - `description` (String)
 - `facets` (Attributes List) The blueprint's facets, in order. (see [below for nested schema](#nestedatt--facets))
 
 ### Read-Only
 
-- `archived` (Boolean) Hidden from the type picker; items already filed keep their `type_profile`.
 - `created_at` (String)
 - `created_by` (Attributes) Who did something — a person, a service account or an AI organization's agent — with what a
 client needs to draw and link them, so a page of records names its actors without a lookup each. (see [below for nested schema](#nestedatt--created_by))
@@ -62,12 +62,48 @@ read, and is refused with a `409` if the blueprint changed since.
 
 Optional:
 
+- `binding` (Attributes) How the criterion a facet adds is bound: `manual` (the default), or `bound` to evidence the
+platform checks. A blueprint whose base type lives only in a group, such as `epic`, may use only
+`manual`.
+
+`mode` says which applies: `manual`; `bound`, with `binding`. (see [below for nested schema](#nestedatt--facets--binding))
 - `category` (String)
 - `hint` (String) The starter criterion's text. When absent the criterion is titled by the facet `label`.
 - `key` (String)
 - `label` (String) The facet's display name, such as "Observability".
 - `required` (Boolean) Whether the facet's criterion must be satisfied before the work item can be closed or
 verified. Defaults to `true`.
+
+<a id="nestedatt--facets--binding"></a>
+### Nested Schema for `facets.binding`
+
+Optional:
+
+- `criterion` (Attributes) What a criterion is bound to — the condition the platform checks on its behalf. A criterion with
+no binding is a manual checkbox.
+
+`kind` says which applies: `test`, with `suite`, `test_id`; `metric`, with `name`, `op`, `threshold`, `unit`; `coverage`, with `min_pct`, `path_glob`; `node`, with `node_id`; `scorecard_check`, with `check_key`, `scorecard_id`. (see [below for nested schema](#nestedatt--facets--binding--criterion))
+- `mode` (String)
+
+<a id="nestedatt--facets--binding--criterion"></a>
+### Nested Schema for `facets.binding.criterion`
+
+Optional:
+
+- `check_key` (String)
+- `kind` (String)
+- `min_pct` (Number)
+- `name` (String)
+- `node_id` (String)
+- `op` (String) How a measurement is compared against its threshold.
+- `path_glob` (String)
+- `scorecard_id` (String)
+- `suite` (String)
+- `test_id` (String)
+- `threshold` (Number)
+- `unit` (String)
+
+
 
 
 <a id="nestedatt--created_by"></a>
