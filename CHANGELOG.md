@@ -1,4 +1,4 @@
-## 0.2.0 (Unreleased)
+## 0.2.0 (November 24, 2026)
 
 Generated from the gitmoap API 0.116.0.
 
@@ -54,11 +54,6 @@ BUG FIXES:
 * A data source's list argument sent as a query parameter, like
   `gitmoap_repository_catalog_resolve`'s `path`, was left out of the request without a word, so the
   data source read as if it weren't set. It's sent now, one parameter for each value.
-
-## 0.1.1 (November 11, 2026)
-
-BUG FIXES:
-
 * An update no longer sends back an attribute only an update takes, or an empty list, that the
   configuration leaves out. A provider connection's update sent `environment_bound` false beside
   `environment_ids` [], which the API refuses, so every change to a connection failed — rotating its
