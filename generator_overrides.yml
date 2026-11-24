@@ -1,0 +1,15 @@
+# Hand-written changes to generator_config.yml, merged over it by
+# scripts/generate_generator_config.py. Same layout as the config: lists are unioned, and null
+# removes a key.
+
+resources:
+  group_outbound:
+    schema:
+      # Changing the policy answers with {"policy": {...}, "would_refuse": [...]}: the policy is the
+      # resource itself, read back after the change, and what a change would refuse only means
+      # something on a dry run. Its rules are gitmoap_group_outbound_rule resources, so listing
+      # them all here too would show every rule's change twice.
+      ignores:
+        - policy
+        - would_refuse
+        - rules

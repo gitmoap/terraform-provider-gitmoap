@@ -42,7 +42,7 @@ manual checkbox).
 - `kind` (String) A kind of acceptance criterion. `Manual` is a human-ticked checkbox (no binding); the
 rest bind to a predicate the platform evaluates from pipeline evidence.
 - `label` (String)
-- `proved_by` (String) What proves a criterion of this kind. `person`: someone ticks it. `step_outcome`: whether a pipeline step succeeds, which needs nothing more than the step. `test_reports`: a test report a step writes — JUnit XML, cargo-nextest JSON, go test -json or CTRF. `coverage_reports`: an LCOV, Cobertura or Go coverage report. `measurements`: a measurement a step writes as gitmoap.evidence/v1. `scorecard`: a service-catalog check.
+- `proved_by` (String) What proves a criterion of this kind. `person`: someone ticks it. `step_outcome`: whether a pipeline step succeeds, which needs nothing more than the step. `test_reports`: a test report a step writes — JUnit XML, TRX, cargo-nextest JSON, go test -json or CTRF. `coverage_reports`: each file's coverage — an LCOV, Cobertura or Go coverage report, or coverage written as gitmoap.evidence/v1. `measurements`: a measurement a step writes as gitmoap.evidence/v1. `scorecard`: a service-catalog check.
 
 <a id="nestedatt--kinds--fields"></a>
 ### Nested Schema for `kinds.fields`

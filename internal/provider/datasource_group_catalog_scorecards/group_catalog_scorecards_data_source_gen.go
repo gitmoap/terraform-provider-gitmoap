@@ -32,8 +32,8 @@ func GroupCatalogScorecardsDataSourceSchema(ctx context.Context) schema.Schema {
 			"include_inherited": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Include ancestor scopes' scorecards. Defaults to true, because union inheritance is what makes a baseline a baseline",
-				MarkdownDescription: "Include ancestor scopes' scorecards. Defaults to true, because union inheritance is what makes a baseline a baseline",
+				Description:         "Include ancestor scopes' scorecards. Defaults to true, because union inheritance is what makes a baseline a baseline — a listing showing only the scope's own rows would misreport what applies",
+				MarkdownDescription: "Include ancestor scopes' scorecards. Defaults to true, because union inheritance is what makes a baseline a baseline — a listing showing only the scope's own rows would misreport what applies",
 			},
 			"items": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{

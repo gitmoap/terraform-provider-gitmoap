@@ -36,14 +36,14 @@ func RepositoriesDataSourceSchema(ctx context.Context) schema.Schema {
 			"group_id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by group ID (mutually exclusive with group_path; one is required)",
-				MarkdownDescription: "Filter by group ID (mutually exclusive with group_path; one is required)",
+				Description:         "The group whose repositories are listed (mutually exclusive with `group_path`; one is required)",
+				MarkdownDescription: "The group whose repositories are listed (mutually exclusive with `group_path`; one is required)",
 			},
 			"group_path": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by group path (mutually exclusive with group_id; one is required)",
-				MarkdownDescription: "Filter by group path (mutually exclusive with group_id; one is required)",
+				Description:         "The path of the group whose repositories are listed (mutually exclusive with `group_id`; one is required)",
+				MarkdownDescription: "The path of the group whose repositories are listed (mutually exclusive with `group_id`; one is required)",
 			},
 			"items": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -51,6 +51,11 @@ func RepositoriesDataSourceSchema(ctx context.Context) schema.Schema {
 						"ancestor_group_ids": schema.ListAttribute{
 							ElementType: types.StringType,
 							Computed:    true,
+						},
+						"archived_at": schema.StringAttribute{
+							Computed:            true,
+							Description:         "When the repository was archived: from then on it is read-only — it can be read, cloned,\nstarred, governed, unarchived or deleted, and nothing else changes it. Absent while it is\nnot archived.",
+							MarkdownDescription: "When the repository was archived: from then on it is read-only — it can be read, cloned,\nstarred, governed, unarchived or deleted, and nothing else changes it. Absent while it is\nnot archived.",
 						},
 						"avatar": schema.StringAttribute{
 							Computed: true,
@@ -159,6 +164,21 @@ func RepositoriesDataSourceSchema(ctx context.Context) schema.Schema {
 						"group_id": schema.StringAttribute{
 							Computed: true,
 						},
+						"last_pushed_at": schema.StringAttribute{
+							Computed:            true,
+							Description:         "When the default branch last moved — a push, a web commit, a merge, a fork's copy or sync —\nas the event that moved it says. Absent while it never has, or not since the platform began\nrecording it. Never touched by a settings change, which moves `updated_at` instead.",
+							MarkdownDescription: "When the default branch last moved — a push, a web commit, a merge, a fork's copy or sync —\nas the event that moved it says. Absent while it never has, or not since the platform began\nrecording it. Never touched by a settings change, which moves `updated_at` instead.",
+						},
+						"listed": schema.BoolAttribute{
+							Computed:            true,
+							Description:         "Whether a public repository is on Explore and in the sitemap. An unlisted one is exactly as\npublic — readable at its address, cloneable, found by search — and only absent from the\nfront door. Means nothing on a repository that is not public, until it is made public.",
+							MarkdownDescription: "Whether a public repository is on Explore and in the sitemap. An unlisted one is exactly as\npublic — readable at its address, cloneable, found by search — and only absent from the\nfront door. Means nothing on a repository that is not public, until it is made public.",
+						},
+						"mirrored_from": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The source this repository mirrors, when it is a mirror: its branches and tags follow the\nsource, and nothing else moves them. Absent otherwise.",
+							MarkdownDescription: "The source this repository mirrors, when it is a mirror: its branches and tags follow the\nsource, and nothing else moves them. Absent otherwise.",
+						},
 						"pipelines_enabled": schema.BoolAttribute{
 							Computed:            true,
 							Description:         "Whether pushes, merge requests and schedules start pipeline runs here. A new fork starts\nwith this off, so it runs nothing until one of its Maintainers turns it on.",
@@ -247,6 +267,24 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`ancestor_group_ids expected to be basetypes.ListValue, was: %T`, ancestorGroupIdsAttribute))
+	}
+
+	archivedAtAttribute, ok := attributes["archived_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`archived_at is missing from object`)
+
+		return nil, diags
+	}
+
+	archivedAtVal, ok := archivedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`archived_at expected to be basetypes.StringValue, was: %T`, archivedAtAttribute))
 	}
 
 	avatarAttribute, ok := attributes["avatar"]
@@ -447,6 +485,60 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`group_id expected to be basetypes.StringValue, was: %T`, groupIdAttribute))
 	}
 
+	lastPushedAtAttribute, ok := attributes["last_pushed_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`last_pushed_at is missing from object`)
+
+		return nil, diags
+	}
+
+	lastPushedAtVal, ok := lastPushedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`last_pushed_at expected to be basetypes.StringValue, was: %T`, lastPushedAtAttribute))
+	}
+
+	listedAttribute, ok := attributes["listed"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`listed is missing from object`)
+
+		return nil, diags
+	}
+
+	listedVal, ok := listedAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`listed expected to be basetypes.BoolValue, was: %T`, listedAttribute))
+	}
+
+	mirroredFromAttribute, ok := attributes["mirrored_from"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mirrored_from is missing from object`)
+
+		return nil, diags
+	}
+
+	mirroredFromVal, ok := mirroredFromAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mirrored_from expected to be basetypes.StringValue, was: %T`, mirroredFromAttribute))
+	}
+
 	pipelinesEnabledAttribute, ok := attributes["pipelines_enabled"]
 
 	if !ok {
@@ -579,6 +671,7 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 
 	return ItemsValue{
 		AncestorGroupIds: ancestorGroupIdsVal,
+		ArchivedAt:       archivedAtVal,
 		Avatar:           avatarVal,
 		CatalogEnabled:   catalogEnabledVal,
 		CreatedAt:        createdAtVal,
@@ -590,6 +683,9 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		ForksCount:       forksCountVal,
 		FullPath:         fullPathVal,
 		GroupId:          groupIdVal,
+		LastPushedAt:     lastPushedAtVal,
+		Listed:           listedVal,
+		MirroredFrom:     mirroredFromVal,
 		PipelinesEnabled: pipelinesEnabledVal,
 		RepositoryId:     repositoryIdVal,
 		RepositoryName:   repositoryNameVal,
@@ -682,6 +778,24 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`ancestor_group_ids expected to be basetypes.ListValue, was: %T`, ancestorGroupIdsAttribute))
 	}
 
+	archivedAtAttribute, ok := attributes["archived_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`archived_at is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	archivedAtVal, ok := archivedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`archived_at expected to be basetypes.StringValue, was: %T`, archivedAtAttribute))
+	}
+
 	avatarAttribute, ok := attributes["avatar"]
 
 	if !ok {
@@ -880,6 +994,60 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`group_id expected to be basetypes.StringValue, was: %T`, groupIdAttribute))
 	}
 
+	lastPushedAtAttribute, ok := attributes["last_pushed_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`last_pushed_at is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	lastPushedAtVal, ok := lastPushedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`last_pushed_at expected to be basetypes.StringValue, was: %T`, lastPushedAtAttribute))
+	}
+
+	listedAttribute, ok := attributes["listed"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`listed is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	listedVal, ok := listedAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`listed expected to be basetypes.BoolValue, was: %T`, listedAttribute))
+	}
+
+	mirroredFromAttribute, ok := attributes["mirrored_from"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mirrored_from is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	mirroredFromVal, ok := mirroredFromAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mirrored_from expected to be basetypes.StringValue, was: %T`, mirroredFromAttribute))
+	}
+
 	pipelinesEnabledAttribute, ok := attributes["pipelines_enabled"]
 
 	if !ok {
@@ -1012,6 +1180,7 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 
 	return ItemsValue{
 		AncestorGroupIds: ancestorGroupIdsVal,
+		ArchivedAt:       archivedAtVal,
 		Avatar:           avatarVal,
 		CatalogEnabled:   catalogEnabledVal,
 		CreatedAt:        createdAtVal,
@@ -1023,6 +1192,9 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		ForksCount:       forksCountVal,
 		FullPath:         fullPathVal,
 		GroupId:          groupIdVal,
+		LastPushedAt:     lastPushedAtVal,
+		Listed:           listedVal,
+		MirroredFrom:     mirroredFromVal,
 		PipelinesEnabled: pipelinesEnabledVal,
 		RepositoryId:     repositoryIdVal,
 		RepositoryName:   repositoryNameVal,
@@ -1103,6 +1275,7 @@ var _ basetypes.ObjectValuable = ItemsValue{}
 
 type ItemsValue struct {
 	AncestorGroupIds basetypes.ListValue   `tfsdk:"ancestor_group_ids"`
+	ArchivedAt       basetypes.StringValue `tfsdk:"archived_at"`
 	Avatar           basetypes.StringValue `tfsdk:"avatar"`
 	CatalogEnabled   basetypes.BoolValue   `tfsdk:"catalog_enabled"`
 	CreatedAt        basetypes.StringValue `tfsdk:"created_at"`
@@ -1114,6 +1287,9 @@ type ItemsValue struct {
 	ForksCount       basetypes.Int64Value  `tfsdk:"forks_count"`
 	FullPath         basetypes.StringValue `tfsdk:"full_path"`
 	GroupId          basetypes.StringValue `tfsdk:"group_id"`
+	LastPushedAt     basetypes.StringValue `tfsdk:"last_pushed_at"`
+	Listed           basetypes.BoolValue   `tfsdk:"listed"`
+	MirroredFrom     basetypes.StringValue `tfsdk:"mirrored_from"`
 	PipelinesEnabled basetypes.BoolValue   `tfsdk:"pipelines_enabled"`
 	RepositoryId     basetypes.StringValue `tfsdk:"repository_id"`
 	RepositoryName   basetypes.StringValue `tfsdk:"repository_name"`
@@ -1125,7 +1301,7 @@ type ItemsValue struct {
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 19)
+	attrTypes := make(map[string]tftypes.Type, 23)
 
 	var val tftypes.Value
 	var err error
@@ -1133,6 +1309,7 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["ancestor_group_ids"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
+	attrTypes["archived_at"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["avatar"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["catalog_enabled"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["created_at"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1146,6 +1323,9 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["forks_count"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["full_path"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["group_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["last_pushed_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["listed"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["mirrored_from"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["pipelines_enabled"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["repository_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["repository_name"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1158,7 +1338,7 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 19)
+		vals := make(map[string]tftypes.Value, 23)
 
 		val, err = v.AncestorGroupIds.ToTerraformValue(ctx)
 
@@ -1167,6 +1347,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["ancestor_group_ids"] = val
+
+		val, err = v.ArchivedAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["archived_at"] = val
 
 		val, err = v.Avatar.ToTerraformValue(ctx)
 
@@ -1255,6 +1443,30 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["group_id"] = val
+
+		val, err = v.LastPushedAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["last_pushed_at"] = val
+
+		val, err = v.Listed.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["listed"] = val
+
+		val, err = v.MirroredFrom.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mirrored_from"] = val
 
 		val, err = v.PipelinesEnabled.ToTerraformValue(ctx)
 
@@ -1379,6 +1591,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"ancestor_group_ids": basetypes.ListType{
 				ElemType: types.StringType,
 			},
+			"archived_at":     basetypes.StringType{},
 			"avatar":          basetypes.StringType{},
 			"catalog_enabled": basetypes.BoolType{},
 			"created_at":      basetypes.StringType{},
@@ -1392,6 +1605,9 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"forks_count":       basetypes.Int64Type{},
 			"full_path":         basetypes.StringType{},
 			"group_id":          basetypes.StringType{},
+			"last_pushed_at":    basetypes.StringType{},
+			"listed":            basetypes.BoolType{},
+			"mirrored_from":     basetypes.StringType{},
 			"pipelines_enabled": basetypes.BoolType{},
 			"repository_id":     basetypes.StringType{},
 			"repository_name":   basetypes.StringType{},
@@ -1406,6 +1622,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"ancestor_group_ids": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+		"archived_at":     basetypes.StringType{},
 		"avatar":          basetypes.StringType{},
 		"catalog_enabled": basetypes.BoolType{},
 		"created_at":      basetypes.StringType{},
@@ -1419,6 +1636,9 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"forks_count":       basetypes.Int64Type{},
 		"full_path":         basetypes.StringType{},
 		"group_id":          basetypes.StringType{},
+		"last_pushed_at":    basetypes.StringType{},
+		"listed":            basetypes.BoolType{},
+		"mirrored_from":     basetypes.StringType{},
 		"pipelines_enabled": basetypes.BoolType{},
 		"repository_id":     basetypes.StringType{},
 		"repository_name":   basetypes.StringType{},
@@ -1440,6 +1660,7 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		attributeTypes,
 		map[string]attr.Value{
 			"ancestor_group_ids": ancestorGroupIdsVal,
+			"archived_at":        v.ArchivedAt,
 			"avatar":             v.Avatar,
 			"catalog_enabled":    v.CatalogEnabled,
 			"created_at":         v.CreatedAt,
@@ -1451,6 +1672,9 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"forks_count":        v.ForksCount,
 			"full_path":          v.FullPath,
 			"group_id":           v.GroupId,
+			"last_pushed_at":     v.LastPushedAt,
+			"listed":             v.Listed,
+			"mirrored_from":      v.MirroredFrom,
 			"pipelines_enabled":  v.PipelinesEnabled,
 			"repository_id":      v.RepositoryId,
 			"repository_name":    v.RepositoryName,
@@ -1479,6 +1703,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.AncestorGroupIds.Equal(other.AncestorGroupIds) {
+		return false
+	}
+
+	if !v.ArchivedAt.Equal(other.ArchivedAt) {
 		return false
 	}
 
@@ -1526,6 +1754,18 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.LastPushedAt.Equal(other.LastPushedAt) {
+		return false
+	}
+
+	if !v.Listed.Equal(other.Listed) {
+		return false
+	}
+
+	if !v.MirroredFrom.Equal(other.MirroredFrom) {
+		return false
+	}
+
 	if !v.PipelinesEnabled.Equal(other.PipelinesEnabled) {
 		return false
 	}
@@ -1570,6 +1810,7 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"ancestor_group_ids": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+		"archived_at":     basetypes.StringType{},
 		"avatar":          basetypes.StringType{},
 		"catalog_enabled": basetypes.BoolType{},
 		"created_at":      basetypes.StringType{},
@@ -1583,6 +1824,9 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"forks_count":       basetypes.Int64Type{},
 		"full_path":         basetypes.StringType{},
 		"group_id":          basetypes.StringType{},
+		"last_pushed_at":    basetypes.StringType{},
+		"listed":            basetypes.BoolType{},
+		"mirrored_from":     basetypes.StringType{},
 		"pipelines_enabled": basetypes.BoolType{},
 		"repository_id":     basetypes.StringType{},
 		"repository_name":   basetypes.StringType{},

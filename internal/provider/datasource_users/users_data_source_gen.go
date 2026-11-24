@@ -20,8 +20,8 @@ func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"group_id": schema.StringAttribute{
 				Required:            true,
-				Description:         "The group whose members to list (required)",
-				MarkdownDescription: "The group whose members to list (required)",
+				Description:         "The group whose members to list",
+				MarkdownDescription: "The group whose members to list",
 			},
 			"items": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{

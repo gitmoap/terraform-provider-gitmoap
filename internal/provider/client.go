@@ -56,6 +56,23 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("%s %s: %d %s: %s", e.Method, e.Path, e.StatusCode, http.StatusText(e.StatusCode), detail)
 }
 
+// Code returns the error's code, like GROUP_NOT_EMPTY, when the API gave one.
+func (e *APIError) Code() string {
+	var parsed struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	_ = json.Unmarshal([]byte(e.Body), &parsed)
+	return parsed.Error.Code
+}
+
+// HasCode reports whether err is an error from the API with the given code.
+func HasCode(err error, code string) bool {
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.Code() == code
+}
+
 // IsNotFound reports whether err is a 404 from the API.
 func IsNotFound(err error) bool {
 	var apiErr *APIError

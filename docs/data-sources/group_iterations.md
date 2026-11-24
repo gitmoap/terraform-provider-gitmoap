@@ -3,13 +3,13 @@
 page_title: "gitmoap_group_iterations Data Source - gitmoap"
 subcategory: ""
 description: |-
-  List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with state, or to one cadence's with cadence_id. Anyone who can see the group's work items may list them — on a public group, without signing in.
+  List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with state, or to one cadence's with cadence_id; each takes several values, and state_not and cadence_id_not leave some out. Anyone who can see the group's work items may list them — on a public group, without signing in.
   The token needs issue:read.
 ---
 
 # gitmoap_group_iterations (Data Source)
 
-List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with `state`, or to one cadence's with `cadence_id`. Anyone who can see the group's work items may list them — on a public group, without signing in.
+List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with `state`, or to one cadence's with `cadence_id`; each takes several values, and `state_not` and `cadence_id_not` leave some out. Anyone who can see the group's work items may list them — on a public group, without signing in.
 
 The token needs `issue:read`.
 
@@ -34,8 +34,10 @@ data "gitmoap_group_iterations" "acme" {
 
 ### Optional
 
-- `cadence_id` (String) Keeps the iterations this cadence generated
-- `state` (String) Keeps the iterations in this state today — upcoming, current or closed
+- `cadence_id` (List of String) Only the iterations these cadences generated; repeat it, or separate with commas, for any of them
+- `cadence_id_not` (List of String) Cadences to leave out. An iteration made by hand, which no cadence generated, is kept. Repeat it, or separate values with commas, for several, up to 20
+- `state` (List of String) Only the iterations in these states today — upcoming, current or closed; repeat it, or separate with commas, for any of them
+- `state_not` (List of String) States to leave out, such as `closed`. Repeat it, or separate values with commas, for several, up to 20
 
 ### Read-Only
 

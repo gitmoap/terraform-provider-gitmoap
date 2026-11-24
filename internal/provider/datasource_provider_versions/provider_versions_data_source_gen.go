@@ -21,6 +21,11 @@ func ProviderVersionsDataSourceSchema(ctx context.Context) schema.Schema {
 			"items": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"auth_schema": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The credentials this version reads, as a JSON Schema: a closed object of named fields, each\na string, a number, a boolean or a map of strings, and which of them this version requires.\nA connection is validated against every version's fields together, and a step on this\nversion does not start when its connection lacks a field this version requires.\n\nJSON: set it with `jsonencode()`.",
+							MarkdownDescription: "The credentials this version reads, as a JSON Schema: a closed object of named fields, each\na string, a number, a boolean or a map of strings, and which of them this version requires.\nA connection is validated against every version's fields together, and a step on this\nversion does not start when its connection lacks a field this version requires.\n\nJSON: set it with `jsonencode()`.",
+						},
 						"capabilities": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -195,6 +200,12 @@ func ProviderVersionsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Where the cosign signature is stored in the registry, when the images are signed.",
 							MarkdownDescription: "Where the cosign signature is stored in the registry, when the images are signed.",
 						},
+						"launcher_requires": schema.ListAttribute{
+							ElementType:         types.StringType,
+							Computed:            true,
+							Description:         "What this version needs from the machine that runs its steps. A step on this version is\nnot started where those needs cannot be met: it fails at once, as a problem on Gitmoap's\nside rather than in the pipeline. Empty for most versions.",
+							MarkdownDescription: "What this version needs from the machine that runs its steps. A step on this version is\nnot started where those needs cannot be met: it fails at once, as a problem on Gitmoap's\nside rather than in the pipeline. Empty for most versions.",
+						},
 						"lifecycle_state": schema.StringAttribute{
 							Computed:            true,
 							Description:         "Lifecycle state of a published `ProviderVersionManifest`. `Active` is the\ndefault; `Deprecated` still runs but the trigger-time validator surfaces a\nwarning; `Sunset` runs only inside its grace window, after which a trigger\nreferencing it fails validation.",
@@ -284,6 +295,24 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 
 	attributes := in.Attributes()
 
+	authSchemaAttribute, ok := attributes["auth_schema"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`auth_schema is missing from object`)
+
+		return nil, diags
+	}
+
+	authSchemaVal, ok := authSchemaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`auth_schema expected to be basetypes.StringValue, was: %T`, authSchemaAttribute))
+	}
+
 	capabilitiesAttribute, ok := attributes["capabilities"]
 
 	if !ok {
@@ -354,6 +383,24 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`cosign_signature_ref expected to be basetypes.StringValue, was: %T`, cosignSignatureRefAttribute))
+	}
+
+	launcherRequiresAttribute, ok := attributes["launcher_requires"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`launcher_requires is missing from object`)
+
+		return nil, diags
+	}
+
+	launcherRequiresVal, ok := launcherRequiresAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`launcher_requires expected to be basetypes.ListValue, was: %T`, launcherRequiresAttribute))
 	}
 
 	lifecycleStateAttribute, ok := attributes["lifecycle_state"]
@@ -523,10 +570,12 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 	}
 
 	return ItemsValue{
+		AuthSchema:         authSchemaVal,
 		Capabilities:       capabilitiesVal,
 		Changelog:          changelogVal,
 		ContractVersion:    contractVersionVal,
 		CosignSignatureRef: cosignSignatureRefVal,
+		LauncherRequires:   launcherRequiresVal,
 		LifecycleState:     lifecycleStateVal,
 		ManifestDigest:     manifestDigestVal,
 		ProviderId:         providerIdVal,
@@ -603,6 +652,24 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewItemsValueUnknown(), diags
 	}
 
+	authSchemaAttribute, ok := attributes["auth_schema"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`auth_schema is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	authSchemaVal, ok := authSchemaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`auth_schema expected to be basetypes.StringValue, was: %T`, authSchemaAttribute))
+	}
+
 	capabilitiesAttribute, ok := attributes["capabilities"]
 
 	if !ok {
@@ -673,6 +740,24 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`cosign_signature_ref expected to be basetypes.StringValue, was: %T`, cosignSignatureRefAttribute))
+	}
+
+	launcherRequiresAttribute, ok := attributes["launcher_requires"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`launcher_requires is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	launcherRequiresVal, ok := launcherRequiresAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`launcher_requires expected to be basetypes.ListValue, was: %T`, launcherRequiresAttribute))
 	}
 
 	lifecycleStateAttribute, ok := attributes["lifecycle_state"]
@@ -842,10 +927,12 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 	}
 
 	return ItemsValue{
+		AuthSchema:         authSchemaVal,
 		Capabilities:       capabilitiesVal,
 		Changelog:          changelogVal,
 		ContractVersion:    contractVersionVal,
 		CosignSignatureRef: cosignSignatureRefVal,
+		LauncherRequires:   launcherRequiresVal,
 		LifecycleState:     lifecycleStateVal,
 		ManifestDigest:     manifestDigestVal,
 		ProviderId:         providerIdVal,
@@ -927,10 +1014,12 @@ func (t ItemsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ItemsValue{}
 
 type ItemsValue struct {
+	AuthSchema         basetypes.StringValue `tfsdk:"auth_schema"`
 	Capabilities       basetypes.ListValue   `tfsdk:"capabilities"`
 	Changelog          basetypes.StringValue `tfsdk:"changelog"`
 	ContractVersion    basetypes.Int64Value  `tfsdk:"contract_version"`
 	CosignSignatureRef basetypes.StringValue `tfsdk:"cosign_signature_ref"`
+	LauncherRequires   basetypes.ListValue   `tfsdk:"launcher_requires"`
 	LifecycleState     basetypes.StringValue `tfsdk:"lifecycle_state"`
 	ManifestDigest     basetypes.StringValue `tfsdk:"manifest_digest"`
 	ProviderId         basetypes.StringValue `tfsdk:"provider_id"`
@@ -944,17 +1033,21 @@ type ItemsValue struct {
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 13)
+	attrTypes := make(map[string]tftypes.Type, 15)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["auth_schema"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["capabilities"] = basetypes.ListType{
 		ElemType: CapabilitiesValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["changelog"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["contract_version"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["cosign_signature_ref"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["launcher_requires"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
 	attrTypes["lifecycle_state"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["manifest_digest"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["provider_id"] = basetypes.StringType{}.TerraformType(ctx)
@@ -969,7 +1062,15 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 13)
+		vals := make(map[string]tftypes.Value, 15)
+
+		val, err = v.AuthSchema.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["auth_schema"] = val
 
 		val, err = v.Capabilities.ToTerraformValue(ctx)
 
@@ -1002,6 +1103,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["cosign_signature_ref"] = val
+
+		val, err = v.LauncherRequires.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["launcher_requires"] = val
 
 		val, err = v.LifecycleState.ToTerraformValue(ctx)
 
@@ -1133,22 +1242,62 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		)
 	}
 
+	var launcherRequiresVal basetypes.ListValue
+	switch {
+	case v.LauncherRequires.IsUnknown():
+		launcherRequiresVal = types.ListUnknown(types.StringType)
+	case v.LauncherRequires.IsNull():
+		launcherRequiresVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		launcherRequiresVal, d = types.ListValue(types.StringType, v.LauncherRequires.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"auth_schema": basetypes.StringType{},
+			"capabilities": basetypes.ListType{
+				ElemType: CapabilitiesValue{}.Type(ctx),
+			},
+			"changelog":            basetypes.StringType{},
+			"contract_version":     basetypes.Int64Type{},
+			"cosign_signature_ref": basetypes.StringType{},
+			"launcher_requires": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"lifecycle_state":    basetypes.StringType{},
+			"manifest_digest":    basetypes.StringType{},
+			"provider_id":        basetypes.StringType{},
+			"published_at":       basetypes.StringType{},
+			"published_by":       basetypes.StringType{},
+			"signed":             basetypes.BoolType{},
+			"sunset_at":          basetypes.StringType{},
+			"sunset_enforced_at": basetypes.StringType{},
+			"version":            basetypes.StringType{},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
+		"auth_schema": basetypes.StringType{},
 		"capabilities": basetypes.ListType{
 			ElemType: CapabilitiesValue{}.Type(ctx),
 		},
 		"changelog":            basetypes.StringType{},
 		"contract_version":     basetypes.Int64Type{},
 		"cosign_signature_ref": basetypes.StringType{},
-		"lifecycle_state":      basetypes.StringType{},
-		"manifest_digest":      basetypes.StringType{},
-		"provider_id":          basetypes.StringType{},
-		"published_at":         basetypes.StringType{},
-		"published_by":         basetypes.StringType{},
-		"signed":               basetypes.BoolType{},
-		"sunset_at":            basetypes.StringType{},
-		"sunset_enforced_at":   basetypes.StringType{},
-		"version":              basetypes.StringType{},
+		"launcher_requires": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"lifecycle_state":    basetypes.StringType{},
+		"manifest_digest":    basetypes.StringType{},
+		"provider_id":        basetypes.StringType{},
+		"published_at":       basetypes.StringType{},
+		"published_by":       basetypes.StringType{},
+		"signed":             basetypes.BoolType{},
+		"sunset_at":          basetypes.StringType{},
+		"sunset_enforced_at": basetypes.StringType{},
+		"version":            basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -1162,10 +1311,12 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"auth_schema":          v.AuthSchema,
 			"capabilities":         capabilities,
 			"changelog":            v.Changelog,
 			"contract_version":     v.ContractVersion,
 			"cosign_signature_ref": v.CosignSignatureRef,
+			"launcher_requires":    launcherRequiresVal,
 			"lifecycle_state":      v.LifecycleState,
 			"manifest_digest":      v.ManifestDigest,
 			"provider_id":          v.ProviderId,
@@ -1195,6 +1346,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
+	if !v.AuthSchema.Equal(other.AuthSchema) {
+		return false
+	}
+
 	if !v.Capabilities.Equal(other.Capabilities) {
 		return false
 	}
@@ -1208,6 +1363,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.CosignSignatureRef.Equal(other.CosignSignatureRef) {
+		return false
+	}
+
+	if !v.LauncherRequires.Equal(other.LauncherRequires) {
 		return false
 	}
 
@@ -1260,21 +1419,25 @@ func (v ItemsValue) Type(ctx context.Context) attr.Type {
 
 func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"auth_schema": basetypes.StringType{},
 		"capabilities": basetypes.ListType{
 			ElemType: CapabilitiesValue{}.Type(ctx),
 		},
 		"changelog":            basetypes.StringType{},
 		"contract_version":     basetypes.Int64Type{},
 		"cosign_signature_ref": basetypes.StringType{},
-		"lifecycle_state":      basetypes.StringType{},
-		"manifest_digest":      basetypes.StringType{},
-		"provider_id":          basetypes.StringType{},
-		"published_at":         basetypes.StringType{},
-		"published_by":         basetypes.StringType{},
-		"signed":               basetypes.BoolType{},
-		"sunset_at":            basetypes.StringType{},
-		"sunset_enforced_at":   basetypes.StringType{},
-		"version":              basetypes.StringType{},
+		"launcher_requires": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"lifecycle_state":    basetypes.StringType{},
+		"manifest_digest":    basetypes.StringType{},
+		"provider_id":        basetypes.StringType{},
+		"published_at":       basetypes.StringType{},
+		"published_by":       basetypes.StringType{},
+		"signed":             basetypes.BoolType{},
+		"sunset_at":          basetypes.StringType{},
+		"sunset_enforced_at": basetypes.StringType{},
+		"version":            basetypes.StringType{},
 	}
 }
 

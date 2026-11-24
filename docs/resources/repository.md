@@ -30,6 +30,24 @@ resource "gitmoap_repository" "api" {
   # Only an update can turn pipelines on: the provider creates the repository, then updates it.
   pipelines_enabled = true
 }
+
+# Kept for reference: read-only, and its pipelines don't run. Set archived to false to work on it
+# again.
+resource "gitmoap_repository" "legacy_api" {
+  group_id        = data.gitmoap_group_by_path.platform.group_id
+  repository_name = "legacy-api"
+  visibility      = "private"
+  archived        = true
+}
+
+# Made again for each demo under the same name: destroying it deletes it for good, so the next one
+# can take its path at once, rather than in seven days.
+resource "gitmoap_repository" "demo" {
+  group_id         = data.gitmoap_group_by_path.platform.group_id
+  repository_name  = "demo"
+  visibility       = "private"
+  purge_on_destroy = true
+}
 ```
 
 ### A repository stricter than its group
@@ -332,18 +350,25 @@ resource "gitmoap_group_webhook" "chat" {
 
 ### Optional
 
+- `archived` (Boolean) Whether the repository is archived: read-only. It can still be read, cloned, starred and forked, and its access, visibility and webhooks still change, but nothing changes what it holds or its settings, and its running pipelines stop. Only Owners archive and unarchive.
 - `avatar` (String)
 - `catalog_enabled` (Boolean) Whether the service catalog reads this repository's catalog file. A new fork starts with
 this off: the file names its upstream's services.
 - `description` (String)
 - `display_name` (String)
+- `listed` (Boolean) Whether the repository, once public, is on Explore and in the sitemap. Listed unless this
+says `false`.
 - `pipelines_enabled` (Boolean) Whether pushes, merge requests and schedules start pipeline runs here. A new fork starts
 with this off, so it runs nothing until one of its Maintainers turns it on.
+- `purge_on_destroy` (Boolean) Delete the repository for good on destroy. Otherwise destroying it schedules its deletion: it's gone for everyone at once, but an Owner can restore it for seven days, and until then it keeps its path, so no new repository can take it.
 - `visibility` (String)
 
 ### Read-Only
 
 - `ancestor_group_ids` (List of String)
+- `archived_at` (String) When the repository was archived: from then on it is read-only — it can be read, cloned,
+starred, governed, unarchived or deleted, and nothing else changes it. Absent while it is
+not archived.
 - `created_at` (String)
 - `created_by` (String)
 - `default_branch` (String)
@@ -356,6 +381,11 @@ repository instead of asking for one.
 public repository, public and internal forks of an internal one. Absent on a private
 repository, because no fork of it is visible to all of its readers.
 - `full_path` (String)
+- `last_pushed_at` (String) When the default branch last moved — a push, a web commit, a merge, a fork's copy or sync —
+as the event that moved it says. Absent while it never has, or not since the platform began
+recording it. Never touched by a settings change, which moves `updated_at` instead.
+- `mirrored_from` (String) The source this repository mirrors, when it is a mirror: its branches and tags follow the
+source, and nothing else moves them. Absent otherwise.
 - `remote_url` (String) The address `git clone` and `git remote add` take for this repository:
 `gitmoap://<host>/<path>` when this deployment knows its public host, which clones on a
 machine never configured for it, and `gitmoap://<path>` otherwise, which works once the CLI

@@ -5,10 +5,8 @@ package datasource_group_ai_org_sessions
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -20,11 +18,19 @@ import (
 func GroupAiOrgSessionsDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"agent_id": schema.StringAttribute{
+			"agent_id": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only this agent's sessions",
-				MarkdownDescription: "Only this agent's sessions",
+				Description:         "Only these agents' sessions; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Only these agents' sessions; repeat it, or separate with commas, for any of them",
+			},
+			"agent_id_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Agents whose sessions to leave out. A session no agent holds — a persona draft, a cache refresh — is kept. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Agents whose sessions to leave out. A session no agent holds — a persona draft, a cache refresh — is kept. Repeat it, or separate values with commas, for several, up to 20",
 			},
 			"group_id": schema.StringAttribute{
 				Required:            true,
@@ -44,6 +50,12 @@ func GroupAiOrgSessionsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "Which of an ended session's workspace objects the platform copied into the session continuing\nit, for its workspace to start from: the newer of its last checkpoint and its last out-bundle.",
 							MarkdownDescription: "Which of an ended session's workspace objects the platform copied into the session continuing\nit, for its workspace to start from: the newer of its last checkpoint and its last out-bundle.",
+						},
+						"claimed_from_session_id": schema.StringAttribute{
+							Computed: true,
+						},
+						"claimed_into_session_id": schema.StringAttribute{
+							Computed: true,
 						},
 						"continuation_id": schema.StringAttribute{
 							Computed: true,
@@ -164,6 +176,83 @@ func GroupAiOrgSessionsDataSourceSchema(ctx context.Context) schema.Schema {
 						"turns": schema.Int64Attribute{
 							Computed: true,
 						},
+						"woken_by": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"address": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The address it is about — a work item, a merge request, a branch, or a channel's thread.",
+									MarkdownDescription: "The address it is about — a work item, a merge request, a branch, or a channel's thread.",
+								},
+								"by": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"kind": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Who caused what woke a session.",
+											MarkdownDescription: "Who caused what woke a session.",
+										},
+										"name": schema.StringAttribute{
+											Computed:            true,
+											Description:         "How they are named: `@username` for a person, `@handle` for an agent, the account's name for\na service account. Absent for the platform, and for an account since removed.",
+											MarkdownDescription: "How they are named: `@username` for a person, `@handle` for an agent, the account's name for\na service account. Absent for the platform, and for an account since removed.",
+										},
+										"principal_id": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+									CustomType: ByType{
+										ObjectType: types.ObjectType{
+											AttrTypes: ByValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Who caused a session to wake.",
+									MarkdownDescription: "Who caused a session to wake.",
+								},
+								"from_session_id": schema.StringAttribute{
+									Computed: true,
+								},
+								"message": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"address": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Its thread's address, such as `acme/~core/42`; a reply carries its thread's.",
+											MarkdownDescription: "Its thread's address, such as `acme/~core/42`; a reply carries its thread's.",
+										},
+										"kind": schema.StringAttribute{
+											Computed:            true,
+											Description:         "What a message is. People post `message`; an AI agent always says which of its kinds it posts,\nso digests can summarize and screens can filter.",
+											MarkdownDescription: "What a message is. People post `message`; an AI agent always says which of its kinds it posts,\nso digests can summarize and screens can filter.",
+										},
+										"message_id": schema.StringAttribute{
+											Computed:            true,
+											Description:         "A channel message's id. Time-ordered: a later message has a greater id.",
+											MarkdownDescription: "A channel message's id. Time-ordered: a later message has a greater id.",
+										},
+									},
+									CustomType: MessageType{
+										ObjectType: types.ObjectType{
+											AttrTypes: MessageValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "The channel message that woke a session.",
+									MarkdownDescription: "The channel message that woke a session.",
+								},
+								"trigger_kind": schema.StringAttribute{
+									Computed:            true,
+									Description:         "What started a session.",
+									MarkdownDescription: "What started a session.",
+								},
+							},
+							CustomType: WokenByType{
+								ObjectType: types.ObjectType{
+									AttrTypes: WokenByValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "What woke a session: the trigger, who caused it, what it is about, and — for a channel message\nor another agent's action — the message and the session it came from.",
+							MarkdownDescription: "What woke a session: the trigger, who caused it, what it is about, and — for a channel message\nor another agent's action — the message and the session it came from.",
+						},
 					},
 					CustomType: ItemsType{
 						ObjectType: types.ObjectType{
@@ -173,35 +262,47 @@ func GroupAiOrgSessionsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 				Computed: true,
 			},
-			"ritual_run_id": schema.StringAttribute{
+			"ritual_run_id": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only the sessions taking part in this ritual run",
-				MarkdownDescription: "Only the sessions taking part in this ritual run",
+				Description:         "Only the sessions taking part in these ritual runs",
+				MarkdownDescription: "Only the sessions taking part in these ritual runs",
 			},
-			"squad": schema.StringAttribute{
+			"ritual_run_id_not": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only the sessions whose agent was in this squad when they started",
-				MarkdownDescription: "Only the sessions whose agent was in this squad when they started",
+				Description:         "Ritual runs whose sessions to leave out. A session in no ritual run is kept. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Ritual runs whose sessions to leave out. A session in no ritual run is kept. Repeat it, or separate values with commas, for several, up to 20",
 			},
-			"state": schema.StringAttribute{
+			"squad": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only sessions in this state",
-				MarkdownDescription: "Only sessions in this state",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"queued",
-						"running",
-						"waiting_gate",
-						"waiting_person",
-						"completed",
-						"failed",
-						"cancelled",
-						"halted",
-					),
-				},
+				Description:         "Only the sessions whose agent was in one of these squads when they started",
+				MarkdownDescription: "Only the sessions whose agent was in one of these squads when they started",
+			},
+			"squad_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Squads whose sessions to leave out. A session whose agent was in no squad is kept. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Squads whose sessions to leave out. A session whose agent was in no squad is kept. Repeat it, or separate values with commas, for several, up to 20",
+			},
+			"state": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Only sessions in these states; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Only sessions in these states; repeat it, or separate with commas, for any of them",
+			},
+			"state_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Session states to leave out. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Session states to leave out. Repeat it, or separate values with commas, for several, up to 20",
 			},
 		},
 		Description:         "The organization's sessions, newest first. Narrow it to one agent, one state, one squad — the squad each session's agent was in when it started — or one ritual run's sessions. A session that read from a group or repository you cannot read is left out. The token needs ai_org:read.",
@@ -210,12 +311,16 @@ func GroupAiOrgSessionsDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type GroupAiOrgSessionsModel struct {
-	AgentId     types.String `tfsdk:"agent_id"`
-	GroupId     types.String `tfsdk:"group_id"`
-	Items       types.List   `tfsdk:"items"`
-	RitualRunId types.String `tfsdk:"ritual_run_id"`
-	Squad       types.String `tfsdk:"squad"`
-	State       types.String `tfsdk:"state"`
+	AgentId        types.List   `tfsdk:"agent_id"`
+	AgentIdNot     types.List   `tfsdk:"agent_id_not"`
+	GroupId        types.String `tfsdk:"group_id"`
+	Items          types.List   `tfsdk:"items"`
+	RitualRunId    types.List   `tfsdk:"ritual_run_id"`
+	RitualRunIdNot types.List   `tfsdk:"ritual_run_id_not"`
+	Squad          types.List   `tfsdk:"squad"`
+	SquadNot       types.List   `tfsdk:"squad_not"`
+	State          types.List   `tfsdk:"state"`
+	StateNot       types.List   `tfsdk:"state_not"`
 }
 
 var _ basetypes.ObjectTypable = ItemsType{}
@@ -295,6 +400,42 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`carried_workspace expected to be basetypes.StringValue, was: %T`, carriedWorkspaceAttribute))
+	}
+
+	claimedFromSessionIdAttribute, ok := attributes["claimed_from_session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`claimed_from_session_id is missing from object`)
+
+		return nil, diags
+	}
+
+	claimedFromSessionIdVal, ok := claimedFromSessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`claimed_from_session_id expected to be basetypes.StringValue, was: %T`, claimedFromSessionIdAttribute))
+	}
+
+	claimedIntoSessionIdAttribute, ok := attributes["claimed_into_session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`claimed_into_session_id is missing from object`)
+
+		return nil, diags
+	}
+
+	claimedIntoSessionIdVal, ok := claimedIntoSessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`claimed_into_session_id expected to be basetypes.StringValue, was: %T`, claimedIntoSessionIdAttribute))
 	}
 
 	continuationIdAttribute, ok := attributes["continuation_id"]
@@ -693,37 +834,58 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`turns expected to be basetypes.Int64Value, was: %T`, turnsAttribute))
 	}
 
+	wokenByAttribute, ok := attributes["woken_by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`woken_by is missing from object`)
+
+		return nil, diags
+	}
+
+	wokenByVal, ok := wokenByAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`woken_by expected to be basetypes.ObjectValue, was: %T`, wokenByAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	return ItemsValue{
-		AgentId:            agentIdVal,
-		Branch:             branchVal,
-		CarriedWorkspace:   carriedWorkspaceVal,
-		ContinuationId:     continuationIdVal,
-		ContinuesSessionId: continuesSessionIdVal,
-		CostMicros:         costMicrosVal,
-		CreatedAt:          createdAtVal,
-		EndedAt:            endedAtVal,
-		Instruction:        instructionVal,
-		ModelId:            modelIdVal,
-		OrgId:              orgIdVal,
-		Outcome:            outcomeVal,
-		PinnedMemory:       pinnedMemoryVal,
-		RepositoryId:       repositoryIdVal,
-		RevisionNumber:     revisionNumberVal,
-		RitualRunId:        ritualRunIdVal,
-		RootGroupId:        rootGroupIdVal,
-		SessionId:          sessionIdVal,
-		SquadKey:           squadKeyVal,
-		StartedAt:          startedAtVal,
-		State:              stateVal,
-		Subject:            subjectVal,
-		Summary:            summaryVal,
-		TriggerKind:        triggerKindVal,
-		Turns:              turnsVal,
-		state:              attr.ValueStateKnown,
+		AgentId:              agentIdVal,
+		Branch:               branchVal,
+		CarriedWorkspace:     carriedWorkspaceVal,
+		ClaimedFromSessionId: claimedFromSessionIdVal,
+		ClaimedIntoSessionId: claimedIntoSessionIdVal,
+		ContinuationId:       continuationIdVal,
+		ContinuesSessionId:   continuesSessionIdVal,
+		CostMicros:           costMicrosVal,
+		CreatedAt:            createdAtVal,
+		EndedAt:              endedAtVal,
+		Instruction:          instructionVal,
+		ModelId:              modelIdVal,
+		OrgId:                orgIdVal,
+		Outcome:              outcomeVal,
+		PinnedMemory:         pinnedMemoryVal,
+		RepositoryId:         repositoryIdVal,
+		RevisionNumber:       revisionNumberVal,
+		RitualRunId:          ritualRunIdVal,
+		RootGroupId:          rootGroupIdVal,
+		SessionId:            sessionIdVal,
+		SquadKey:             squadKeyVal,
+		StartedAt:            startedAtVal,
+		State:                stateVal,
+		Subject:              subjectVal,
+		Summary:              summaryVal,
+		TriggerKind:          triggerKindVal,
+		Turns:                turnsVal,
+		WokenBy:              wokenByVal,
+		state:                attr.ValueStateKnown,
 	}, diags
 }
 
@@ -844,6 +1006,42 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`carried_workspace expected to be basetypes.StringValue, was: %T`, carriedWorkspaceAttribute))
 	}
 
+	claimedFromSessionIdAttribute, ok := attributes["claimed_from_session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`claimed_from_session_id is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	claimedFromSessionIdVal, ok := claimedFromSessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`claimed_from_session_id expected to be basetypes.StringValue, was: %T`, claimedFromSessionIdAttribute))
+	}
+
+	claimedIntoSessionIdAttribute, ok := attributes["claimed_into_session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`claimed_into_session_id is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	claimedIntoSessionIdVal, ok := claimedIntoSessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`claimed_into_session_id expected to be basetypes.StringValue, was: %T`, claimedIntoSessionIdAttribute))
+	}
+
 	continuationIdAttribute, ok := attributes["continuation_id"]
 
 	if !ok {
@@ -1240,37 +1438,58 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`turns expected to be basetypes.Int64Value, was: %T`, turnsAttribute))
 	}
 
+	wokenByAttribute, ok := attributes["woken_by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`woken_by is missing from object`)
+
+		return NewItemsValueUnknown(), diags
+	}
+
+	wokenByVal, ok := wokenByAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`woken_by expected to be basetypes.ObjectValue, was: %T`, wokenByAttribute))
+	}
+
 	if diags.HasError() {
 		return NewItemsValueUnknown(), diags
 	}
 
 	return ItemsValue{
-		AgentId:            agentIdVal,
-		Branch:             branchVal,
-		CarriedWorkspace:   carriedWorkspaceVal,
-		ContinuationId:     continuationIdVal,
-		ContinuesSessionId: continuesSessionIdVal,
-		CostMicros:         costMicrosVal,
-		CreatedAt:          createdAtVal,
-		EndedAt:            endedAtVal,
-		Instruction:        instructionVal,
-		ModelId:            modelIdVal,
-		OrgId:              orgIdVal,
-		Outcome:            outcomeVal,
-		PinnedMemory:       pinnedMemoryVal,
-		RepositoryId:       repositoryIdVal,
-		RevisionNumber:     revisionNumberVal,
-		RitualRunId:        ritualRunIdVal,
-		RootGroupId:        rootGroupIdVal,
-		SessionId:          sessionIdVal,
-		SquadKey:           squadKeyVal,
-		StartedAt:          startedAtVal,
-		State:              stateVal,
-		Subject:            subjectVal,
-		Summary:            summaryVal,
-		TriggerKind:        triggerKindVal,
-		Turns:              turnsVal,
-		state:              attr.ValueStateKnown,
+		AgentId:              agentIdVal,
+		Branch:               branchVal,
+		CarriedWorkspace:     carriedWorkspaceVal,
+		ClaimedFromSessionId: claimedFromSessionIdVal,
+		ClaimedIntoSessionId: claimedIntoSessionIdVal,
+		ContinuationId:       continuationIdVal,
+		ContinuesSessionId:   continuesSessionIdVal,
+		CostMicros:           costMicrosVal,
+		CreatedAt:            createdAtVal,
+		EndedAt:              endedAtVal,
+		Instruction:          instructionVal,
+		ModelId:              modelIdVal,
+		OrgId:                orgIdVal,
+		Outcome:              outcomeVal,
+		PinnedMemory:         pinnedMemoryVal,
+		RepositoryId:         repositoryIdVal,
+		RevisionNumber:       revisionNumberVal,
+		RitualRunId:          ritualRunIdVal,
+		RootGroupId:          rootGroupIdVal,
+		SessionId:            sessionIdVal,
+		SquadKey:             squadKeyVal,
+		StartedAt:            startedAtVal,
+		State:                stateVal,
+		Subject:              subjectVal,
+		Summary:              summaryVal,
+		TriggerKind:          triggerKindVal,
+		Turns:                turnsVal,
+		WokenBy:              wokenByVal,
+		state:                attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1342,36 +1561,39 @@ func (t ItemsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ItemsValue{}
 
 type ItemsValue struct {
-	AgentId            basetypes.StringValue `tfsdk:"agent_id"`
-	Branch             basetypes.StringValue `tfsdk:"branch"`
-	CarriedWorkspace   basetypes.StringValue `tfsdk:"carried_workspace"`
-	ContinuationId     basetypes.StringValue `tfsdk:"continuation_id"`
-	ContinuesSessionId basetypes.StringValue `tfsdk:"continues_session_id"`
-	CostMicros         basetypes.Int64Value  `tfsdk:"cost_micros"`
-	CreatedAt          basetypes.StringValue `tfsdk:"created_at"`
-	EndedAt            basetypes.StringValue `tfsdk:"ended_at"`
-	Instruction        basetypes.StringValue `tfsdk:"instruction"`
-	ModelId            basetypes.StringValue `tfsdk:"model_id"`
-	OrgId              basetypes.StringValue `tfsdk:"org_id"`
-	Outcome            basetypes.StringValue `tfsdk:"outcome"`
-	PinnedMemory       basetypes.ObjectValue `tfsdk:"pinned_memory"`
-	RepositoryId       basetypes.StringValue `tfsdk:"repository_id"`
-	RevisionNumber     basetypes.Int64Value  `tfsdk:"revision_number"`
-	RitualRunId        basetypes.StringValue `tfsdk:"ritual_run_id"`
-	RootGroupId        basetypes.StringValue `tfsdk:"root_group_id"`
-	SessionId          basetypes.StringValue `tfsdk:"session_id"`
-	SquadKey           basetypes.StringValue `tfsdk:"squad_key"`
-	StartedAt          basetypes.StringValue `tfsdk:"started_at"`
-	State              basetypes.StringValue `tfsdk:"state"`
-	Subject            basetypes.ObjectValue `tfsdk:"subject"`
-	Summary            basetypes.StringValue `tfsdk:"summary"`
-	TriggerKind        basetypes.StringValue `tfsdk:"trigger_kind"`
-	Turns              basetypes.Int64Value  `tfsdk:"turns"`
-	state              attr.ValueState
+	AgentId              basetypes.StringValue `tfsdk:"agent_id"`
+	Branch               basetypes.StringValue `tfsdk:"branch"`
+	CarriedWorkspace     basetypes.StringValue `tfsdk:"carried_workspace"`
+	ClaimedFromSessionId basetypes.StringValue `tfsdk:"claimed_from_session_id"`
+	ClaimedIntoSessionId basetypes.StringValue `tfsdk:"claimed_into_session_id"`
+	ContinuationId       basetypes.StringValue `tfsdk:"continuation_id"`
+	ContinuesSessionId   basetypes.StringValue `tfsdk:"continues_session_id"`
+	CostMicros           basetypes.Int64Value  `tfsdk:"cost_micros"`
+	CreatedAt            basetypes.StringValue `tfsdk:"created_at"`
+	EndedAt              basetypes.StringValue `tfsdk:"ended_at"`
+	Instruction          basetypes.StringValue `tfsdk:"instruction"`
+	ModelId              basetypes.StringValue `tfsdk:"model_id"`
+	OrgId                basetypes.StringValue `tfsdk:"org_id"`
+	Outcome              basetypes.StringValue `tfsdk:"outcome"`
+	PinnedMemory         basetypes.ObjectValue `tfsdk:"pinned_memory"`
+	RepositoryId         basetypes.StringValue `tfsdk:"repository_id"`
+	RevisionNumber       basetypes.Int64Value  `tfsdk:"revision_number"`
+	RitualRunId          basetypes.StringValue `tfsdk:"ritual_run_id"`
+	RootGroupId          basetypes.StringValue `tfsdk:"root_group_id"`
+	SessionId            basetypes.StringValue `tfsdk:"session_id"`
+	SquadKey             basetypes.StringValue `tfsdk:"squad_key"`
+	StartedAt            basetypes.StringValue `tfsdk:"started_at"`
+	State                basetypes.StringValue `tfsdk:"state"`
+	Subject              basetypes.ObjectValue `tfsdk:"subject"`
+	Summary              basetypes.StringValue `tfsdk:"summary"`
+	TriggerKind          basetypes.StringValue `tfsdk:"trigger_kind"`
+	Turns                basetypes.Int64Value  `tfsdk:"turns"`
+	WokenBy              basetypes.ObjectValue `tfsdk:"woken_by"`
+	state                attr.ValueState
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 25)
+	attrTypes := make(map[string]tftypes.Type, 28)
 
 	var val tftypes.Value
 	var err error
@@ -1379,6 +1601,8 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["agent_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["branch"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["carried_workspace"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["claimed_from_session_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["claimed_into_session_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["continuation_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["continues_session_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["cost_micros"] = basetypes.Int64Type{}.TerraformType(ctx)
@@ -1405,12 +1629,15 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["summary"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["trigger_kind"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["turns"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["woken_by"] = basetypes.ObjectType{
+		AttrTypes: WokenByValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 25)
+		vals := make(map[string]tftypes.Value, 28)
 
 		val, err = v.AgentId.ToTerraformValue(ctx)
 
@@ -1435,6 +1662,22 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["carried_workspace"] = val
+
+		val, err = v.ClaimedFromSessionId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["claimed_from_session_id"] = val
+
+		val, err = v.ClaimedIntoSessionId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["claimed_into_session_id"] = val
 
 		val, err = v.ContinuationId.ToTerraformValue(ctx)
 
@@ -1612,6 +1855,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 		vals["turns"] = val
 
+		val, err = v.WokenBy.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["woken_by"] = val
+
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
@@ -1683,19 +1934,42 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		)
 	}
 
+	var wokenBy basetypes.ObjectValue
+
+	if v.WokenBy.IsNull() {
+		wokenBy = types.ObjectNull(
+			WokenByValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.WokenBy.IsUnknown() {
+		wokenBy = types.ObjectUnknown(
+			WokenByValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.WokenBy.IsNull() && !v.WokenBy.IsUnknown() {
+		wokenBy = types.ObjectValueMust(
+			WokenByValue{}.AttributeTypes(ctx),
+			v.WokenBy.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
-		"agent_id":             basetypes.StringType{},
-		"branch":               basetypes.StringType{},
-		"carried_workspace":    basetypes.StringType{},
-		"continuation_id":      basetypes.StringType{},
-		"continues_session_id": basetypes.StringType{},
-		"cost_micros":          basetypes.Int64Type{},
-		"created_at":           basetypes.StringType{},
-		"ended_at":             basetypes.StringType{},
-		"instruction":          basetypes.StringType{},
-		"model_id":             basetypes.StringType{},
-		"org_id":               basetypes.StringType{},
-		"outcome":              basetypes.StringType{},
+		"agent_id":                basetypes.StringType{},
+		"branch":                  basetypes.StringType{},
+		"carried_workspace":       basetypes.StringType{},
+		"claimed_from_session_id": basetypes.StringType{},
+		"claimed_into_session_id": basetypes.StringType{},
+		"continuation_id":         basetypes.StringType{},
+		"continues_session_id":    basetypes.StringType{},
+		"cost_micros":             basetypes.Int64Type{},
+		"created_at":              basetypes.StringType{},
+		"ended_at":                basetypes.StringType{},
+		"instruction":             basetypes.StringType{},
+		"model_id":                basetypes.StringType{},
+		"org_id":                  basetypes.StringType{},
+		"outcome":                 basetypes.StringType{},
 		"pinned_memory": basetypes.ObjectType{
 			AttrTypes: PinnedMemoryValue{}.AttributeTypes(ctx),
 		},
@@ -1713,6 +1987,9 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"summary":      basetypes.StringType{},
 		"trigger_kind": basetypes.StringType{},
 		"turns":        basetypes.Int64Type{},
+		"woken_by": basetypes.ObjectType{
+			AttrTypes: WokenByValue{}.AttributeTypes(ctx),
+		},
 	}
 
 	if v.IsNull() {
@@ -1726,31 +2003,34 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"agent_id":             v.AgentId,
-			"branch":               v.Branch,
-			"carried_workspace":    v.CarriedWorkspace,
-			"continuation_id":      v.ContinuationId,
-			"continues_session_id": v.ContinuesSessionId,
-			"cost_micros":          v.CostMicros,
-			"created_at":           v.CreatedAt,
-			"ended_at":             v.EndedAt,
-			"instruction":          v.Instruction,
-			"model_id":             v.ModelId,
-			"org_id":               v.OrgId,
-			"outcome":              v.Outcome,
-			"pinned_memory":        pinnedMemory,
-			"repository_id":        v.RepositoryId,
-			"revision_number":      v.RevisionNumber,
-			"ritual_run_id":        v.RitualRunId,
-			"root_group_id":        v.RootGroupId,
-			"session_id":           v.SessionId,
-			"squad_key":            v.SquadKey,
-			"started_at":           v.StartedAt,
-			"state":                v.State,
-			"subject":              subject,
-			"summary":              v.Summary,
-			"trigger_kind":         v.TriggerKind,
-			"turns":                v.Turns,
+			"agent_id":                v.AgentId,
+			"branch":                  v.Branch,
+			"carried_workspace":       v.CarriedWorkspace,
+			"claimed_from_session_id": v.ClaimedFromSessionId,
+			"claimed_into_session_id": v.ClaimedIntoSessionId,
+			"continuation_id":         v.ContinuationId,
+			"continues_session_id":    v.ContinuesSessionId,
+			"cost_micros":             v.CostMicros,
+			"created_at":              v.CreatedAt,
+			"ended_at":                v.EndedAt,
+			"instruction":             v.Instruction,
+			"model_id":                v.ModelId,
+			"org_id":                  v.OrgId,
+			"outcome":                 v.Outcome,
+			"pinned_memory":           pinnedMemory,
+			"repository_id":           v.RepositoryId,
+			"revision_number":         v.RevisionNumber,
+			"ritual_run_id":           v.RitualRunId,
+			"root_group_id":           v.RootGroupId,
+			"session_id":              v.SessionId,
+			"squad_key":               v.SquadKey,
+			"started_at":              v.StartedAt,
+			"state":                   v.State,
+			"subject":                 subject,
+			"summary":                 v.Summary,
+			"trigger_kind":            v.TriggerKind,
+			"turns":                   v.Turns,
+			"woken_by":                wokenBy,
 		})
 
 	return objVal, diags
@@ -1780,6 +2060,14 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.CarriedWorkspace.Equal(other.CarriedWorkspace) {
+		return false
+	}
+
+	if !v.ClaimedFromSessionId.Equal(other.ClaimedFromSessionId) {
+		return false
+	}
+
+	if !v.ClaimedIntoSessionId.Equal(other.ClaimedIntoSessionId) {
 		return false
 	}
 
@@ -1871,6 +2159,10 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.WokenBy.Equal(other.WokenBy) {
+		return false
+	}
+
 	return true
 }
 
@@ -1884,18 +2176,20 @@ func (v ItemsValue) Type(ctx context.Context) attr.Type {
 
 func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"agent_id":             basetypes.StringType{},
-		"branch":               basetypes.StringType{},
-		"carried_workspace":    basetypes.StringType{},
-		"continuation_id":      basetypes.StringType{},
-		"continues_session_id": basetypes.StringType{},
-		"cost_micros":          basetypes.Int64Type{},
-		"created_at":           basetypes.StringType{},
-		"ended_at":             basetypes.StringType{},
-		"instruction":          basetypes.StringType{},
-		"model_id":             basetypes.StringType{},
-		"org_id":               basetypes.StringType{},
-		"outcome":              basetypes.StringType{},
+		"agent_id":                basetypes.StringType{},
+		"branch":                  basetypes.StringType{},
+		"carried_workspace":       basetypes.StringType{},
+		"claimed_from_session_id": basetypes.StringType{},
+		"claimed_into_session_id": basetypes.StringType{},
+		"continuation_id":         basetypes.StringType{},
+		"continues_session_id":    basetypes.StringType{},
+		"cost_micros":             basetypes.Int64Type{},
+		"created_at":              basetypes.StringType{},
+		"ended_at":                basetypes.StringType{},
+		"instruction":             basetypes.StringType{},
+		"model_id":                basetypes.StringType{},
+		"org_id":                  basetypes.StringType{},
+		"outcome":                 basetypes.StringType{},
 		"pinned_memory": basetypes.ObjectType{
 			AttrTypes: PinnedMemoryValue{}.AttributeTypes(ctx),
 		},
@@ -1913,6 +2207,9 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"summary":      basetypes.StringType{},
 		"trigger_kind": basetypes.StringType{},
 		"turns":        basetypes.Int64Type{},
+		"woken_by": basetypes.ObjectType{
+			AttrTypes: WokenByValue{}.AttributeTypes(ctx),
+		},
 	}
 }
 
@@ -2726,5 +3023,1471 @@ func (v SubjectValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"address":    basetypes.StringType{},
 		"started_by": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = WokenByType{}
+
+type WokenByType struct {
+	basetypes.ObjectType
+}
+
+func (t WokenByType) Equal(o attr.Type) bool {
+	other, ok := o.(WokenByType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t WokenByType) String() string {
+	return "WokenByType"
+}
+
+func (t WokenByType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	addressAttribute, ok := attributes["address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`address is missing from object`)
+
+		return nil, diags
+	}
+
+	addressVal, ok := addressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`address expected to be basetypes.StringValue, was: %T`, addressAttribute))
+	}
+
+	byAttribute, ok := attributes["by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`by is missing from object`)
+
+		return nil, diags
+	}
+
+	byVal, ok := byAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`by expected to be basetypes.ObjectValue, was: %T`, byAttribute))
+	}
+
+	fromSessionIdAttribute, ok := attributes["from_session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from_session_id is missing from object`)
+
+		return nil, diags
+	}
+
+	fromSessionIdVal, ok := fromSessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from_session_id expected to be basetypes.StringValue, was: %T`, fromSessionIdAttribute))
+	}
+
+	messageAttribute, ok := attributes["message"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`message is missing from object`)
+
+		return nil, diags
+	}
+
+	messageVal, ok := messageAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`message expected to be basetypes.ObjectValue, was: %T`, messageAttribute))
+	}
+
+	triggerKindAttribute, ok := attributes["trigger_kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`trigger_kind is missing from object`)
+
+		return nil, diags
+	}
+
+	triggerKindVal, ok := triggerKindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`trigger_kind expected to be basetypes.StringValue, was: %T`, triggerKindAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return WokenByValue{
+		Address:       addressVal,
+		By:            byVal,
+		FromSessionId: fromSessionIdVal,
+		Message:       messageVal,
+		TriggerKind:   triggerKindVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewWokenByValueNull() WokenByValue {
+	return WokenByValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewWokenByValueUnknown() WokenByValue {
+	return WokenByValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewWokenByValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (WokenByValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing WokenByValue Attribute Value",
+				"While creating a WokenByValue value, a missing attribute value was detected. "+
+					"A WokenByValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("WokenByValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid WokenByValue Attribute Type",
+				"While creating a WokenByValue value, an invalid attribute value was detected. "+
+					"A WokenByValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("WokenByValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("WokenByValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra WokenByValue Attribute Value",
+				"While creating a WokenByValue value, an extra attribute value was detected. "+
+					"A WokenByValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra WokenByValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewWokenByValueUnknown(), diags
+	}
+
+	addressAttribute, ok := attributes["address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`address is missing from object`)
+
+		return NewWokenByValueUnknown(), diags
+	}
+
+	addressVal, ok := addressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`address expected to be basetypes.StringValue, was: %T`, addressAttribute))
+	}
+
+	byAttribute, ok := attributes["by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`by is missing from object`)
+
+		return NewWokenByValueUnknown(), diags
+	}
+
+	byVal, ok := byAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`by expected to be basetypes.ObjectValue, was: %T`, byAttribute))
+	}
+
+	fromSessionIdAttribute, ok := attributes["from_session_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from_session_id is missing from object`)
+
+		return NewWokenByValueUnknown(), diags
+	}
+
+	fromSessionIdVal, ok := fromSessionIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from_session_id expected to be basetypes.StringValue, was: %T`, fromSessionIdAttribute))
+	}
+
+	messageAttribute, ok := attributes["message"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`message is missing from object`)
+
+		return NewWokenByValueUnknown(), diags
+	}
+
+	messageVal, ok := messageAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`message expected to be basetypes.ObjectValue, was: %T`, messageAttribute))
+	}
+
+	triggerKindAttribute, ok := attributes["trigger_kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`trigger_kind is missing from object`)
+
+		return NewWokenByValueUnknown(), diags
+	}
+
+	triggerKindVal, ok := triggerKindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`trigger_kind expected to be basetypes.StringValue, was: %T`, triggerKindAttribute))
+	}
+
+	if diags.HasError() {
+		return NewWokenByValueUnknown(), diags
+	}
+
+	return WokenByValue{
+		Address:       addressVal,
+		By:            byVal,
+		FromSessionId: fromSessionIdVal,
+		Message:       messageVal,
+		TriggerKind:   triggerKindVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewWokenByValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) WokenByValue {
+	object, diags := NewWokenByValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewWokenByValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t WokenByType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewWokenByValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewWokenByValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewWokenByValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewWokenByValueMust(WokenByValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t WokenByType) ValueType(ctx context.Context) attr.Value {
+	return WokenByValue{}
+}
+
+var _ basetypes.ObjectValuable = WokenByValue{}
+
+type WokenByValue struct {
+	Address       basetypes.StringValue `tfsdk:"address"`
+	By            basetypes.ObjectValue `tfsdk:"by"`
+	FromSessionId basetypes.StringValue `tfsdk:"from_session_id"`
+	Message       basetypes.ObjectValue `tfsdk:"message"`
+	TriggerKind   basetypes.StringValue `tfsdk:"trigger_kind"`
+	state         attr.ValueState
+}
+
+func (v WokenByValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["address"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["by"] = basetypes.ObjectType{
+		AttrTypes: ByValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["from_session_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["message"] = basetypes.ObjectType{
+		AttrTypes: MessageValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["trigger_kind"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.Address.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["address"] = val
+
+		val, err = v.By.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["by"] = val
+
+		val, err = v.FromSessionId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["from_session_id"] = val
+
+		val, err = v.Message.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["message"] = val
+
+		val, err = v.TriggerKind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["trigger_kind"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v WokenByValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v WokenByValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v WokenByValue) String() string {
+	return "WokenByValue"
+}
+
+func (v WokenByValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var by basetypes.ObjectValue
+
+	if v.By.IsNull() {
+		by = types.ObjectNull(
+			ByValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.By.IsUnknown() {
+		by = types.ObjectUnknown(
+			ByValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.By.IsNull() && !v.By.IsUnknown() {
+		by = types.ObjectValueMust(
+			ByValue{}.AttributeTypes(ctx),
+			v.By.Attributes(),
+		)
+	}
+
+	var message basetypes.ObjectValue
+
+	if v.Message.IsNull() {
+		message = types.ObjectNull(
+			MessageValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Message.IsUnknown() {
+		message = types.ObjectUnknown(
+			MessageValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Message.IsNull() && !v.Message.IsUnknown() {
+		message = types.ObjectValueMust(
+			MessageValue{}.AttributeTypes(ctx),
+			v.Message.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"address": basetypes.StringType{},
+		"by": basetypes.ObjectType{
+			AttrTypes: ByValue{}.AttributeTypes(ctx),
+		},
+		"from_session_id": basetypes.StringType{},
+		"message": basetypes.ObjectType{
+			AttrTypes: MessageValue{}.AttributeTypes(ctx),
+		},
+		"trigger_kind": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"address":         v.Address,
+			"by":              by,
+			"from_session_id": v.FromSessionId,
+			"message":         message,
+			"trigger_kind":    v.TriggerKind,
+		})
+
+	return objVal, diags
+}
+
+func (v WokenByValue) Equal(o attr.Value) bool {
+	other, ok := o.(WokenByValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Address.Equal(other.Address) {
+		return false
+	}
+
+	if !v.By.Equal(other.By) {
+		return false
+	}
+
+	if !v.FromSessionId.Equal(other.FromSessionId) {
+		return false
+	}
+
+	if !v.Message.Equal(other.Message) {
+		return false
+	}
+
+	if !v.TriggerKind.Equal(other.TriggerKind) {
+		return false
+	}
+
+	return true
+}
+
+func (v WokenByValue) Type(ctx context.Context) attr.Type {
+	return WokenByType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v WokenByValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"address": basetypes.StringType{},
+		"by": basetypes.ObjectType{
+			AttrTypes: ByValue{}.AttributeTypes(ctx),
+		},
+		"from_session_id": basetypes.StringType{},
+		"message": basetypes.ObjectType{
+			AttrTypes: MessageValue{}.AttributeTypes(ctx),
+		},
+		"trigger_kind": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ByType{}
+
+type ByType struct {
+	basetypes.ObjectType
+}
+
+func (t ByType) Equal(o attr.Type) bool {
+	other, ok := o.(ByType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ByType) String() string {
+	return "ByType"
+}
+
+func (t ByType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	principalIdAttribute, ok := attributes["principal_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`principal_id is missing from object`)
+
+		return nil, diags
+	}
+
+	principalIdVal, ok := principalIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`principal_id expected to be basetypes.StringValue, was: %T`, principalIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ByValue{
+		Kind:        kindVal,
+		Name:        nameVal,
+		PrincipalId: principalIdVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewByValueNull() ByValue {
+	return ByValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewByValueUnknown() ByValue {
+	return ByValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewByValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ByValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ByValue Attribute Value",
+				"While creating a ByValue value, a missing attribute value was detected. "+
+					"A ByValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ByValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ByValue Attribute Type",
+				"While creating a ByValue value, an invalid attribute value was detected. "+
+					"A ByValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ByValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ByValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ByValue Attribute Value",
+				"While creating a ByValue value, an extra attribute value was detected. "+
+					"A ByValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ByValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewByValueUnknown(), diags
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewByValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewByValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	principalIdAttribute, ok := attributes["principal_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`principal_id is missing from object`)
+
+		return NewByValueUnknown(), diags
+	}
+
+	principalIdVal, ok := principalIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`principal_id expected to be basetypes.StringValue, was: %T`, principalIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewByValueUnknown(), diags
+	}
+
+	return ByValue{
+		Kind:        kindVal,
+		Name:        nameVal,
+		PrincipalId: principalIdVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewByValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ByValue {
+	object, diags := NewByValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewByValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ByType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewByValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewByValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewByValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewByValueMust(ByValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ByType) ValueType(ctx context.Context) attr.Value {
+	return ByValue{}
+}
+
+var _ basetypes.ObjectValuable = ByValue{}
+
+type ByValue struct {
+	Kind        basetypes.StringValue `tfsdk:"kind"`
+	Name        basetypes.StringValue `tfsdk:"name"`
+	PrincipalId basetypes.StringValue `tfsdk:"principal_id"`
+	state       attr.ValueState
+}
+
+func (v ByValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["principal_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.PrincipalId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["principal_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ByValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ByValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ByValue) String() string {
+	return "ByValue"
+}
+
+func (v ByValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"kind":         basetypes.StringType{},
+		"name":         basetypes.StringType{},
+		"principal_id": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"kind":         v.Kind,
+			"name":         v.Name,
+			"principal_id": v.PrincipalId,
+		})
+
+	return objVal, diags
+}
+
+func (v ByValue) Equal(o attr.Value) bool {
+	other, ok := o.(ByValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.PrincipalId.Equal(other.PrincipalId) {
+		return false
+	}
+
+	return true
+}
+
+func (v ByValue) Type(ctx context.Context) attr.Type {
+	return ByType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ByValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"kind":         basetypes.StringType{},
+		"name":         basetypes.StringType{},
+		"principal_id": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = MessageType{}
+
+type MessageType struct {
+	basetypes.ObjectType
+}
+
+func (t MessageType) Equal(o attr.Type) bool {
+	other, ok := o.(MessageType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t MessageType) String() string {
+	return "MessageType"
+}
+
+func (t MessageType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	addressAttribute, ok := attributes["address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`address is missing from object`)
+
+		return nil, diags
+	}
+
+	addressVal, ok := addressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`address expected to be basetypes.StringValue, was: %T`, addressAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	messageIdAttribute, ok := attributes["message_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`message_id is missing from object`)
+
+		return nil, diags
+	}
+
+	messageIdVal, ok := messageIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`message_id expected to be basetypes.StringValue, was: %T`, messageIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return MessageValue{
+		Address:   addressVal,
+		Kind:      kindVal,
+		MessageId: messageIdVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewMessageValueNull() MessageValue {
+	return MessageValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewMessageValueUnknown() MessageValue {
+	return MessageValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewMessageValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (MessageValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing MessageValue Attribute Value",
+				"While creating a MessageValue value, a missing attribute value was detected. "+
+					"A MessageValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("MessageValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid MessageValue Attribute Type",
+				"While creating a MessageValue value, an invalid attribute value was detected. "+
+					"A MessageValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("MessageValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("MessageValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra MessageValue Attribute Value",
+				"While creating a MessageValue value, an extra attribute value was detected. "+
+					"A MessageValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra MessageValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewMessageValueUnknown(), diags
+	}
+
+	addressAttribute, ok := attributes["address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`address is missing from object`)
+
+		return NewMessageValueUnknown(), diags
+	}
+
+	addressVal, ok := addressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`address expected to be basetypes.StringValue, was: %T`, addressAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewMessageValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	messageIdAttribute, ok := attributes["message_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`message_id is missing from object`)
+
+		return NewMessageValueUnknown(), diags
+	}
+
+	messageIdVal, ok := messageIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`message_id expected to be basetypes.StringValue, was: %T`, messageIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewMessageValueUnknown(), diags
+	}
+
+	return MessageValue{
+		Address:   addressVal,
+		Kind:      kindVal,
+		MessageId: messageIdVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewMessageValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) MessageValue {
+	object, diags := NewMessageValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewMessageValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t MessageType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewMessageValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewMessageValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewMessageValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewMessageValueMust(MessageValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t MessageType) ValueType(ctx context.Context) attr.Value {
+	return MessageValue{}
+}
+
+var _ basetypes.ObjectValuable = MessageValue{}
+
+type MessageValue struct {
+	Address   basetypes.StringValue `tfsdk:"address"`
+	Kind      basetypes.StringValue `tfsdk:"kind"`
+	MessageId basetypes.StringValue `tfsdk:"message_id"`
+	state     attr.ValueState
+}
+
+func (v MessageValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["address"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["message_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Address.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["address"] = val
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.MessageId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["message_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v MessageValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v MessageValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v MessageValue) String() string {
+	return "MessageValue"
+}
+
+func (v MessageValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"address":    basetypes.StringType{},
+		"kind":       basetypes.StringType{},
+		"message_id": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"address":    v.Address,
+			"kind":       v.Kind,
+			"message_id": v.MessageId,
+		})
+
+	return objVal, diags
+}
+
+func (v MessageValue) Equal(o attr.Value) bool {
+	other, ok := o.(MessageValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Address.Equal(other.Address) {
+		return false
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.MessageId.Equal(other.MessageId) {
+		return false
+	}
+
+	return true
+}
+
+func (v MessageValue) Type(ctx context.Context) attr.Type {
+	return MessageType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v MessageValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"address":    basetypes.StringType{},
+		"kind":       basetypes.StringType{},
+		"message_id": basetypes.StringType{},
 	}
 }

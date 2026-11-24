@@ -207,16 +207,22 @@ resource "gitmoap_group_iteration" "test" {
 }
 
 // checkDestroyed checks the API no longer has what the test created, reading it the way the
-// resource does.
+// resource does, and that what purge_on_destroy deleted for good isn't waiting to be. What the API
+// can't delete, like an organization's outbound policy, stays.
 func checkDestroyed(s *terraform.State) error {
 	endpoint := firstSet(os.Getenv(endpointEnv), defaultEndpoint)
 	client := NewClient(endpoint, os.Getenv(tokenEnv), "terraform-provider-gitmoap/test")
 	for address, state := range s.RootModule().Resources {
 		api, ok := resourceAPIs[strings.TrimPrefix(state.Type, "gitmoap_")]
-		if !ok || strings.HasPrefix(address, "data.") {
+		if !ok || strings.HasPrefix(address, "data.") || api.Delete == nil {
 			continue
 		}
 		attributes := state.Primary.Attributes
+		if attributes["purge_on_destroy"] == "true" {
+			if err := checkPurged(client, state.Type, attributes); err != nil {
+				return fmt.Errorf("%s: %w", address, err)
+			}
+		}
 		path := pathParameter.ReplaceAllStringFunc(api.Read.Path, func(segment string) string {
 			return url.PathEscape(attributes[api.Params[segment[1:len(segment)-1]]])
 		})
@@ -259,15 +265,36 @@ func (compareEqual) CompareValues(values ...any) error {
 	return fmt.Errorf("expected equal values, got %v", values)
 }
 
+// checkPurged checks a repository or group is not among the deletions waiting to be purged.
+func checkPurged(client *Client, typeName string, attributes map[string]string) error {
+	kind, id := "repositories", attributes["repository_id"]
+	if typeName == "gitmoap_group" {
+		kind, id = "groups", attributes["group_id"]
+	}
+	response, err := client.Get(context.Background(), "/user/pending-deletions/"+kind, nil, &pages{Param: "next_token", Items: "items", Limit: 100})
+	if err != nil {
+		return err
+	}
+	items, _ := listItems(response, "items")
+	for _, raw := range items {
+		if item, _ := raw.(map[string]any); item != nil && (item["repository_id"] == id || item["group_id"] == id) {
+			return fmt.Errorf("purge_on_destroy is set, but it's only scheduled to be deleted, at %v", item["purge_after"])
+		}
+	}
+	return nil
+}
+
 // subgroupConfig adds a throwaway subgroup of the test group, as gitmoap_group.test, for tests that
-// change group-wide settings.
+// change group-wide settings. It's deleted for good, with the repositories in it, which have to set
+// purge_on_destroy too.
 func subgroupConfig(name, config string) string {
 	return groupConfig(fmt.Sprintf(`
 resource "gitmoap_group" "test" {
-  group_name      = %q
-  parent_group_id = data.gitmoap_group_by_path.test.group_id
-  description     = "Created by the provider's acceptance tests"
-  visibility      = "private"
+  group_name       = %q
+  parent_group_id  = data.gitmoap_group_by_path.test.group_id
+  description      = "Created by the provider's acceptance tests"
+  visibility       = "private"
+  purge_on_destroy = true
 }
 `, name) + config)
 }
@@ -393,10 +420,11 @@ func TestAccRepositoryResources(t *testing.T) {
 	config := func(description, key, level string) string {
 		return subgroupConfig(name, fmt.Sprintf(`
 resource "gitmoap_repository" "test" {
-  group_id        = gitmoap_group.test.group_id
-  repository_name = "app"
-  description     = %q
-  visibility      = "private"
+  group_id         = gitmoap_group.test.group_id
+  repository_name  = "app"
+  description      = %q
+  visibility       = "private"
+  purge_on_destroy = true
 }
 
 resource "gitmoap_repository_mr_settings" "test" {
@@ -440,7 +468,7 @@ resource "gitmoap_repository_pipeline_variable" "test" {
 				plancheck.ExpectResourceAction("gitmoap_repository_mr_settings.test", plancheck.ResourceActionNoop),
 			}},
 		},
-		importStep("gitmoap_repository.test", "gitmoap_repository"),
+		importStep("gitmoap_repository.test", "gitmoap_repository", "purge_on_destroy"),
 		importStep("gitmoap_repository_issue_settings.test", "gitmoap_repository_issue_settings"),
 		// Only creating a variable returns who created it and when: the list it's read from doesn't.
 		importStep("gitmoap_repository_pipeline_variable.test", "gitmoap_repository_pipeline_variable", "created_at", "created_by", "updated_at"),

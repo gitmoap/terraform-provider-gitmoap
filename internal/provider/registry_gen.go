@@ -48,7 +48,13 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_catalog_service_by_slug"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_catalog_services"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_channels"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_chat_apps"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_chat_apps_slack_conversations"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_chat_subscriptions"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_fork_settings"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_imported_identities"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_imported_identities_suggestions"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_imports"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_issue_blueprint"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_issue_blueprints"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_issue_settings"
@@ -62,6 +68,7 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_milestone"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_milestones"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_mr_settings"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_outbound"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_package"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_packages"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_group_pipeline_variables"
@@ -110,9 +117,11 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_catalog_environments"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_catalog_resolve"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_catalog_services"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_chat_subscriptions"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_fork"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_fork_settings"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_forks"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_import"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_issue_blueprint"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_issue_blueprints"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_issue_settings"
@@ -121,9 +130,12 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_members"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_milestone"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_milestones"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_mirror"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_mr_settings"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline_component"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline_component_file"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline_component_files"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline_component_version"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline_component_versions"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/datasource_repository_pipeline_components"
@@ -180,6 +192,7 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_approval_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_branch_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_catalog_environment"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_chat_subscription"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_fork_settings"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_issue_blueprint"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_issue_settings"
@@ -189,6 +202,8 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_member"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_milestone"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_mr_settings"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_outbound"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_outbound_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_pipeline_variable"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_provider_connection"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_group_provider_policy"
@@ -210,6 +225,7 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_branch"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_branch_rule"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_catalog_environment"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_chat_subscription"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_fork"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_fork_settings"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_issue_blueprint"
@@ -217,6 +233,7 @@ import (
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_label"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_member"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_milestone"
+	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_mirror"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_mr_settings"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_pipeline_variable"
 	"github.com/gitmoap/terraform-provider-gitmoap/internal/provider/resource_repository_provider_connection"
@@ -249,6 +266,7 @@ func resources() []func() resource.Resource {
 		newRestResource("group_approval_rule", resource_group_approval_rule.GroupApprovalRuleResourceSchema),
 		newRestResource("group_branch_rule", resource_group_branch_rule.GroupBranchRuleResourceSchema),
 		newRestResource("group_catalog_environment", resource_group_catalog_environment.GroupCatalogEnvironmentResourceSchema),
+		newRestResource("group_chat_subscription", resource_group_chat_subscription.GroupChatSubscriptionResourceSchema),
 		newRestResource("group_fork_settings", resource_group_fork_settings.GroupForkSettingsResourceSchema),
 		newRestResource("group_issue_blueprint", resource_group_issue_blueprint.GroupIssueBlueprintResourceSchema),
 		newRestResource("group_issue_settings", resource_group_issue_settings.GroupIssueSettingsResourceSchema),
@@ -258,6 +276,8 @@ func resources() []func() resource.Resource {
 		newRestResource("group_member", resource_group_member.GroupMemberResourceSchema),
 		newRestResource("group_milestone", resource_group_milestone.GroupMilestoneResourceSchema),
 		newRestResource("group_mr_settings", resource_group_mr_settings.GroupMrSettingsResourceSchema),
+		newRestResource("group_outbound", resource_group_outbound.GroupOutboundResourceSchema),
+		newRestResource("group_outbound_rule", resource_group_outbound_rule.GroupOutboundRuleResourceSchema),
 		newRestResource("group_pipeline_variable", resource_group_pipeline_variable.GroupPipelineVariableResourceSchema),
 		newRestResource("group_provider_connection", resource_group_provider_connection.GroupProviderConnectionResourceSchema),
 		newRestResource("group_provider_policy", resource_group_provider_policy.GroupProviderPolicyResourceSchema),
@@ -279,6 +299,7 @@ func resources() []func() resource.Resource {
 		newRestResource("repository_branch", resource_repository_branch.RepositoryBranchResourceSchema),
 		newRestResource("repository_branch_rule", resource_repository_branch_rule.RepositoryBranchRuleResourceSchema),
 		newRestResource("repository_catalog_environment", resource_repository_catalog_environment.RepositoryCatalogEnvironmentResourceSchema),
+		newRestResource("repository_chat_subscription", resource_repository_chat_subscription.RepositoryChatSubscriptionResourceSchema),
 		newRestResource("repository_fork", resource_repository_fork.RepositoryForkResourceSchema),
 		newRestResource("repository_fork_settings", resource_repository_fork_settings.RepositoryForkSettingsResourceSchema),
 		newRestResource("repository_issue_blueprint", resource_repository_issue_blueprint.RepositoryIssueBlueprintResourceSchema),
@@ -286,6 +307,7 @@ func resources() []func() resource.Resource {
 		newRestResource("repository_label", resource_repository_label.RepositoryLabelResourceSchema),
 		newRestResource("repository_member", resource_repository_member.RepositoryMemberResourceSchema),
 		newRestResource("repository_milestone", resource_repository_milestone.RepositoryMilestoneResourceSchema),
+		newRestResource("repository_mirror", resource_repository_mirror.RepositoryMirrorResourceSchema),
 		newRestResource("repository_mr_settings", resource_repository_mr_settings.RepositoryMrSettingsResourceSchema),
 		newRestResource("repository_pipeline_variable", resource_repository_pipeline_variable.RepositoryPipelineVariableResourceSchema),
 		newRestResource("repository_provider_connection", resource_repository_provider_connection.RepositoryProviderConnectionResourceSchema),
@@ -349,7 +371,13 @@ func dataSources() []func() datasource.DataSource {
 		newRestDataSource("group_catalog_service_by_slug", datasource_group_catalog_service_by_slug.GroupCatalogServiceBySlugDataSourceSchema),
 		newRestDataSource("group_catalog_services", datasource_group_catalog_services.GroupCatalogServicesDataSourceSchema),
 		newRestDataSource("group_channels", datasource_group_channels.GroupChannelsDataSourceSchema),
+		newRestDataSource("group_chat_apps", datasource_group_chat_apps.GroupChatAppsDataSourceSchema),
+		newRestDataSource("group_chat_apps_slack_conversations", datasource_group_chat_apps_slack_conversations.GroupChatAppsSlackConversationsDataSourceSchema),
+		newRestDataSource("group_chat_subscriptions", datasource_group_chat_subscriptions.GroupChatSubscriptionsDataSourceSchema),
 		newRestDataSource("group_fork_settings", datasource_group_fork_settings.GroupForkSettingsDataSourceSchema),
+		newRestDataSource("group_imported_identities", datasource_group_imported_identities.GroupImportedIdentitiesDataSourceSchema),
+		newRestDataSource("group_imported_identities_suggestions", datasource_group_imported_identities_suggestions.GroupImportedIdentitiesSuggestionsDataSourceSchema),
+		newRestDataSource("group_imports", datasource_group_imports.GroupImportsDataSourceSchema),
 		newRestDataSource("group_issue_blueprint", datasource_group_issue_blueprint.GroupIssueBlueprintDataSourceSchema),
 		newRestDataSource("group_issue_blueprints", datasource_group_issue_blueprints.GroupIssueBlueprintsDataSourceSchema),
 		newRestDataSource("group_issue_settings", datasource_group_issue_settings.GroupIssueSettingsDataSourceSchema),
@@ -363,6 +391,7 @@ func dataSources() []func() datasource.DataSource {
 		newRestDataSource("group_milestone", datasource_group_milestone.GroupMilestoneDataSourceSchema),
 		newRestDataSource("group_milestones", datasource_group_milestones.GroupMilestonesDataSourceSchema),
 		newRestDataSource("group_mr_settings", datasource_group_mr_settings.GroupMrSettingsDataSourceSchema),
+		newRestDataSource("group_outbound", datasource_group_outbound.GroupOutboundDataSourceSchema),
 		newRestDataSource("group_package", datasource_group_package.GroupPackageDataSourceSchema),
 		newRestDataSource("group_packages", datasource_group_packages.GroupPackagesDataSourceSchema),
 		newRestDataSource("group_pipeline_variables", datasource_group_pipeline_variables.GroupPipelineVariablesDataSourceSchema),
@@ -411,9 +440,11 @@ func dataSources() []func() datasource.DataSource {
 		newRestDataSource("repository_catalog_environments", datasource_repository_catalog_environments.RepositoryCatalogEnvironmentsDataSourceSchema),
 		newRestDataSource("repository_catalog_resolve", datasource_repository_catalog_resolve.RepositoryCatalogResolveDataSourceSchema),
 		newRestDataSource("repository_catalog_services", datasource_repository_catalog_services.RepositoryCatalogServicesDataSourceSchema),
+		newRestDataSource("repository_chat_subscriptions", datasource_repository_chat_subscriptions.RepositoryChatSubscriptionsDataSourceSchema),
 		newRestDataSource("repository_fork", datasource_repository_fork.RepositoryForkDataSourceSchema),
 		newRestDataSource("repository_fork_settings", datasource_repository_fork_settings.RepositoryForkSettingsDataSourceSchema),
 		newRestDataSource("repository_forks", datasource_repository_forks.RepositoryForksDataSourceSchema),
+		newRestDataSource("repository_import", datasource_repository_import.RepositoryImportDataSourceSchema),
 		newRestDataSource("repository_issue_blueprint", datasource_repository_issue_blueprint.RepositoryIssueBlueprintDataSourceSchema),
 		newRestDataSource("repository_issue_blueprints", datasource_repository_issue_blueprints.RepositoryIssueBlueprintsDataSourceSchema),
 		newRestDataSource("repository_issue_settings", datasource_repository_issue_settings.RepositoryIssueSettingsDataSourceSchema),
@@ -422,9 +453,12 @@ func dataSources() []func() datasource.DataSource {
 		newRestDataSource("repository_members", datasource_repository_members.RepositoryMembersDataSourceSchema),
 		newRestDataSource("repository_milestone", datasource_repository_milestone.RepositoryMilestoneDataSourceSchema),
 		newRestDataSource("repository_milestones", datasource_repository_milestones.RepositoryMilestonesDataSourceSchema),
+		newRestDataSource("repository_mirror", datasource_repository_mirror.RepositoryMirrorDataSourceSchema),
 		newRestDataSource("repository_mr_settings", datasource_repository_mr_settings.RepositoryMrSettingsDataSourceSchema),
 		newRestDataSource("repository_pipeline", datasource_repository_pipeline.RepositoryPipelineDataSourceSchema),
 		newRestDataSource("repository_pipeline_component", datasource_repository_pipeline_component.RepositoryPipelineComponentDataSourceSchema),
+		newRestDataSource("repository_pipeline_component_file", datasource_repository_pipeline_component_file.RepositoryPipelineComponentFileDataSourceSchema),
+		newRestDataSource("repository_pipeline_component_files", datasource_repository_pipeline_component_files.RepositoryPipelineComponentFilesDataSourceSchema),
 		newRestDataSource("repository_pipeline_component_version", datasource_repository_pipeline_component_version.RepositoryPipelineComponentVersionDataSourceSchema),
 		newRestDataSource("repository_pipeline_component_versions", datasource_repository_pipeline_component_versions.RepositoryPipelineComponentVersionsDataSourceSchema),
 		newRestDataSource("repository_pipeline_components", datasource_repository_pipeline_components.RepositoryPipelineComponentsDataSourceSchema),

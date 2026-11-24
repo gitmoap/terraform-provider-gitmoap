@@ -51,6 +51,8 @@ them. (see [below for nested schema](#nestedatt--files))
 - `name` (String)
 - `path` (String) The file its `pipeline` block is in, from the repository's root.
 - `pipeline_id` (String)
+- `source_map` (Attributes List) Where each part of `definition` is written in `files`, and how a value the files compute,
+default or repeat came by it. Empty when there is no `definition`. (see [below for nested schema](#nestedatt--source_map))
 - `text` (String) The file its block is in, as committed.
 
 <a id="nestedatt--definition"></a>
@@ -77,6 +79,9 @@ Read-Only:
 - `component_id` (String)
 - `component_ref` (String) The reference as the author wrote it, kept for display. It is not used to find the
 component.
+- `condition` (String) On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.
+
+JSON: set it with `jsonencode()`.
 - `id` (String)
 - `name` (String) Display name, also put in front of the display names of the steps it expands into.
 - `params` (String) Values for the component's parameters, by parameter name.
@@ -130,6 +135,9 @@ list may only name approvers the environment also names. (see [below for nested 
 - `changes` (List of String) Path globs that decide whether this step runs: when none of them matches a path the push
 changed, the step is skipped. When absent and `service` is set, the service's own path globs
 apply.
+- `condition` (String) On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.
+
+JSON: set it with `jsonencode()`.
 - `config` (String) The step's provider-specific configuration, checked against the capability's
 `config_schema` when the run starts.
 
@@ -394,3 +402,57 @@ Read-Only:
 - `path` (String) The file's path from the repository's root, under `.gitmoap/pipelines/` — or, for a
 component a check is sent, under `.gitmoap/components/`.
 - `text` (String) The file's contents, at most 256 KiB.
+
+
+<a id="nestedatt--source_map"></a>
+### Nested Schema for `source_map`
+
+Read-Only:
+
+- `pointer` (String) JSON pointer into the definition or body beside it. In a pipeline's definition
+`/stages/<s>/nodes/<n>` is a step's label, `/stages/<s>/nodes/<n>/config/<key>` a value of
+its `with`, `/stages/<s>` a stage, `/edges/<i>` an edge and `/component_instances/<i>` a
+component instance; in a component's body a step is at `/nodes/<i>/node`, and its contract at
+`/parameters/<i>`, `/inputs/<i>` and `/outputs/<i>`.
+- `provenance` (Attributes) How a part of a pipeline came by its value when its files do not write it out.
+
+`kind` says which applies: `computed`; `defaulted`; `generated`, with `key`, `label`. (see [below for nested schema](#nestedatt--source_map--provenance))
+- `source_map_location` (Attributes) A span of a file. (see [below for nested schema](#nestedatt--source_map--source_map_location))
+
+<a id="nestedatt--source_map--provenance"></a>
+### Nested Schema for `source_map.provenance`
+
+Read-Only:
+
+- `key` (String) The instance's key.
+- `kind` (String)
+- `label` (String) The repeated block's label.
+
+
+<a id="nestedatt--source_map--source_map_location"></a>
+### Nested Schema for `source_map.source_map_location`
+
+Read-Only:
+
+- `path` (String) The file's path from the repository's root.
+- `source_map_location_end` (Attributes) A position in a file. (see [below for nested schema](#nestedatt--source_map--source_map_location--source_map_location_end))
+- `source_map_location_start` (Attributes) A position in a file. (see [below for nested schema](#nestedatt--source_map--source_map_location--source_map_location_start))
+
+<a id="nestedatt--source_map--source_map_location--source_map_location_end"></a>
+### Nested Schema for `source_map.source_map_location.source_map_location_end`
+
+Read-Only:
+
+- `column` (Number) The column, counted from 1 in Unicode characters.
+- `line` (Number) The line, counted from 1.
+- `offset` (Number) The byte offset from the start of the file.
+
+
+<a id="nestedatt--source_map--source_map_location--source_map_location_start"></a>
+### Nested Schema for `source_map.source_map_location.source_map_location_start`
+
+Read-Only:
+
+- `column` (Number) The column, counted from 1 in Unicode characters.
+- `line` (Number) The line, counted from 1.
+- `offset` (Number) The byte offset from the start of the file.

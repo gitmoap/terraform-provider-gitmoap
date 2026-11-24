@@ -20,25 +20,19 @@ import (
 func ProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"category": schema.StringAttribute{
+			"category": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter to providers declaring this category",
-				MarkdownDescription: "Filter to providers declaring this category",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"source-control",
-						"build",
-						"test",
-						"quality",
-						"security",
-						"release",
-						"deploy",
-						"infrastructure",
-						"notify",
-						"other",
-					),
-				},
+				Description:         "Providers declaring one of these categories; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Providers declaring one of these categories; repeat it, or separate with commas, for any of them",
+			},
+			"category_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Categories to leave out: a provider declaring any of them is left out, whatever else it declares. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Categories to leave out: a provider declaring any of them is left out, whatever else it declares. Repeat it, or separate values with commas, for several, up to 20",
 			},
 			"featured": schema.BoolAttribute{
 				Optional:            true,
@@ -138,20 +132,20 @@ func ProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 			"owning_group": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "List one org's private providers (members only)",
-				MarkdownDescription: "List one org's private providers (members only)",
+				Description:         "List one organization's private providers (members only)",
+				MarkdownDescription: "List one organization's private providers (members only)",
 			},
 			"q": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Free-text match over name/description/keywords",
-				MarkdownDescription: "Free-text match over name/description/keywords",
+				Description:         "Free-text match over name, description and keywords",
+				MarkdownDescription: "Free-text match over name, description and keywords",
 			},
 			"sort": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "relevance | installs | name | recently_updated",
-				MarkdownDescription: "relevance | installs | name | recently_updated",
+				Description:         "`relevance` (default), `installs`, `name` or `recently_updated`",
+				MarkdownDescription: "`relevance` (default), `installs`, `name` or `recently_updated`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"relevance",
@@ -161,19 +155,19 @@ func ProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
-			"tier": schema.StringAttribute{
+			"tier": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by tier",
-				MarkdownDescription: "Filter by tier",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"platform",
-						"verified",
-						"community",
-						"private",
-					),
-				},
+				Description:         "Provider tiers — platform, verified, community or private; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Provider tiers — platform, verified, community or private; repeat it, or separate with commas, for any of them",
+			},
+			"tier_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Provider tiers to leave out. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Provider tiers to leave out. Repeat it, or separate values with commas, for several, up to 20",
 			},
 			"verified_only": schema.BoolAttribute{
 				Optional:            true,
@@ -182,19 +176,21 @@ func ProvidersDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Only providers whose publisher namespace is verified",
 			},
 		},
-		Description:         "Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted. The token needs provider_catalog:read.",
-		MarkdownDescription: "Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted.\n\nThe token needs `provider_catalog:read`.",
+		Description:         "Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted. Leave categories and tiers out with category_not and tier_not. The token needs provider_catalog:read.",
+		MarkdownDescription: "Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted. Leave categories and tiers out with `category_not` and `tier_not`.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 
 type ProvidersModel struct {
-	Category     types.String `tfsdk:"category"`
+	Category     types.List   `tfsdk:"category"`
+	CategoryNot  types.List   `tfsdk:"category_not"`
 	Featured     types.Bool   `tfsdk:"featured"`
 	Items        types.List   `tfsdk:"items"`
 	OwningGroup  types.String `tfsdk:"owning_group"`
 	Q            types.String `tfsdk:"q"`
 	Sort         types.String `tfsdk:"sort"`
-	Tier         types.String `tfsdk:"tier"`
+	Tier         types.List   `tfsdk:"tier"`
+	TierNot      types.List   `tfsdk:"tier_not"`
 	VerifiedOnly types.Bool   `tfsdk:"verified_only"`
 }
 

@@ -3,13 +3,13 @@
 page_title: "gitmoap_provider_capabilities Data Source - gitmoap"
 subcategory: ""
 description: |-
-  List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the version you name; the response says which version it used. Narrow them with stage_type. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller.
+  List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the version you name; the response says which version it used. Narrow them with stage_type, or leave stages out with stage_type_not. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller.
   The token needs provider_catalog:read.
 ---
 
 # gitmoap_provider_capabilities (Data Source)
 
-List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the `version` you name; the response says which version it used. Narrow them with `stage_type`. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.
+List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the `version` you name; the response says which version it used. Narrow them with `stage_type`, or leave stages out with `stage_type_not`. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.
 
 The token needs `provider_catalog:read`.
 
@@ -30,7 +30,8 @@ data "gitmoap_provider_capabilities" "example" {
 
 ### Optional
 
-- `stage_type` (String) Filter by stage type
+- `stage_type` (List of String) Stage types — source, build, test, publish, deploy, notify or custom; repeat it, or separate with commas, for any of them
+- `stage_type_not` (List of String) Stage types to leave out. Repeat it, or separate values with commas, for several, up to 20
 - `version` (String) Pin to a version (default: latest)
 
 ### Read-Only

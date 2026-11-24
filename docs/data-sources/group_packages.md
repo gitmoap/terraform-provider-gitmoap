@@ -3,13 +3,13 @@
 page_title: "gitmoap_group_packages Data Source - gitmoap"
 subcategory: ""
 description: |-
-  List a group's packages. Returns the packages in the group's npm, Cargo and PyPI registries, each with its newest version, version count and total size. Name a format (npm, cargo or pypi) to page through one registry with limit (up to 100, 20 by default) and cursor; without one you get an overview of up to 100 packages per format and no further pages. search keeps only the packages whose name contains it, ignoring case, before a page is cut — so an empty page means there is no match, not that the match is further on; send it again with the cursor. Anyone who can see the group may call it.
+  List a group's packages. Returns the packages in the group's npm, Cargo and PyPI registries, each with its newest version, version count and total size. Name a format (npm, cargo or pypi) to page through one registry with limit (up to 100, 20 by default) and cursor; without one you get an overview of up to 100 packages per format and no further pages. Leave formats out with format_not: leaving out two pages through the third, leaving out one gives the overview of the other two. search keeps only the packages whose name contains it, ignoring case, before a page is cut — so an empty page means there is no match, not that the match is further on; send it again with the cursor. Anyone who can see the group may call it.
   The token needs package:read.
 ---
 
 # gitmoap_group_packages (Data Source)
 
-List a group's packages. Returns the packages in the group's npm, Cargo and PyPI registries, each with its newest version, version count and total size. Name a `format` (npm, cargo or pypi) to page through one registry with `limit` (up to 100, 20 by default) and `cursor`; without one you get an overview of up to 100 packages per format and no further pages. `search` keeps only the packages whose name contains it, ignoring case, before a page is cut — so an empty page means there is no match, not that the match is further on; send it again with the cursor. Anyone who can see the group may call it.
+List a group's packages. Returns the packages in the group's npm, Cargo and PyPI registries, each with its newest version, version count and total size. Name a `format` (npm, cargo or pypi) to page through one registry with `limit` (up to 100, 20 by default) and `cursor`; without one you get an overview of up to 100 packages per format and no further pages. Leave formats out with `format_not`: leaving out two pages through the third, leaving out one gives the overview of the other two. `search` keeps only the packages whose name contains it, ignoring case, before a page is cut — so an empty page means there is no match, not that the match is further on; send it again with the cursor. Anyone who can see the group may call it.
 
 The token needs `package:read`.
 
@@ -34,7 +34,8 @@ data "gitmoap_group_packages" "acme" {
 
 ### Optional
 
-- `format` (String) Filter by format (npm/cargo/pypi)
+- `format` (List of String) Registry formats — npm, cargo or pypi. Name exactly one to page through that registry; repeat it, or separate with commas, for an overview of the packages of each
+- `format_not` (List of String) Registry formats to leave out. Leaving out one or two of the three gives an overview of the rest, without further pages. Repeat it, or separate values with commas, for several, up to 20
 - `search` (String) Only packages whose name contains this, ignoring case (1-200 characters)
 
 ### Read-Only

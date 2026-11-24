@@ -66,6 +66,10 @@ func scenarioText(t *testing.T, name string) string {
 
 var acmePath = regexp.MustCompile(`full_path(\s*)=(\s*)"acme(/[^"]*)?"`)
 
+// What a scenario creates is deleted for good when the test destroys it, so the subgroup it runs in
+// can be too: nothing waits a week to be purged.
+var purgedBlock = regexp.MustCompile(`(?m)^(resource "gitmoap_(?:repository|group)" "\w+" \{)$`)
+
 // TestAccScenarios applies every scenario in the documentation, so its examples are known to work:
 // then a plan has to find nothing to change, and it's destroyed. Each runs in a throwaway subgroup
 // of the test group, standing in for the acme organization. It drives Terraform directly, since
@@ -164,19 +168,21 @@ func runScenario(t *testing.T, terraform, cliConfig, name string, test scenarioT
 		dependsOn = "gitmoap_group.tfacc"
 		setup := groupConfig(fmt.Sprintf(`
 resource "gitmoap_group" "tfacc" {
-  group_name      = %q
-  parent_group_id = data.gitmoap_group_by_path.test.group_id
-  description     = "Created by the provider's acceptance tests"
-  visibility      = "private"
+  group_name       = %q
+  parent_group_id  = data.gitmoap_group_by_path.test.group_id
+  description      = "Created by the provider's acceptance tests"
+  visibility       = "private"
+  purge_on_destroy = true
 }
 `, subgroup))
 		if test.repository != "" {
 			dependsOn += ", gitmoap_repository.tfacc"
 			setup += fmt.Sprintf(`
 resource "gitmoap_repository" "tfacc" {
-  group_id        = gitmoap_group.tfacc.group_id
-  repository_name = %q
-  visibility      = "private"
+  group_id         = gitmoap_group.tfacc.group_id
+  repository_name  = %q
+  visibility       = "private"
+  purge_on_destroy = true
 }
 `, test.repository)
 		}
@@ -255,6 +261,7 @@ func copyScenario(t *testing.T, name, directory, path, dependsOn string) {
 				replacement += "\n  depends_on = [" + dependsOn + "]"
 			}
 			content = acmePath.ReplaceAll(content, []byte(replacement))
+			content = purgedBlock.ReplaceAll(content, []byte("${1}\n  purge_on_destroy = true"))
 		}
 		writeFile(t, filepath.Join(directory, relative), string(content))
 		return nil

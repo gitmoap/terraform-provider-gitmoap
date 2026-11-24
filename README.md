@@ -9,7 +9,7 @@ terraform {
   required_providers {
     gitmoap = {
       source  = "gitmoap/gitmoap"
-      version = "~> 0.0.1"
+      version = "~> 0.2"
     }
   }
 }
@@ -108,13 +108,16 @@ scenario needs an entry in its `scenarioTests`.
 
 ### Acceptance tests
 
-They create and delete real objects, named `tfacc-<random>`, and clean up even when a step fails.
-The tests that change group-wide settings, and the scenarios, work in a throwaway subgroup of the
-test group. The release scenario pushes a commit, and runs only where gitmoap's command-line tools
-are installed.
+They create and delete real objects, named `tfacc-<random>`, and clean up even when a step fails:
+repositories and groups are deleted for good, not left to be purged in a week. The tests that change
+group-wide settings, and the scenarios, work in a throwaway subgroup of the test group. The outbound
+test can't: the outbound policy is the organization's. It sets the policy to what it is, and adds a
+rule for a name nobody uses, then removes it. The release scenario pushes a commit, and runs only
+where gitmoap's command-line tools are installed. Chat subscriptions aren't tested: they need a
+Slack workspace connected to the test group.
 
 ```sh
-export GITMOAP_TOKEN=gmp_...                  # an Owner of the test group
+export GITMOAP_TOKEN=gmp_...                  # an Owner of the test group, with every scope
 export GITMOAP_TEST_GROUP=gitmoap-showcase    # a top-level group's full path
 export GITMOAP_TEST_USER_ID=...               # the token's user, for the team test
 make testacc

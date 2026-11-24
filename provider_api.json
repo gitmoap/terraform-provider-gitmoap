@@ -14,6 +14,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/ai-agents/{agent_id}"
+			},
+			"renames": {
+				"suspended_by.suspended_by_imported": "imported"
 			}
 		},
 		"ai_agent_memory": {
@@ -28,7 +31,8 @@
 				}
 			},
 			"renames": {
-				"history.history_updated_by": "updated_by"
+				"history.history_updated_by": "updated_by",
+				"history.history_updated_by.updated_by_imported": "imported"
 			}
 		},
 		"ai_agent_profile": {
@@ -47,6 +51,10 @@
 			"read": {
 				"method": "GET",
 				"path": "/ai-gates/{gate_id}"
+			},
+			"renames": {
+				"approvers.approvers_imported": "imported",
+				"decided_by.decided_by_imported": "imported"
 			}
 		},
 		"ai_models": {
@@ -143,8 +151,11 @@
 				"path": "/catalog/scorecards/{scorecard_id}/results",
 				"query": {
 					"check_key": "check_key",
+					"check_key_not": "check_key_not",
 					"service_id": "service_id",
-					"state": "state"
+					"service_id_not": "service_id_not",
+					"state": "state",
+					"state_not": "state_not"
 				}
 			},
 			"transforms": {
@@ -161,7 +172,8 @@
 				"path": "/catalog/services/{service_id}"
 			},
 			"renames": {
-				"lifecycle_stage": "lifecycle"
+				"lifecycle_stage": "lifecycle",
+				"owner.actor.actor_imported": "imported"
 			},
 			"transforms": {
 				"annotations": "json"
@@ -198,8 +210,13 @@
 				"path": "/catalog/services/{service_id}/deployments",
 				"query": {
 					"environment_id": "environment_id",
-					"status": "status"
+					"environment_id_not": "environment_id_not",
+					"status": "status",
+					"status_not": "status_not"
 				}
+			},
+			"renames": {
+				"items.triggered_by.triggered_by_imported": "imported"
 			}
 		},
 		"catalog_service_deployments_current": {
@@ -227,6 +244,10 @@
 			"read": {
 				"method": "GET",
 				"path": "/channels/{channel_id}"
+			},
+			"renames": {
+				"direct_agent.direct_agent_imported": "imported",
+				"direct_user.direct_user_imported": "imported"
 			}
 		},
 		"channel_members": {
@@ -240,6 +261,9 @@
 					"param": "next_token"
 				},
 				"path": "/channels/{channel_id}/members"
+			},
+			"renames": {
+				"items.member.member_imported": "imported"
 			}
 		},
 		"group": {
@@ -265,10 +289,12 @@
 				"query": {
 					"search": "search",
 					"source": "source",
-					"subject_kind": "subject_kind"
+					"subject_kind": "subject_kind",
+					"subject_kind_not": "subject_kind_not"
 				}
 			},
 			"renames": {
+				"entries.limited_to.created_by.created_by_imported": "imported",
 				"entries.limited_to.limited_to_subject": "subject",
 				"entries.limited_to.limited_to_subject.subject_principal": "principal",
 				"entries.limited_to.limited_to_subject.subject_team": "team",
@@ -292,6 +318,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/ai-org"
+			},
+			"renames": {
+				"created_by.created_by_imported": "imported"
 			}
 		},
 		"group_ai_org_agents": {
@@ -301,6 +330,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/ai-org/agents"
+			},
+			"renames": {
+				"items.suspended_by.suspended_by_imported": "imported"
 			}
 		},
 		"group_ai_org_conventions": {
@@ -315,7 +347,8 @@
 				}
 			},
 			"renames": {
-				"history.history_updated_by": "updated_by"
+				"history.history_updated_by": "updated_by",
+				"history.history_updated_by.updated_by_imported": "imported"
 			}
 		},
 		"group_ai_org_gates": {
@@ -331,8 +364,14 @@
 				"path": "/groups/{group_id}/ai-org/gates",
 				"query": {
 					"session_id": "session_id",
-					"state": "state"
+					"session_id_not": "session_id_not",
+					"state": "state",
+					"state_not": "state_not"
 				}
+			},
+			"renames": {
+				"items.approvers.approvers_imported": "imported",
+				"items.decided_by.decided_by_imported": "imported"
 			}
 		},
 		"group_ai_org_model_connections": {
@@ -357,9 +396,13 @@
 				"path": "/groups/{group_id}/ai-org/sessions",
 				"query": {
 					"agent_id": "agent_id",
+					"agent_id_not": "agent_id_not",
 					"ritual_run_id": "ritual_run_id",
+					"ritual_run_id_not": "ritual_run_id_not",
 					"squad": "squad",
-					"state": "state"
+					"squad_not": "squad_not",
+					"state": "state",
+					"state_not": "state_not"
 				}
 			}
 		},
@@ -376,7 +419,8 @@
 				}
 			},
 			"renames": {
-				"history.history_updated_by": "updated_by"
+				"history.history_updated_by": "updated_by",
+				"history.history_updated_by.updated_by_imported": "imported"
 			}
 		},
 		"group_approval_policy": {
@@ -438,8 +482,10 @@
 				"path": "/groups/{group_id}/catalog/deployments",
 				"query": {
 					"environment_id": "environment_id",
+					"environment_id_not": "environment_id_not",
 					"search": "search",
-					"tier": "tier"
+					"tier": "tier",
+					"tier_not": "tier_not"
 				}
 			}
 		},
@@ -458,7 +504,8 @@
 					"include_archived": "include_archived",
 					"inherited": "inherited",
 					"search": "search",
-					"tier": "tier"
+					"tier": "tier",
+					"tier_not": "tier_not"
 				}
 			}
 		},
@@ -489,7 +536,8 @@
 				"path": "/groups/{group_id}/catalog/services/by-slug/{slug}"
 			},
 			"renames": {
-				"lifecycle_stage": "lifecycle"
+				"lifecycle_stage": "lifecycle",
+				"owner.actor.actor_imported": "imported"
 			},
 			"transforms": {
 				"annotations": "json"
@@ -509,9 +557,12 @@
 				"query": {
 					"include_orphaned": "include_orphaned",
 					"kind": "kind",
+					"kind_not": "kind_not",
 					"lifecycle": "lifecycle_stage",
+					"lifecycle_not": "lifecycle_not",
 					"search": "search",
-					"source": "source"
+					"source": "source",
+					"source_not": "source_not"
 				}
 			},
 			"renames": {
@@ -534,6 +585,41 @@
 					"kind": "kind",
 					"name": "name"
 				}
+			},
+			"renames": {
+				"items.direct_agent.direct_agent_imported": "imported",
+				"items.direct_user.direct_user_imported": "imported"
+			}
+		},
+		"group_chat_apps": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/chat-apps"
+			}
+		},
+		"group_chat_apps_slack_conversations": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/chat-apps/slack/conversations"
+			}
+		},
+		"group_chat_subscriptions": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/chat-subscriptions"
 			}
 		},
 		"group_fork_settings": {
@@ -543,6 +629,42 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/fork-settings"
+			}
+		},
+		"group_imported_identities": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/imported-identities"
+			}
+		},
+		"group_imported_identities_suggestions": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/imported-identities/suggestions"
+			},
+			"root": "group_imported_identities_suggestions"
+		},
+		"group_imports": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/groups/{group_id}/imports"
 			}
 		},
 		"group_issue_blueprint": {
@@ -586,8 +708,7 @@
 				"on_branch_created": "scalar_or_object",
 				"on_mr_closed": "scalar_or_object",
 				"on_mr_merged": "scalar_or_object",
-				"on_mr_opened": "scalar_or_object",
-				"transitions.table": "json"
+				"on_mr_opened": "scalar_or_object"
 			}
 		},
 		"group_iteration": {
@@ -629,7 +750,9 @@
 				"path": "/groups/{group_id}/iterations",
 				"query": {
 					"cadence_id": "cadence_id",
-					"state": "state"
+					"cadence_id_not": "cadence_id_not",
+					"state": "state",
+					"state_not": "state_not"
 				}
 			},
 			"root": "group_iterations"
@@ -705,6 +828,18 @@
 				"path": "/groups/{group_id}/mr-settings"
 			}
 		},
+		"group_outbound": {
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/outbound"
+			},
+			"renames": {
+				"rules.created_by.created_by_imported": "imported"
+			}
+		},
 		"group_package": {
 			"params": {
 				"format": "format",
@@ -729,6 +864,7 @@
 				"path": "/groups/{group_id}/packages",
 				"query": {
 					"format": "format",
+					"format_not": "format_not",
 					"search": "search"
 				}
 			}
@@ -850,6 +986,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/sso-connection"
+			},
+			"renames": {
+				"last_test.by.by_imported": "imported"
 			}
 		},
 		"group_sso_domains": {
@@ -950,6 +1089,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/groups/{group_id}/wiki/pages/{path}"
+			},
+			"renames": {
+				"commit.author.author_imported": "imported"
 			}
 		},
 		"group_wiki_pages": {
@@ -1014,6 +1156,7 @@
 				"path": "/providers/{provider_id}/capabilities",
 				"query": {
 					"stage_type": "stage_type",
+					"stage_type_not": "stage_type_not",
 					"version": "version"
 				}
 			},
@@ -1043,10 +1186,12 @@
 			},
 			"renames": {
 				"manifest.manifest_capabilities": "capabilities",
-				"mirror_result.mirror_result_capabilities": "capabilities"
+				"mirror_result.mirror_result_capabilities": "capabilities",
+				"submitted_by.submitted_by_imported": "imported"
 			},
 			"transforms": {
 				"auth_schema": "json",
+				"manifest.auth_schema": "json",
 				"manifest.manifest_capabilities.config_schema": "json"
 			}
 		},
@@ -1069,6 +1214,7 @@
 				"path": "/providers/{provider_id}/versions/{version}"
 			},
 			"transforms": {
+				"auth_schema": "json",
 				"capabilities.config_schema": "json"
 			}
 		},
@@ -1085,6 +1231,7 @@
 				"path": "/providers/{provider_id}/versions"
 			},
 			"transforms": {
+				"items.auth_schema": "json",
 				"items.capabilities.config_schema": "json"
 			}
 		},
@@ -1099,11 +1246,13 @@
 				"path": "/providers",
 				"query": {
 					"category": "category",
+					"category_not": "category_not",
 					"featured": "featured",
 					"owning_group": "owning_group",
 					"q": "q",
 					"sort": "sort",
 					"tier": "tier",
+					"tier_not": "tier_not",
 					"verified_only": "verified_only"
 				}
 			}
@@ -1170,10 +1319,12 @@
 				"query": {
 					"search": "search",
 					"source": "source",
-					"subject_kind": "subject_kind"
+					"subject_kind": "subject_kind",
+					"subject_kind_not": "subject_kind_not"
 				}
 			},
 			"renames": {
+				"entries.limited_to.created_by.created_by_imported": "imported",
 				"entries.limited_to.limited_to_subject": "subject",
 				"entries.limited_to.limited_to_subject.subject_principal": "principal",
 				"entries.limited_to.limited_to_subject.subject_team": "team",
@@ -1274,7 +1425,8 @@
 					"include_archived": "include_archived",
 					"inherited": "inherited",
 					"search": "search",
-					"tier": "tier"
+					"tier": "tier",
+					"tier_not": "tier_not"
 				}
 			}
 		},
@@ -1291,7 +1443,8 @@
 			},
 			"renames": {
 				"resolved.service.service_owner": "owner",
-				"resolved.service.service_owner.owner_actor": "actor"
+				"resolved.service.service_owner.owner_actor": "actor",
+				"resolved.service.service_owner.owner_actor.actor_imported": "imported"
 			}
 		},
 		"repository_catalog_services": {
@@ -1308,13 +1461,25 @@
 				"query": {
 					"include_orphaned": "include_orphaned",
 					"kind": "kind",
+					"kind_not": "kind_not",
 					"lifecycle": "lifecycle_stage",
+					"lifecycle_not": "lifecycle_not",
 					"search": "search",
-					"source": "source"
+					"source": "source",
+					"source_not": "source_not"
 				}
 			},
 			"renames": {
 				"lifecycle_stage": "lifecycle"
+			}
+		},
+		"repository_chat_subscriptions": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/chat-subscriptions"
 			}
 		},
 		"repository_fork": {
@@ -1324,6 +1489,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/fork"
+			},
+			"renames": {
+				"auto_sync.actor.actor_imported": "imported"
 			}
 		},
 		"repository_fork_settings": {
@@ -1351,6 +1519,15 @@
 					"search": "search",
 					"sort": "sort"
 				}
+			}
+		},
+		"repository_import": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/import"
 			}
 		},
 		"repository_issue_blueprint": {
@@ -1394,8 +1571,7 @@
 				"on_branch_created": "scalar_or_object",
 				"on_mr_closed": "scalar_or_object",
 				"on_mr_merged": "scalar_or_object",
-				"on_mr_opened": "scalar_or_object",
-				"transitions.table": "json"
+				"on_mr_opened": "scalar_or_object"
 			}
 		},
 		"repository_labels": {
@@ -1460,6 +1636,15 @@
 			},
 			"root": "repository_milestones"
 		},
+		"repository_mirror": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/mirror"
+			}
+		},
 		"repository_mr_settings": {
 			"params": {
 				"repo_id": "repo_id"
@@ -1482,9 +1667,11 @@
 				"diagnostics.warnings.warnings_target": "target"
 			},
 			"transforms": {
+				"component_instances.condition": "json",
 				"component_instances.params": "json",
 				"stages.nodes.approval.approvers.anyone": "marker",
 				"stages.nodes.approval.approvers.code_owners": "marker",
+				"stages.nodes.condition": "json",
 				"stages.nodes.config": "json",
 				"stages.nodes.matrix.dimensions": "json",
 				"trigger_config.events.params.default": "json"
@@ -1499,14 +1686,70 @@
 				"method": "GET",
 				"path": "/repositories/{repo_id}/pipeline-components/{component_id}"
 			},
+			"renames": {
+				"versions.published_by.published_by_imported": "imported"
+			},
 			"transforms": {
+				"body.component_instances.condition": "json",
 				"body.component_instances.params": "json",
 				"body.nodes.node.approval.approvers.anyone": "marker",
 				"body.nodes.node.approval.approvers.code_owners": "marker",
+				"body.nodes.node.condition": "json",
 				"body.nodes.node.config": "json",
 				"body.nodes.node.matrix.dimensions": "json",
 				"body.parameters.allowed_values": "json",
 				"body.parameters.default": "json"
+			}
+		},
+		"repository_pipeline_component_file": {
+			"params": {
+				"component_name": "component_name",
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/pipeline-component-files/{component_name}",
+				"query": {
+					"commit_sha": "commit_sha",
+					"ref": "ref"
+				}
+			},
+			"renames": {
+				"diagnostics.fix.fix_location": "location",
+				"diagnostics.fix.fix_location.location_end": "end",
+				"diagnostics.fix.fix_location.location_start": "start",
+				"diagnostics.related.related_end": "end",
+				"diagnostics.related.related_start": "start",
+				"source_map.source_map_location": "location",
+				"source_map.source_map_location.source_map_location_end": "end",
+				"source_map.source_map_location.source_map_location_start": "start"
+			},
+			"transforms": {
+				"body.component_instances.condition": "json",
+				"body.component_instances.params": "json",
+				"body.nodes.node.approval.approvers.anyone": "marker",
+				"body.nodes.node.approval.approvers.code_owners": "marker",
+				"body.nodes.node.condition": "json",
+				"body.nodes.node.config": "json",
+				"body.nodes.node.matrix.dimensions": "json",
+				"body.parameters.allowed_values": "json",
+				"body.parameters.default": "json"
+			}
+		},
+		"repository_pipeline_component_files": {
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"pages": {
+					"items": "items",
+					"param": "next_token"
+				},
+				"path": "/repositories/{repo_id}/pipeline-component-files",
+				"query": {
+					"ref": "ref"
+				}
 			}
 		},
 		"repository_pipeline_component_version": {
@@ -1523,9 +1766,11 @@
 				"body.outputs.outputs_source": "source"
 			},
 			"transforms": {
+				"body.component_instances.condition": "json",
 				"body.component_instances.params": "json",
 				"body.nodes.node.approval.approvers.anyone": "marker",
 				"body.nodes.node.approval.approvers.code_owners": "marker",
+				"body.nodes.node.condition": "json",
 				"body.nodes.node.config": "json",
 				"body.nodes.node.matrix.dimensions": "json",
 				"body.parameters.allowed_values": "json",
@@ -1545,7 +1790,8 @@
 				},
 				"path": "/repositories/{repo_id}/pipeline-components/{component_id}/versions",
 				"query": {
-					"lifecycle_state": "lifecycle_state"
+					"lifecycle_state": "lifecycle_state",
+					"lifecycle_state_not": "lifecycle_state_not"
 				}
 			}
 		},
@@ -1565,10 +1811,15 @@
 					"search": "search"
 				}
 			},
+			"renames": {
+				"items.versions.published_by.published_by_imported": "imported"
+			},
 			"transforms": {
+				"items.body.component_instances.condition": "json",
 				"items.body.component_instances.params": "json",
 				"items.body.nodes.node.approval.approvers.anyone": "marker",
 				"items.body.nodes.node.approval.approvers.code_owners": "marker",
+				"items.body.nodes.node.condition": "json",
 				"items.body.nodes.node.config": "json",
 				"items.body.nodes.node.matrix.dimensions": "json",
 				"items.body.parameters.allowed_values": "json",
@@ -1593,12 +1844,17 @@
 				"diagnostics.fix.fix_location.location_end": "end",
 				"diagnostics.fix.fix_location.location_start": "start",
 				"diagnostics.related.related_end": "end",
-				"diagnostics.related.related_start": "start"
+				"diagnostics.related.related_start": "start",
+				"source_map.source_map_location": "location",
+				"source_map.source_map_location.source_map_location_end": "end",
+				"source_map.source_map_location.source_map_location_start": "start"
 			},
 			"transforms": {
+				"definition.component_instances.condition": "json",
 				"definition.component_instances.params": "json",
 				"definition.stages.nodes.approval.approvers.anyone": "marker",
 				"definition.stages.nodes.approval.approvers.code_owners": "marker",
+				"definition.stages.nodes.condition": "json",
 				"definition.stages.nodes.config": "json",
 				"definition.stages.nodes.matrix.dimensions": "json",
 				"definition.trigger_config.events.params.default": "json"
@@ -1661,9 +1917,11 @@
 				"items.diagnostics.warnings.warnings_target": "target"
 			},
 			"transforms": {
+				"items.component_instances.condition": "json",
 				"items.component_instances.params": "json",
 				"items.stages.nodes.approval.approvers.anyone": "marker",
 				"items.stages.nodes.approval.approvers.code_owners": "marker",
+				"items.stages.nodes.condition": "json",
 				"items.stages.nodes.config": "json",
 				"items.stages.nodes.matrix.dimensions": "json",
 				"items.trigger_config.events.params.default": "json"
@@ -1755,6 +2013,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/releases/{tag_name}"
+			},
+			"renames": {
+				"assets.uploader.uploader_imported": "imported"
 			}
 		},
 		"repository_release_asset": {
@@ -1785,6 +2046,9 @@
 				"query": {
 					"include_drafts": "include_drafts"
 				}
+			},
+			"renames": {
+				"items.assets.uploader.uploader_imported": "imported"
 			}
 		},
 		"repository_releases_latest": {
@@ -1794,6 +2058,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/releases/latest"
+			},
+			"renames": {
+				"assets.uploader.uploader_imported": "imported"
 			}
 		},
 		"repository_resolved_provider_connections": {
@@ -1903,6 +2170,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/wiki/pages/{path}"
+			},
+			"renames": {
+				"commit.author.author_imported": "imported"
 			}
 		},
 		"repository_wiki_pages": {
@@ -1985,6 +2255,9 @@
 					"param": "next_token"
 				},
 				"path": "/teams/{team_id}/members"
+			},
+			"renames": {
+				"members.user.user_imported": "imported"
 			}
 		},
 		"template": {
@@ -2003,7 +2276,8 @@
 				"method": "GET",
 				"path": "/templates",
 				"query": {
-					"kind": "kind"
+					"kind": "kind",
+					"kind_not": "kind_not"
 				}
 			}
 		},
@@ -2097,7 +2371,8 @@
 				"path": "/ai-agents/{agent_id}/memory"
 			},
 			"renames": {
-				"history.history_updated_by": "updated_by"
+				"history.history_updated_by": "updated_by",
+				"history.history_updated_by.updated_by_imported": "imported"
 			},
 			"update": {
 				"body": {
@@ -2241,7 +2516,8 @@
 				"path": "/catalog/services/{service_id}"
 			},
 			"renames": {
-				"lifecycle_stage": "lifecycle"
+				"lifecycle_stage": "lifecycle",
+				"owner.actor.actor_imported": "imported"
 			},
 			"transforms": {
 				"annotations": "json"
@@ -2379,7 +2655,8 @@
 				"path": "/groups/{group_id}/ai-org/conventions"
 			},
 			"renames": {
-				"history.history_updated_by": "updated_by"
+				"history.history_updated_by": "updated_by",
+				"history.history_updated_by.updated_by_imported": "imported"
 			},
 			"update": {
 				"body": {
@@ -2414,7 +2691,8 @@
 				"path": "/groups/{group_id}/ai-org/squads/{squad_key}/memory"
 			},
 			"renames": {
-				"history.history_updated_by": "updated_by"
+				"history.history_updated_by": "updated_by",
+				"history.history_updated_by.updated_by_imported": "imported"
 			},
 			"update": {
 				"body": {
@@ -2626,6 +2904,49 @@
 				"archived"
 			]
 		},
+		"group_chat_subscription": {
+			"create": {
+				"body": {
+					"channel_id": "channel_id",
+					"events": "events"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/chat-subscriptions"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/groups/{group_id}/chat-subscriptions/{subscription_id}"
+			},
+			"identity": [
+				"group_id",
+				"subscription_id"
+			],
+			"match": {
+				"subscription_id": "subscription_id"
+			},
+			"params": {
+				"group_id": "group_id",
+				"subscription_id": "subscription_id"
+			},
+			"read": {
+				"items": "items",
+				"method": "GET",
+				"path": "/groups/{group_id}/chat-subscriptions"
+			},
+			"renames": {
+				"provider_info": "provider"
+			},
+			"replace": [
+				"channel_id"
+			],
+			"update": {
+				"body": {
+					"events": "events"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/chat-subscriptions/{subscription_id}"
+			}
+		},
 		"group_fork_settings": {
 			"create": {
 				"body": {
@@ -2777,8 +3098,7 @@
 				"on_branch_created": "scalar_or_object",
 				"on_mr_closed": "scalar_or_object",
 				"on_mr_merged": "scalar_or_object",
-				"on_mr_opened": "scalar_or_object",
-				"transitions.table": "json"
+				"on_mr_opened": "scalar_or_object"
 			},
 			"update": {
 				"body": {
@@ -3066,6 +3386,86 @@
 				"path": "/groups/{group_id}/mr-settings"
 			}
 		},
+		"group_outbound": {
+			"create": {
+				"body": {
+					"platform_registries": "platform_registries",
+					"services": "services",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/outbound"
+			},
+			"identity": [
+				"group_id"
+			],
+			"params": {
+				"group_id": "group_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/groups/{group_id}/outbound"
+			},
+			"update": {
+				"body": {
+					"platform_registries": "platform_registries",
+					"services": "services",
+					"version": "version"
+				},
+				"method": "PATCH",
+				"path": "/groups/{group_id}/outbound"
+			}
+		},
+		"group_outbound_rule": {
+			"create": {
+				"body": {
+					"from_destination": "from_destination",
+					"kind": "kind",
+					"note": "note",
+					"ports": "ports",
+					"repository_ids": "repository_ids",
+					"services": "services",
+					"value": "value"
+				},
+				"method": "POST",
+				"path": "/groups/{group_id}/outbound/rules"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/outbound-rules/{outbound_rule_id}"
+			},
+			"identity": [
+				"group_id",
+				"rule_id"
+			],
+			"match": {
+				"rule_id": "rule_id"
+			},
+			"params": {
+				"group_id": "group_id",
+				"outbound_rule_id": "rule_id"
+			},
+			"read": {
+				"items": "rules",
+				"method": "GET",
+				"path": "/groups/{group_id}/outbound"
+			},
+			"replace": [
+				"from_destination",
+				"kind",
+				"value"
+			],
+			"update": {
+				"body": {
+					"note": "note",
+					"ports": "ports",
+					"repository_ids": "repository_ids",
+					"services": "services"
+				},
+				"method": "PATCH",
+				"path": "/outbound-rules/{outbound_rule_id}"
+			}
+		},
 		"group_pipeline_variable": {
 			"create": {
 				"body": {
@@ -3347,6 +3747,9 @@
 				"method": "GET",
 				"path": "/groups/{group_id}/sso-connection"
 			},
+			"renames": {
+				"last_test.by.by_imported": "imported"
+			},
 			"update": {
 				"body": {
 					"attribute_mapping": "attribute_mapping",
@@ -3576,6 +3979,9 @@
 				"method": "GET",
 				"path": "/groups/{group_id}/wiki/pages/{path}"
 			},
+			"renames": {
+				"commit.author.author_imported": "imported"
+			},
 			"replace": [
 				"format",
 				"path"
@@ -3636,6 +4042,7 @@
 					"description": "description",
 					"display_name": "display_name",
 					"group_id": "group_id",
+					"listed": "listed",
 					"repository_name": "repository_name",
 					"visibility": "visibility"
 				},
@@ -3665,6 +4072,7 @@
 					"catalog_enabled": "catalog_enabled",
 					"description": "description",
 					"display_name": "display_name",
+					"listed": "listed",
 					"pipelines_enabled": "pipelines_enabled",
 					"repository_name": "repository_name",
 					"visibility": "visibility"
@@ -3955,6 +4363,49 @@
 				"archived"
 			]
 		},
+		"repository_chat_subscription": {
+			"create": {
+				"body": {
+					"channel_id": "channel_id",
+					"events": "events"
+				},
+				"method": "POST",
+				"path": "/repositories/{repo_id}/chat-subscriptions"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/chat-subscriptions/{subscription_id}"
+			},
+			"identity": [
+				"repo_id",
+				"subscription_id"
+			],
+			"match": {
+				"subscription_id": "subscription_id"
+			},
+			"params": {
+				"repo_id": "repo_id",
+				"subscription_id": "subscription_id"
+			},
+			"read": {
+				"items": "items",
+				"method": "GET",
+				"path": "/repositories/{repo_id}/chat-subscriptions"
+			},
+			"renames": {
+				"provider_info": "provider"
+			},
+			"replace": [
+				"channel_id"
+			],
+			"update": {
+				"body": {
+					"events": "events"
+				},
+				"method": "PATCH",
+				"path": "/repositories/{repo_id}/chat-subscriptions/{subscription_id}"
+			}
+		},
 		"repository_fork": {
 			"create": {
 				"body": {
@@ -4138,8 +4589,7 @@
 				"on_branch_created": "scalar_or_object",
 				"on_mr_closed": "scalar_or_object",
 				"on_mr_merged": "scalar_or_object",
-				"on_mr_opened": "scalar_or_object",
-				"transitions.table": "json"
+				"on_mr_opened": "scalar_or_object"
 			},
 			"update": {
 				"body": {
@@ -4287,6 +4737,45 @@
 			},
 			"update_only": [
 				"closed"
+			]
+		},
+		"repository_mirror": {
+			"create": {
+				"body": {
+					"interval_minutes": "interval_minutes",
+					"run_pipelines": "run_pipelines",
+					"source_url": "source_url",
+					"token": "token"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/mirror"
+			},
+			"delete": {
+				"method": "DELETE",
+				"path": "/repositories/{repo_id}/mirror"
+			},
+			"identity": [
+				"repo_id"
+			],
+			"params": {
+				"repo_id": "repo_id"
+			},
+			"read": {
+				"method": "GET",
+				"path": "/repositories/{repo_id}/mirror"
+			},
+			"update": {
+				"body": {
+					"interval_minutes": "interval_minutes",
+					"run_pipelines": "run_pipelines",
+					"source_url": "source_url",
+					"token": "token"
+				},
+				"method": "PUT",
+				"path": "/repositories/{repo_id}/mirror"
+			},
+			"write_only": [
+				"token"
 			]
 		},
 		"repository_mr_settings": {
@@ -4517,6 +5006,9 @@
 			"read": {
 				"method": "GET",
 				"path": "/repositories/{repo_id}/releases/{tag_name}"
+			},
+			"renames": {
+				"assets.uploader.uploader_imported": "imported"
 			},
 			"replace": [
 				"tag_name",
@@ -4777,6 +5269,9 @@
 				"method": "GET",
 				"path": "/repositories/{repo_id}/wiki/pages/{path}"
 			},
+			"renames": {
+				"commit.author.author_imported": "imported"
+			},
 			"replace": [
 				"format",
 				"path"
@@ -4947,6 +5442,9 @@
 					"param": "next_token"
 				},
 				"path": "/teams/{team_id}/members"
+			},
+			"renames": {
+				"member.user.user_imported": "imported"
 			},
 			"update": {
 				"body": {

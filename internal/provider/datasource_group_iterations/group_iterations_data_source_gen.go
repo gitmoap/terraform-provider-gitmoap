@@ -18,11 +18,19 @@ import (
 func GroupIterationsDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"cadence_id": schema.StringAttribute{
+			"cadence_id": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Keeps the iterations this cadence generated",
-				MarkdownDescription: "Keeps the iterations this cadence generated",
+				Description:         "Only the iterations these cadences generated; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Only the iterations these cadences generated; repeat it, or separate with commas, for any of them",
+			},
+			"cadence_id_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Cadences to leave out. An iteration made by hand, which no cadence generated, is kept. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Cadences to leave out. An iteration made by hand, which no cadence generated, is kept. Repeat it, or separate values with commas, for several, up to 20",
 			},
 			"group_id": schema.StringAttribute{
 				Required:            true,
@@ -94,23 +102,33 @@ func GroupIterationsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 				Computed: true,
 			},
-			"state": schema.StringAttribute{
+			"state": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Keeps the iterations in this state today — upcoming, current or closed",
-				MarkdownDescription: "Keeps the iterations in this state today — upcoming, current or closed",
+				Description:         "Only the iterations in these states today — upcoming, current or closed; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Only the iterations in these states today — upcoming, current or closed; repeat it, or separate with commas, for any of them",
+			},
+			"state_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "States to leave out, such as `closed`. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "States to leave out, such as `closed`. Repeat it, or separate values with commas, for several, up to 20",
 			},
 		},
-		Description:         "List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with state, or to one cadence's with cadence_id. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue:read.",
-		MarkdownDescription: "List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with `state`, or to one cadence's with `cadence_id`. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue:read`.",
+		Description:         "List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with state, or to one cadence's with cadence_id; each takes several values, and state_not and cadence_id_not leave some out. Anyone who can see the group's work items may list them — on a public group, without signing in. The token needs issue:read.",
+		MarkdownDescription: "List a group's iterations. Returns the iterations the group holds — hand-made and generated alike — in date order, each with whether it is upcoming, current or closed today. Narrow it with `state`, or to one cadence's with `cadence_id`; each takes several values, and `state_not` and `cadence_id_not` leave some out. Anyone who can see the group's work items may list them — on a public group, without signing in.\n\nThe token needs `issue:read`.",
 	}
 }
 
 type GroupIterationsModel struct {
-	CadenceId       types.String `tfsdk:"cadence_id"`
+	CadenceId       types.List   `tfsdk:"cadence_id"`
+	CadenceIdNot    types.List   `tfsdk:"cadence_id_not"`
 	GroupId         types.String `tfsdk:"group_id"`
 	GroupIterations types.Set    `tfsdk:"group_iterations"`
-	State           types.String `tfsdk:"state"`
+	State           types.List   `tfsdk:"state"`
+	StateNot        types.List   `tfsdk:"state_not"`
 }
 
 var _ basetypes.ObjectTypable = GroupIterationsType{}

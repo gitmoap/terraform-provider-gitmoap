@@ -1,3 +1,60 @@
+## 0.2.0 (Unreleased)
+
+Generated from the gitmoap API 0.116.0.
+
+BREAKING CHANGES:
+
+* A list data source's filters take several values, and match any of them: `tier = "production"`
+  is now `tier = ["production"]`. Each has a `<name>_not` twin that leaves values out. They are
+  `gitmoap_catalog_scorecard_results`' `state`, `check_key` and `service_id`;
+  `gitmoap_catalog_service_deployments`' `environment_id` and `status`; `gitmoap_group_access`' and
+  `gitmoap_repository_access`' `subject_kind`; `gitmoap_group_ai_org_gates`' `state` and
+  `session_id`; `gitmoap_group_ai_org_sessions`' `agent_id`, `state`, `squad` and
+  `ritual_run_id`; `gitmoap_group_catalog_deployments`' `environment_id` and `tier`;
+  `gitmoap_group_catalog_environments`' and `gitmoap_repository_catalog_environments`' `tier`;
+  `gitmoap_group_catalog_services`' and `gitmoap_repository_catalog_services`' `kind`,
+  `lifecycle_stage` and `source`; `gitmoap_group_iterations`' `state` and `cadence_id`;
+  `gitmoap_group_packages`' `format`; `gitmoap_provider_capabilities`' `stage_type`;
+  `gitmoap_providers`' `category` and `tier`; `gitmoap_repository_pipeline_component_versions`'
+  `lifecycle_state`; and `gitmoap_templates`' `kind`.
+* An issue settings' `transitions` is a map from a status category to the categories a work item
+  may move to from it, `{ done = ["todo"] }`, as the API sends it. `transitions.table` never held
+  the table: the API refused it, and reading left it empty. A state from 0.1 reads as it is.
+
+NOTES:
+
+* Destroying a `gitmoap_repository` or `gitmoap_group` no longer deletes it at once: the API now
+  keeps it for seven days, restorable by an Owner, and it holds its path until then, so creating
+  another under the same name fails. Set `purge_on_destroy` to delete it for good.
+
+FEATURES:
+
+* New resources: `gitmoap_group_outbound`, an organization's outbound policy, and
+  `gitmoap_group_outbound_rule`, a destination its code may reach; `gitmoap_repository_mirror`, a
+  repository that follows one on another host, with a write-only `token_wo`; and
+  `gitmoap_group_chat_subscription` and `gitmoap_repository_chat_subscription`, a Slack channel
+  that hears a group's or a repository's events, which `paused` pauses.
+* New data sources: `gitmoap_group_outbound`, `gitmoap_group_chat_apps`,
+  `gitmoap_group_chat_apps_slack_conversations`, `gitmoap_group_chat_subscriptions`,
+  `gitmoap_repository_chat_subscriptions`, `gitmoap_group_imports`, `gitmoap_repository_import`,
+  `gitmoap_group_imported_identities`, `gitmoap_group_imported_identities_suggestions`,
+  `gitmoap_repository_mirror`, `gitmoap_repository_pipeline_component_file` and
+  `gitmoap_repository_pipeline_component_files`.
+* `gitmoap_repository` has `archived`, which archives and unarchives it in place, `listed`, and
+  `purge_on_destroy`; and reads `archived_at`, `mirrored_from` and `last_pushed_at`.
+  `gitmoap_group` has `purge_on_destroy`.
+* Who did something, like a `created_by` or an `author`, has `imported`: who they are on another
+  host, when an import brought what they wrote there.
+* A pipeline's steps and components have `condition`, as JSON; `gitmoap_repository_pipeline_file`
+  has `source_map`; a provider version has `auth_schema` and `launcher_requires`; and an AI
+  session says who woke it.
+
+BUG FIXES:
+
+* A data source's list argument sent as a query parameter, like
+  `gitmoap_repository_catalog_resolve`'s `path`, was left out of the request without a word, so the
+  data source read as if it weren't set. It's sent now, one parameter for each value.
+
 ## 0.1.1 (November 11, 2026)
 
 BUG FIXES:

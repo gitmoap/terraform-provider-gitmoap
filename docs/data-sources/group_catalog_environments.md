@@ -3,13 +3,13 @@
 page_title: "gitmoap_group_catalog_environments Data Source - gitmoap"
 subcategory: ""
 description: |-
-  List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless include_archived=true. With inherited=true the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by tier or search; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.
+  List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless include_archived=true. With inherited=true the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by tier or search, and leave tiers out with tier_not; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.
   The token needs catalog:read.
 ---
 
 # gitmoap_group_catalog_environments (Data Source)
 
-List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless `include_archived=true`. With `inherited=true` the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by `tier` or `search`; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.
+List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless `include_archived=true`. With `inherited=true` the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by `tier` or `search`, and leave tiers out with `tier_not`; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.
 
 The token needs `catalog:read`.
 
@@ -34,10 +34,11 @@ data "gitmoap_group_catalog_environments" "acme" {
 
 ### Optional
 
-- `include_archived` (Boolean) Include archived environments (excluded by default)
-- `inherited` (Boolean) Also return the ancestor-group environments this scope may reference, with a nearer slug shadowing a farther one
+- `include_archived` (Boolean) Include archived environments. Excluded by default, because an archived environment is out of resolution and therefore out of the estate.
+- `inherited` (Boolean) Also return the ancestor-group environments this scope may reference — what a pipeline author needs, since a node's `environment:` resolves up the chain — with a nearer slug shadowing a farther one
 - `search` (String) Match the slug or display name
-- `tier` (String) Filter by tier
+- `tier` (List of String) Environment tiers — development, testing, staging or production; repeat it, or separate with commas, for any of them
+- `tier_not` (List of String) Environment tiers to leave out. Repeat it, or separate values with commas, for several, up to 20
 
 ### Read-Only
 

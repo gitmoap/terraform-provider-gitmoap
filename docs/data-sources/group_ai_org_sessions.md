@@ -34,10 +34,14 @@ data "gitmoap_group_ai_org_sessions" "acme" {
 
 ### Optional
 
-- `agent_id` (String) Only this agent's sessions
-- `ritual_run_id` (String) Only the sessions taking part in this ritual run
-- `squad` (String) Only the sessions whose agent was in this squad when they started
-- `state` (String) Only sessions in this state
+- `agent_id` (List of String) Only these agents' sessions; repeat it, or separate with commas, for any of them
+- `agent_id_not` (List of String) Agents whose sessions to leave out. A session no agent holds — a persona draft, a cache refresh — is kept. Repeat it, or separate values with commas, for several, up to 20
+- `ritual_run_id` (List of String) Only the sessions taking part in these ritual runs
+- `ritual_run_id_not` (List of String) Ritual runs whose sessions to leave out. A session in no ritual run is kept. Repeat it, or separate values with commas, for several, up to 20
+- `squad` (List of String) Only the sessions whose agent was in one of these squads when they started
+- `squad_not` (List of String) Squads whose sessions to leave out. A session whose agent was in no squad is kept. Repeat it, or separate values with commas, for several, up to 20
+- `state` (List of String) Only sessions in these states; repeat it, or separate with commas, for any of them
+- `state_not` (List of String) Session states to leave out. Repeat it, or separate values with commas, for several, up to 20
 
 ### Read-Only
 
@@ -52,6 +56,8 @@ Read-Only:
 - `branch` (String)
 - `carried_workspace` (String) Which of an ended session's workspace objects the platform copied into the session continuing
 it, for its workspace to start from: the newer of its last checkpoint and its last out-bundle.
+- `claimed_from_session_id` (String)
+- `claimed_into_session_id` (String)
 - `continuation_id` (String)
 - `continues_session_id` (String)
 - `cost_micros` (Number) Settled spend, fee included, in micro-dollars.
@@ -76,6 +82,8 @@ revision was published.
 - `summary` (String) The agent's own account of the session.
 - `trigger_kind` (String) What started a session.
 - `turns` (Number)
+- `woken_by` (Attributes) What woke a session: the trigger, who caused it, what it is about, and — for a channel message
+or another agent's action — the message and the session it came from. (see [below for nested schema](#nestedatt--items--woken_by))
 
 <a id="nestedatt--items--pinned_memory"></a>
 ### Nested Schema for `items.pinned_memory`
@@ -94,3 +102,36 @@ Read-Only:
 
 - `address` (String) The address acted on — `acme/api#412`, `acme/api!87` — when the session has one.
 - `started_by` (String) The person or account whose action started the session, when one did.
+
+
+<a id="nestedatt--items--woken_by"></a>
+### Nested Schema for `items.woken_by`
+
+Read-Only:
+
+- `address` (String) The address it is about — a work item, a merge request, a branch, or a channel's thread.
+- `by` (Attributes) Who caused a session to wake. (see [below for nested schema](#nestedatt--items--woken_by--by))
+- `from_session_id` (String)
+- `message` (Attributes) The channel message that woke a session. (see [below for nested schema](#nestedatt--items--woken_by--message))
+- `trigger_kind` (String) What started a session.
+
+<a id="nestedatt--items--woken_by--by"></a>
+### Nested Schema for `items.woken_by.by`
+
+Read-Only:
+
+- `kind` (String) Who caused what woke a session.
+- `name` (String) How they are named: `@username` for a person, `@handle` for an agent, the account's name for
+a service account. Absent for the platform, and for an account since removed.
+- `principal_id` (String)
+
+
+<a id="nestedatt--items--woken_by--message"></a>
+### Nested Schema for `items.woken_by.message`
+
+Read-Only:
+
+- `address` (String) Its thread's address, such as `acme/~core/42`; a reply carries its thread's.
+- `kind` (String) What a message is. People post `message`; an AI agent always says which of its kinds it posts,
+so digests can summarize and screens can filter.
+- `message_id` (String) A channel message's id. Time-ordered: a later message has a greater id.

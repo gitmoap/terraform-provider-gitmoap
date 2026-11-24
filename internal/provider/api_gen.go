@@ -9,7 +9,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Update:   &operation{Method: "PUT", Path: "/ai-agents/{agent_id}/memory", Body: map[string]string{"body": "body", "expected_revision": "expected_revision", "note": "note"}},
 		Params:   map[string]string{"agent_id": "agent_id"},
 		Identity: []string{"agent_id"},
-		Renames:  map[string]string{"history.history_updated_by": "updated_by"},
+		Renames:  map[string]string{"history.history_updated_by": "updated_by", "history.history_updated_by.updated_by_imported": "imported"},
 	},
 	"catalog_environment_variable": {
 		Create:    operation{Method: "PUT", Path: "/catalog/environments/{environment_id}/variables/{name}", Body: map[string]string{"secret": "secret", "value": "value"}},
@@ -37,7 +37,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Delete:     &operation{Method: "DELETE", Path: "/catalog/services/{service_id}"},
 		Params:     map[string]string{"group_id": "group_id", "service_id": "service_id"},
 		Identity:   []string{"group_id", "service_id"},
-		Renames:    map[string]string{"lifecycle_stage": "lifecycle"},
+		Renames:    map[string]string{"lifecycle_stage": "lifecycle", "owner.actor.actor_imported": "imported"},
 		Transforms: map[string]string{"annotations": "json"},
 	},
 	"group": {
@@ -65,7 +65,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Update:   &operation{Method: "PUT", Path: "/groups/{group_id}/ai-org/conventions", Body: map[string]string{"body": "body", "expected_revision": "expected_revision", "note": "note"}},
 		Params:   map[string]string{"group_id": "group_id"},
 		Identity: []string{"group_id"},
-		Renames:  map[string]string{"history.history_updated_by": "updated_by"},
+		Renames:  map[string]string{"history.history_updated_by": "updated_by", "history.history_updated_by.updated_by_imported": "imported"},
 	},
 	"group_ai_org_squad_memory": {
 		Create:   operation{Method: "PUT", Path: "/groups/{group_id}/ai-org/squads/{squad_key}/memory", Body: map[string]string{"body": "body", "expected_revision": "expected_revision", "note": "note"}},
@@ -73,7 +73,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Update:   &operation{Method: "PUT", Path: "/groups/{group_id}/ai-org/squads/{squad_key}/memory", Body: map[string]string{"body": "body", "expected_revision": "expected_revision", "note": "note"}},
 		Params:   map[string]string{"group_id": "group_id", "squad_key": "squad_key"},
 		Identity: []string{"group_id", "squad_key"},
-		Renames:  map[string]string{"history.history_updated_by": "updated_by"},
+		Renames:  map[string]string{"history.history_updated_by": "updated_by", "history.history_updated_by.updated_by_imported": "imported"},
 	},
 	"group_approval_policy": {
 		Create:     operation{Method: "PUT", Path: "/groups/{group_id}/approval-policy", Body: map[string]string{"author_can_approve": "author_can_approve", "committers_can_approve": "committers_can_approve", "enforcement": "enforcement", "last_pusher_can_approve": "last_pusher_can_approve", "reset_on_push": "reset_on_push"}},
@@ -114,6 +114,17 @@ var resourceAPIs = map[string]resourceAPI{
 		Transforms: map[string]string{"protection.approvers.anyone": "marker", "protection.approvers.code_owners": "marker"},
 		UpdateOnly: []string{"archived"},
 	},
+	"group_chat_subscription": {
+		Create:   operation{Method: "POST", Path: "/groups/{group_id}/chat-subscriptions", Body: map[string]string{"channel_id": "channel_id", "events": "events"}},
+		Read:     operation{Method: "GET", Path: "/groups/{group_id}/chat-subscriptions", Items: "items"},
+		Update:   &operation{Method: "PATCH", Path: "/groups/{group_id}/chat-subscriptions/{subscription_id}", Body: map[string]string{"events": "events"}},
+		Delete:   &operation{Method: "DELETE", Path: "/groups/{group_id}/chat-subscriptions/{subscription_id}"},
+		Params:   map[string]string{"group_id": "group_id", "subscription_id": "subscription_id"},
+		Identity: []string{"group_id", "subscription_id"},
+		Match:    map[string]string{"subscription_id": "subscription_id"},
+		Replace:  []string{"channel_id"},
+		Renames:  map[string]string{"provider_info": "provider"},
+	},
 	"group_fork_settings": {
 		Create:   operation{Method: "PATCH", Path: "/groups/{group_id}/fork-settings", Body: map[string]string{"allow_maintainer_edits": "allow_maintainer_edits", "closed_proposal_retention_days": "closed_proposal_retention_days", "fork_merge_requests": "fork_merge_requests", "fork_merge_requests_enforced": "fork_merge_requests_enforced", "forking": "forking", "forking_enforced": "forking_enforced", "min_account_age_days": "min_account_age_days", "min_account_age_days_enforced": "min_account_age_days_enforced", "outbound_merge_requests": "outbound_merge_requests", "outbound_merge_requests_enforced": "outbound_merge_requests_enforced", "override_group_settings": "override_group_settings", "proposal_runs": "proposal_runs", "proposal_runs_enforced": "proposal_runs_enforced"}},
 		Read:     operation{Method: "GET", Path: "/groups/{group_id}/fork-settings"},
@@ -140,7 +151,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Delete:     &operation{Method: "DELETE", Path: "/groups/{group_id}/issue-settings"},
 		Params:     map[string]string{"group_id": "group_id"},
 		Identity:   []string{"group_id"},
-		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object", "transitions.table": "json"},
+		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object"},
 	},
 	"group_iteration": {
 		Create:   operation{Method: "POST", Path: "/groups/{group_id}/iterations", Body: map[string]string{"description": "description", "due_date": "due_date", "start_date": "start_date", "title": "title"}},
@@ -194,6 +205,23 @@ var resourceAPIs = map[string]resourceAPI{
 		Delete:   &operation{Method: "DELETE", Path: "/groups/{group_id}/mr-settings"},
 		Params:   map[string]string{"group_id": "group_id"},
 		Identity: []string{"group_id"},
+	},
+	"group_outbound": {
+		Create:   operation{Method: "PATCH", Path: "/groups/{group_id}/outbound", Body: map[string]string{"platform_registries": "platform_registries", "services": "services", "version": "version"}},
+		Read:     operation{Method: "GET", Path: "/groups/{group_id}/outbound"},
+		Update:   &operation{Method: "PATCH", Path: "/groups/{group_id}/outbound", Body: map[string]string{"platform_registries": "platform_registries", "services": "services", "version": "version"}},
+		Params:   map[string]string{"group_id": "group_id"},
+		Identity: []string{"group_id"},
+	},
+	"group_outbound_rule": {
+		Create:   operation{Method: "POST", Path: "/groups/{group_id}/outbound/rules", Body: map[string]string{"from_destination": "from_destination", "kind": "kind", "note": "note", "ports": "ports", "repository_ids": "repository_ids", "services": "services", "value": "value"}},
+		Read:     operation{Method: "GET", Path: "/groups/{group_id}/outbound", Items: "rules"},
+		Update:   &operation{Method: "PATCH", Path: "/outbound-rules/{outbound_rule_id}", Body: map[string]string{"note": "note", "ports": "ports", "repository_ids": "repository_ids", "services": "services"}},
+		Delete:   &operation{Method: "DELETE", Path: "/outbound-rules/{outbound_rule_id}"},
+		Params:   map[string]string{"group_id": "group_id", "outbound_rule_id": "rule_id"},
+		Identity: []string{"group_id", "rule_id"},
+		Match:    map[string]string{"rule_id": "rule_id"},
+		Replace:  []string{"from_destination", "kind", "value"},
 	},
 	"group_pipeline_variable": {
 		Create:    operation{Method: "PUT", Path: "/groups/{group_id}/pipeline-variables/{name}", Body: map[string]string{"protected": "protected", "secret": "secret", "value": "value"}},
@@ -257,6 +285,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Delete:    &operation{Method: "DELETE", Path: "/groups/{group_id}/sso-connection"},
 		Params:    map[string]string{"group_id": "group_id"},
 		Identity:  []string{"group_id"},
+		Renames:   map[string]string{"last_test.by.by_imported": "imported"},
 		WriteOnly: []string{"oidc.client_secret"},
 	},
 	"group_sso_domain": {
@@ -310,6 +339,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Params:   map[string]string{"group_id": "group_id", "path": "path"},
 		Identity: []string{"group_id", "path"},
 		Replace:  []string{"format", "path"},
+		Renames:  map[string]string{"commit.author.author_imported": "imported"},
 	},
 	"provider_listing": {
 		Create:   operation{Method: "PUT", Path: "/providers/{provider_id}/listing", Body: map[string]string{"categories": "categories", "examples": "examples", "homepage_url": "homepage_url", "keywords": "keywords", "readme": "readme", "repository_url": "repository_url"}},
@@ -320,9 +350,9 @@ var resourceAPIs = map[string]resourceAPI{
 		Renames:  map[string]string{"provider_info": "provider"},
 	},
 	"repository": {
-		Create:     operation{Method: "POST", Path: "/repositories", Body: map[string]string{"avatar": "avatar", "description": "description", "display_name": "display_name", "group_id": "group_id", "repository_name": "repository_name", "visibility": "visibility"}},
+		Create:     operation{Method: "POST", Path: "/repositories", Body: map[string]string{"avatar": "avatar", "description": "description", "display_name": "display_name", "group_id": "group_id", "listed": "listed", "repository_name": "repository_name", "visibility": "visibility"}},
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}"},
-		Update:     &operation{Method: "PUT", Path: "/repositories/{repo_id}", Body: map[string]string{"avatar": "avatar", "catalog_enabled": "catalog_enabled", "description": "description", "display_name": "display_name", "pipelines_enabled": "pipelines_enabled", "repository_name": "repository_name", "visibility": "visibility"}},
+		Update:     &operation{Method: "PUT", Path: "/repositories/{repo_id}", Body: map[string]string{"avatar": "avatar", "catalog_enabled": "catalog_enabled", "description": "description", "display_name": "display_name", "listed": "listed", "pipelines_enabled": "pipelines_enabled", "repository_name": "repository_name", "visibility": "visibility"}},
 		Delete:     &operation{Method: "DELETE", Path: "/repositories/{repo_id}"},
 		Params:     map[string]string{"repo_id": "repository_id"},
 		Identity:   []string{"repository_id"},
@@ -386,6 +416,17 @@ var resourceAPIs = map[string]resourceAPI{
 		Transforms: map[string]string{"protection.approvers.anyone": "marker", "protection.approvers.code_owners": "marker"},
 		UpdateOnly: []string{"archived"},
 	},
+	"repository_chat_subscription": {
+		Create:   operation{Method: "POST", Path: "/repositories/{repo_id}/chat-subscriptions", Body: map[string]string{"channel_id": "channel_id", "events": "events"}},
+		Read:     operation{Method: "GET", Path: "/repositories/{repo_id}/chat-subscriptions", Items: "items"},
+		Update:   &operation{Method: "PATCH", Path: "/repositories/{repo_id}/chat-subscriptions/{subscription_id}", Body: map[string]string{"events": "events"}},
+		Delete:   &operation{Method: "DELETE", Path: "/repositories/{repo_id}/chat-subscriptions/{subscription_id}"},
+		Params:   map[string]string{"repo_id": "repo_id", "subscription_id": "subscription_id"},
+		Identity: []string{"repo_id", "subscription_id"},
+		Match:    map[string]string{"subscription_id": "subscription_id"},
+		Replace:  []string{"channel_id"},
+		Renames:  map[string]string{"provider_info": "provider"},
+	},
 	"repository_fork": {
 		Create:   operation{Method: "PATCH", Path: "/repositories/{repo_id}/fork", Body: map[string]string{"auto_sync": "auto_sync", "code_search": "code_search", "tracked_branch": "tracked_branch", "upstream_branch": "upstream_branch"}},
 		Read:     operation{Method: "GET", Path: "/repositories/{repo_id}/fork"},
@@ -419,7 +460,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Delete:     &operation{Method: "DELETE", Path: "/repositories/{repo_id}/issue-settings"},
 		Params:     map[string]string{"repo_id": "repo_id"},
 		Identity:   []string{"repo_id"},
-		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object", "transitions.table": "json"},
+		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object"},
 	},
 	"repository_label": {
 		Create:   operation{Method: "POST", Path: "/repositories/{repo_id}/labels", Body: map[string]string{"color": "color", "description": "description", "key": "key", "title": "title"}},
@@ -448,6 +489,15 @@ var resourceAPIs = map[string]resourceAPI{
 		Params:     map[string]string{"milestone_id": "milestone_id", "repo_id": "repo_id"},
 		Identity:   []string{"repo_id", "milestone_id"},
 		UpdateOnly: []string{"closed"},
+	},
+	"repository_mirror": {
+		Create:    operation{Method: "PUT", Path: "/repositories/{repo_id}/mirror", Body: map[string]string{"interval_minutes": "interval_minutes", "run_pipelines": "run_pipelines", "source_url": "source_url", "token": "token"}},
+		Read:      operation{Method: "GET", Path: "/repositories/{repo_id}/mirror"},
+		Update:    &operation{Method: "PUT", Path: "/repositories/{repo_id}/mirror", Body: map[string]string{"interval_minutes": "interval_minutes", "run_pipelines": "run_pipelines", "source_url": "source_url", "token": "token"}},
+		Delete:    &operation{Method: "DELETE", Path: "/repositories/{repo_id}/mirror"},
+		Params:    map[string]string{"repo_id": "repo_id"},
+		Identity:  []string{"repo_id"},
+		WriteOnly: []string{"token"},
 	},
 	"repository_mr_settings": {
 		Create:   operation{Method: "PATCH", Path: "/repositories/{repo_id}/mr-settings", Body: map[string]string{"allow_merge_without_pipeline": "allow_merge_without_pipeline", "block_on_rejection": "block_on_rejection", "delete_source_branch_default": "delete_source_branch_default", "merge_method": "merge_method", "override_group_settings": "override_group_settings", "require_issue_criteria_green": "require_issue_criteria_green", "require_linked_issue": "require_linked_issue", "require_pipeline_success": "require_pipeline_success", "squash_option": "squash_option", "stack_auto_retarget": "stack_auto_retarget", "stack_enforce_merge_order": "stack_enforce_merge_order", "stack_restack_strategy": "stack_restack_strategy", "unresolved_threads": "unresolved_threads"}},
@@ -495,6 +545,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Params:   map[string]string{"repo_id": "repo_id", "tag_name": "tag_name"},
 		Identity: []string{"repo_id", "tag_name"},
 		Replace:  []string{"tag_name", "target"},
+		Renames:  map[string]string{"assets.uploader.uploader_imported": "imported"},
 	},
 	"repository_release_asset": {
 		Create:   operation{Method: "POST", Path: "/repositories/{repo_id}/releases/{tag_name}/assets", Body: map[string]string{"content_type": "content_type", "name": "name", "size": "size"}},
@@ -553,6 +604,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Params:   map[string]string{"path": "path", "repo_id": "repo_id"},
 		Identity: []string{"repo_id", "path"},
 		Replace:  []string{"format", "path"},
+		Renames:  map[string]string{"commit.author.author_imported": "imported"},
 	},
 	"role": {
 		Create:   operation{Method: "POST", Path: "/groups/{group_id}/roles", Body: map[string]string{"added": "added", "base_role": "base_role", "description": "description", "name": "name", "removed": "removed", "slug": "slug"}},
@@ -588,6 +640,7 @@ var resourceAPIs = map[string]resourceAPI{
 		Params:   map[string]string{"team_id": "team_id", "user_id": "user_id"},
 		Identity: []string{"team_id", "user_id"},
 		Match:    map[string]string{"user_id": "user_id"},
+		Renames:  map[string]string{"member.user.user_imported": "imported"},
 	},
 }
 
@@ -597,21 +650,23 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{},
 	},
 	"ai_agent": {
-		Read:   operation{Method: "GET", Path: "/ai-agents/{agent_id}"},
-		Params: map[string]string{"agent_id": "agent_id"},
+		Read:    operation{Method: "GET", Path: "/ai-agents/{agent_id}"},
+		Params:  map[string]string{"agent_id": "agent_id"},
+		Renames: map[string]string{"suspended_by.suspended_by_imported": "imported"},
 	},
 	"ai_agent_memory": {
 		Read:    operation{Method: "GET", Path: "/ai-agents/{agent_id}/memory", Query: map[string]string{"revision": "revision"}},
 		Params:  map[string]string{"agent_id": "agent_id"},
-		Renames: map[string]string{"history.history_updated_by": "updated_by"},
+		Renames: map[string]string{"history.history_updated_by": "updated_by", "history.history_updated_by.updated_by_imported": "imported"},
 	},
 	"ai_agent_profile": {
 		Read:   operation{Method: "GET", Path: "/ai-agents/{agent_id}/profile"},
 		Params: map[string]string{"agent_id": "agent_id"},
 	},
 	"ai_gate": {
-		Read:   operation{Method: "GET", Path: "/ai-gates/{gate_id}"},
-		Params: map[string]string{"gate_id": "gate_id"},
+		Read:    operation{Method: "GET", Path: "/ai-gates/{gate_id}"},
+		Params:  map[string]string{"gate_id": "gate_id"},
+		Renames: map[string]string{"approvers.approvers_imported": "imported", "decided_by.decided_by_imported": "imported"},
 	},
 	"ai_models": {
 		Read:   operation{Method: "GET", Path: "/ai-models"},
@@ -650,14 +705,14 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Transforms: map[string]string{"applies_to.annotations": "json", "checks.config": "json"},
 	},
 	"catalog_scorecard_results": {
-		Read:       operation{Method: "GET", Path: "/catalog/scorecards/{scorecard_id}/results", Query: map[string]string{"check_key": "check_key", "service_id": "service_id", "state": "state"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:       operation{Method: "GET", Path: "/catalog/scorecards/{scorecard_id}/results", Query: map[string]string{"check_key": "check_key", "check_key_not": "check_key_not", "service_id": "service_id", "service_id_not": "service_id_not", "state": "state", "state_not": "state_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params:     map[string]string{"scorecard_id": "scorecard_id"},
 		Transforms: map[string]string{"items.detail": "json", "summary.scored.by_level": "json"},
 	},
 	"catalog_service": {
 		Read:       operation{Method: "GET", Path: "/catalog/services/{service_id}"},
 		Params:     map[string]string{"service_id": "service_id"},
-		Renames:    map[string]string{"lifecycle_stage": "lifecycle"},
+		Renames:    map[string]string{"lifecycle_stage": "lifecycle", "owner.actor.actor_imported": "imported"},
 		Transforms: map[string]string{"annotations": "json"},
 	},
 	"catalog_service_dependencies": {
@@ -669,8 +724,9 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"service_id": "service_id"},
 	},
 	"catalog_service_deployments": {
-		Read:   operation{Method: "GET", Path: "/catalog/services/{service_id}/deployments", Query: map[string]string{"environment_id": "environment_id", "status": "status"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
-		Params: map[string]string{"service_id": "service_id"},
+		Read:    operation{Method: "GET", Path: "/catalog/services/{service_id}/deployments", Query: map[string]string{"environment_id": "environment_id", "environment_id_not": "environment_id_not", "status": "status", "status_not": "status_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params:  map[string]string{"service_id": "service_id"},
+		Renames: map[string]string{"items.triggered_by.triggered_by_imported": "imported"},
 	},
 	"catalog_service_deployments_current": {
 		Read:   operation{Method: "GET", Path: "/catalog/services/{service_id}/deployments/current"},
@@ -681,55 +737,60 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"service_id": "service_id"},
 	},
 	"channel": {
-		Read:   operation{Method: "GET", Path: "/channels/{channel_id}"},
-		Params: map[string]string{"channel_id": "channel_id"},
+		Read:    operation{Method: "GET", Path: "/channels/{channel_id}"},
+		Params:  map[string]string{"channel_id": "channel_id"},
+		Renames: map[string]string{"direct_agent.direct_agent_imported": "imported", "direct_user.direct_user_imported": "imported"},
 	},
 	"channel_members": {
-		Read:   operation{Method: "GET", Path: "/channels/{channel_id}/members", Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
-		Params: map[string]string{"channel_id": "channel_id"},
+		Read:    operation{Method: "GET", Path: "/channels/{channel_id}/members", Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params:  map[string]string{"channel_id": "channel_id"},
+		Renames: map[string]string{"items.member.member_imported": "imported"},
 	},
 	"group": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}"},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_access": {
-		Read:    operation{Method: "GET", Path: "/groups/{group_id}/access", Query: map[string]string{"search": "search", "source": "source", "subject_kind": "subject_kind"}, Pages: &pages{Param: "next_token", Items: "entries", Limit: 0}},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/access", Query: map[string]string{"search": "search", "source": "source", "subject_kind": "subject_kind", "subject_kind_not": "subject_kind_not"}, Pages: &pages{Param: "next_token", Items: "entries", Limit: 0}},
 		Params:  map[string]string{"group_id": "group_id"},
-		Renames: map[string]string{"entries.limited_to.limited_to_subject": "subject", "entries.limited_to.limited_to_subject.subject_principal": "principal", "entries.limited_to.limited_to_subject.subject_team": "team", "entries.source.source_at": "at"},
+		Renames: map[string]string{"entries.limited_to.created_by.created_by_imported": "imported", "entries.limited_to.limited_to_subject": "subject", "entries.limited_to.limited_to_subject.subject_principal": "principal", "entries.limited_to.limited_to_subject.subject_team": "team", "entries.source.source_at": "at"},
 	},
 	"group_ai_agent_by_handle": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-agents/by-handle/{handle}"},
 		Params: map[string]string{"group_id": "group_id", "handle": "handle"},
 	},
 	"group_ai_org": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-org"},
-		Params: map[string]string{"group_id": "group_id"},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/ai-org"},
+		Params:  map[string]string{"group_id": "group_id"},
+		Renames: map[string]string{"created_by.created_by_imported": "imported"},
 	},
 	"group_ai_org_agents": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-org/agents"},
-		Params: map[string]string{"group_id": "group_id"},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/ai-org/agents"},
+		Params:  map[string]string{"group_id": "group_id"},
+		Renames: map[string]string{"items.suspended_by.suspended_by_imported": "imported"},
 	},
 	"group_ai_org_conventions": {
 		Read:    operation{Method: "GET", Path: "/groups/{group_id}/ai-org/conventions", Query: map[string]string{"revision": "revision"}},
 		Params:  map[string]string{"group_id": "group_id"},
-		Renames: map[string]string{"history.history_updated_by": "updated_by"},
+		Renames: map[string]string{"history.history_updated_by": "updated_by", "history.history_updated_by.updated_by_imported": "imported"},
 	},
 	"group_ai_org_gates": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-org/gates", Query: map[string]string{"session_id": "session_id", "state": "state"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
-		Params: map[string]string{"group_id": "group_id"},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/ai-org/gates", Query: map[string]string{"session_id": "session_id", "session_id_not": "session_id_not", "state": "state", "state_not": "state_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params:  map[string]string{"group_id": "group_id"},
+		Renames: map[string]string{"items.approvers.approvers_imported": "imported", "items.decided_by.decided_by_imported": "imported"},
 	},
 	"group_ai_org_model_connections": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-org/model-connections"},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_ai_org_sessions": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-org/sessions", Query: map[string]string{"agent_id": "agent_id", "ritual_run_id": "ritual_run_id", "squad": "squad", "state": "state"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/ai-org/sessions", Query: map[string]string{"agent_id": "agent_id", "agent_id_not": "agent_id_not", "ritual_run_id": "ritual_run_id", "ritual_run_id_not": "ritual_run_id_not", "squad": "squad", "squad_not": "squad_not", "state": "state", "state_not": "state_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_ai_org_squad_memory": {
 		Read:    operation{Method: "GET", Path: "/groups/{group_id}/ai-org/squads/{squad_key}/memory", Query: map[string]string{"revision": "revision"}},
 		Params:  map[string]string{"group_id": "group_id", "squad_key": "squad_key"},
-		Renames: map[string]string{"history.history_updated_by": "updated_by"},
+		Renames: map[string]string{"history.history_updated_by": "updated_by", "history.history_updated_by.updated_by_imported": "imported"},
 	},
 	"group_approval_policy": {
 		Read:       operation{Method: "GET", Path: "/groups/{group_id}/approval-policy"},
@@ -750,11 +811,11 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"full_path": "full_path"},
 	},
 	"group_catalog_deployments": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/catalog/deployments", Query: map[string]string{"environment_id": "environment_id", "search": "search", "tier": "tier"}},
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/catalog/deployments", Query: map[string]string{"environment_id": "environment_id", "environment_id_not": "environment_id_not", "search": "search", "tier": "tier", "tier_not": "tier_not"}},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_catalog_environments": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/catalog/environments", Query: map[string]string{"include_archived": "include_archived", "inherited": "inherited", "search": "search", "tier": "tier"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/catalog/environments", Query: map[string]string{"include_archived": "include_archived", "inherited": "inherited", "search": "search", "tier": "tier", "tier_not": "tier_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_catalog_scorecards": {
@@ -764,20 +825,46 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 	"group_catalog_service_by_slug": {
 		Read:       operation{Method: "GET", Path: "/groups/{group_id}/catalog/services/by-slug/{slug}"},
 		Params:     map[string]string{"group_id": "group_id", "slug": "slug"},
-		Renames:    map[string]string{"lifecycle_stage": "lifecycle"},
+		Renames:    map[string]string{"lifecycle_stage": "lifecycle", "owner.actor.actor_imported": "imported"},
 		Transforms: map[string]string{"annotations": "json"},
 	},
 	"group_catalog_services": {
-		Read:    operation{Method: "GET", Path: "/groups/{group_id}/catalog/services", Query: map[string]string{"include_orphaned": "include_orphaned", "kind": "kind", "lifecycle": "lifecycle_stage", "search": "search", "source": "source"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/catalog/services", Query: map[string]string{"include_orphaned": "include_orphaned", "kind": "kind", "kind_not": "kind_not", "lifecycle": "lifecycle_stage", "lifecycle_not": "lifecycle_not", "search": "search", "source": "source", "source_not": "source_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params:  map[string]string{"group_id": "group_id"},
 		Renames: map[string]string{"lifecycle_stage": "lifecycle"},
 	},
 	"group_channels": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/channels", Query: map[string]string{"archived": "archived", "kind": "kind", "name": "name"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/channels", Query: map[string]string{"archived": "archived", "kind": "kind", "name": "name"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params:  map[string]string{"group_id": "group_id"},
+		Renames: map[string]string{"items.direct_agent.direct_agent_imported": "imported", "items.direct_user.direct_user_imported": "imported"},
+	},
+	"group_chat_apps": {
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/chat-apps"},
+		Params: map[string]string{"group_id": "group_id"},
+	},
+	"group_chat_apps_slack_conversations": {
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/chat-apps/slack/conversations", Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params: map[string]string{"group_id": "group_id"},
+	},
+	"group_chat_subscriptions": {
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/chat-subscriptions"},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_fork_settings": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/fork-settings"},
+		Params: map[string]string{"group_id": "group_id"},
+	},
+	"group_imported_identities": {
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/imported-identities", Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params: map[string]string{"group_id": "group_id"},
+	},
+	"group_imported_identities_suggestions": {
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/imported-identities/suggestions"},
+		Params: map[string]string{"group_id": "group_id"},
+		Root:   "group_imported_identities_suggestions",
+	},
+	"group_imports": {
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/imports", Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_issue_blueprint": {
@@ -794,7 +881,7 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 	"group_issue_settings": {
 		Read:       operation{Method: "GET", Path: "/groups/{group_id}/issue-settings"},
 		Params:     map[string]string{"group_id": "group_id"},
-		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object", "transitions.table": "json"},
+		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object"},
 	},
 	"group_iteration": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/iterations/{iteration_id}"},
@@ -810,7 +897,7 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Root:   "group_iteration_cadences",
 	},
 	"group_iterations": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/iterations", Query: map[string]string{"cadence_id": "cadence_id", "state": "state"}},
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/iterations", Query: map[string]string{"cadence_id": "cadence_id", "cadence_id_not": "cadence_id_not", "state": "state", "state_not": "state_not"}},
 		Params: map[string]string{"group_id": "group_id"},
 		Root:   "group_iterations",
 	},
@@ -840,12 +927,17 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/mr-settings"},
 		Params: map[string]string{"group_id": "group_id"},
 	},
+	"group_outbound": {
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/outbound"},
+		Params:  map[string]string{"group_id": "group_id"},
+		Renames: map[string]string{"rules.created_by.created_by_imported": "imported"},
+	},
 	"group_package": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/packages/{format}/{package_name}"},
 		Params: map[string]string{"format": "format", "group_id": "group_id", "package_name": "package_name"},
 	},
 	"group_packages": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/packages", Query: map[string]string{"format": "format", "search": "search"}, Pages: &pages{Param: "cursor", Items: "items", Limit: 0}},
+		Read:   operation{Method: "GET", Path: "/groups/{group_id}/packages", Query: map[string]string{"format": "format", "format_not": "format_not", "search": "search"}, Pages: &pages{Param: "cursor", Items: "items", Limit: 0}},
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_pipeline_variables": {
@@ -891,8 +983,9 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_sso_connection": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/sso-connection"},
-		Params: map[string]string{"group_id": "group_id"},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/sso-connection"},
+		Params:  map[string]string{"group_id": "group_id"},
+		Renames: map[string]string{"last_test.by.by_imported": "imported"},
 	},
 	"group_sso_domains": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/sso-domains"},
@@ -931,8 +1024,9 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"group_id": "group_id"},
 	},
 	"group_wiki_page": {
-		Read:   operation{Method: "GET", Path: "/groups/{group_id}/wiki/pages/{path}"},
-		Params: map[string]string{"group_id": "group_id", "path": "path"},
+		Read:    operation{Method: "GET", Path: "/groups/{group_id}/wiki/pages/{path}"},
+		Params:  map[string]string{"group_id": "group_id", "path": "path"},
+		Renames: map[string]string{"commit.author.author_imported": "imported"},
 	},
 	"group_wiki_pages": {
 		Read:   operation{Method: "GET", Path: "/groups/{group_id}/wiki/pages", Query: map[string]string{"prefix": "prefix"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
@@ -953,7 +1047,7 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Transforms: map[string]string{"auth_schema": "json"},
 	},
 	"provider_capabilities": {
-		Read:       operation{Method: "GET", Path: "/providers/{provider_id}/capabilities", Query: map[string]string{"stage_type": "stage_type", "version": "version"}},
+		Read:       operation{Method: "GET", Path: "/providers/{provider_id}/capabilities", Query: map[string]string{"stage_type": "stage_type", "stage_type_not": "stage_type_not", "version": "version"}},
 		Params:     map[string]string{"provider_id": "provider_id"},
 		Transforms: map[string]string{"items.config_schema": "json"},
 	},
@@ -965,8 +1059,8 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 	"provider_submission": {
 		Read:       operation{Method: "GET", Path: "/provider-submissions/{submission_id}"},
 		Params:     map[string]string{"submission_id": "submission_id"},
-		Renames:    map[string]string{"manifest.manifest_capabilities": "capabilities", "mirror_result.mirror_result_capabilities": "capabilities"},
-		Transforms: map[string]string{"auth_schema": "json", "manifest.manifest_capabilities.config_schema": "json"},
+		Renames:    map[string]string{"manifest.manifest_capabilities": "capabilities", "mirror_result.mirror_result_capabilities": "capabilities", "submitted_by.submitted_by_imported": "imported"},
+		Transforms: map[string]string{"auth_schema": "json", "manifest.auth_schema": "json", "manifest.manifest_capabilities.config_schema": "json"},
 	},
 	"provider_submissions": {
 		Read:   operation{Method: "GET", Path: "/providers/{provider_id}/submissions"},
@@ -975,15 +1069,15 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 	"provider_version": {
 		Read:       operation{Method: "GET", Path: "/providers/{provider_id}/versions/{version}"},
 		Params:     map[string]string{"provider_id": "provider_id", "version": "version"},
-		Transforms: map[string]string{"capabilities.config_schema": "json"},
+		Transforms: map[string]string{"auth_schema": "json", "capabilities.config_schema": "json"},
 	},
 	"provider_versions": {
 		Read:       operation{Method: "GET", Path: "/providers/{provider_id}/versions", Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params:     map[string]string{"provider_id": "provider_id"},
-		Transforms: map[string]string{"items.capabilities.config_schema": "json"},
+		Transforms: map[string]string{"items.auth_schema": "json", "items.capabilities.config_schema": "json"},
 	},
 	"providers": {
-		Read:   operation{Method: "GET", Path: "/providers", Query: map[string]string{"category": "category", "featured": "featured", "owning_group": "owning_group", "q": "q", "sort": "sort", "tier": "tier", "verified_only": "verified_only"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:   operation{Method: "GET", Path: "/providers", Query: map[string]string{"category": "category", "category_not": "category_not", "featured": "featured", "owning_group": "owning_group", "q": "q", "sort": "sort", "tier": "tier", "tier_not": "tier_not", "verified_only": "verified_only"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params: map[string]string{},
 	},
 	"publisher": {
@@ -1003,9 +1097,9 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"repo_id": "repository_id"},
 	},
 	"repository_access": {
-		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/access", Query: map[string]string{"search": "search", "source": "source", "subject_kind": "subject_kind"}, Pages: &pages{Param: "next_token", Items: "entries", Limit: 0}},
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/access", Query: map[string]string{"search": "search", "source": "source", "subject_kind": "subject_kind", "subject_kind_not": "subject_kind_not"}, Pages: &pages{Param: "next_token", Items: "entries", Limit: 0}},
 		Params:  map[string]string{"repo_id": "repo_id"},
-		Renames: map[string]string{"entries.limited_to.limited_to_subject": "subject", "entries.limited_to.limited_to_subject.subject_principal": "principal", "entries.limited_to.limited_to_subject.subject_team": "team", "entries.source.source_at": "at"},
+		Renames: map[string]string{"entries.limited_to.created_by.created_by_imported": "imported", "entries.limited_to.limited_to_subject": "subject", "entries.limited_to.limited_to_subject.subject_principal": "principal", "entries.limited_to.limited_to_subject.subject_team": "team", "entries.source.source_at": "at"},
 	},
 	"repository_approval_policy": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/approval-policy"},
@@ -1034,22 +1128,27 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"full_path": "full_path"},
 	},
 	"repository_catalog_environments": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/catalog/environments", Query: map[string]string{"include_archived": "include_archived", "inherited": "inherited", "search": "search", "tier": "tier"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/catalog/environments", Query: map[string]string{"include_archived": "include_archived", "inherited": "inherited", "search": "search", "tier": "tier", "tier_not": "tier_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params: map[string]string{"repo_id": "repo_id"},
 	},
 	"repository_catalog_resolve": {
 		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/catalog/resolve", Query: map[string]string{"path": "path"}},
 		Params:  map[string]string{"repo_id": "repo_id"},
-		Renames: map[string]string{"resolved.service.service_owner": "owner", "resolved.service.service_owner.owner_actor": "actor"},
+		Renames: map[string]string{"resolved.service.service_owner": "owner", "resolved.service.service_owner.owner_actor": "actor", "resolved.service.service_owner.owner_actor.actor_imported": "imported"},
 	},
 	"repository_catalog_services": {
-		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/catalog/services", Query: map[string]string{"include_orphaned": "include_orphaned", "kind": "kind", "lifecycle": "lifecycle_stage", "search": "search", "source": "source"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/catalog/services", Query: map[string]string{"include_orphaned": "include_orphaned", "kind": "kind", "kind_not": "kind_not", "lifecycle": "lifecycle_stage", "lifecycle_not": "lifecycle_not", "search": "search", "source": "source", "source_not": "source_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params:  map[string]string{"repo_id": "repo_id"},
 		Renames: map[string]string{"lifecycle_stage": "lifecycle"},
 	},
-	"repository_fork": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/fork"},
+	"repository_chat_subscriptions": {
+		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/chat-subscriptions"},
 		Params: map[string]string{"repo_id": "repo_id"},
+	},
+	"repository_fork": {
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/fork"},
+		Params:  map[string]string{"repo_id": "repo_id"},
+		Renames: map[string]string{"auto_sync.actor.actor_imported": "imported"},
 	},
 	"repository_fork_settings": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/fork-settings"},
@@ -1057,6 +1156,10 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 	},
 	"repository_forks": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/forks", Query: map[string]string{"scope": "scope", "search": "search", "sort": "sort"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params: map[string]string{"repo_id": "repo_id"},
+	},
+	"repository_import": {
+		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/import"},
 		Params: map[string]string{"repo_id": "repo_id"},
 	},
 	"repository_issue_blueprint": {
@@ -1073,7 +1176,7 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 	"repository_issue_settings": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/issue-settings"},
 		Params:     map[string]string{"repo_id": "repo_id"},
-		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object", "transitions.table": "json"},
+		Transforms: map[string]string{"on_branch_created": "scalar_or_object", "on_mr_closed": "scalar_or_object", "on_mr_merged": "scalar_or_object", "on_mr_opened": "scalar_or_object"},
 	},
 	"repository_labels": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/labels", Query: map[string]string{"search": "search"}},
@@ -1097,6 +1200,10 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"repo_id": "repo_id"},
 		Root:   "repository_milestones",
 	},
+	"repository_mirror": {
+		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/mirror"},
+		Params: map[string]string{"repo_id": "repo_id"},
+	},
 	"repository_mr_settings": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/mr-settings"},
 		Params: map[string]string{"repo_id": "repo_id"},
@@ -1105,33 +1212,45 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipelines/{pipeline_id}"},
 		Params:     map[string]string{"pipeline_id": "id", "repo_id": "repo_id"},
 		Renames:    map[string]string{"diagnostics.warnings.warnings_target": "target"},
-		Transforms: map[string]string{"component_instances.params": "json", "stages.nodes.approval.approvers.anyone": "marker", "stages.nodes.approval.approvers.code_owners": "marker", "stages.nodes.config": "json", "stages.nodes.matrix.dimensions": "json", "trigger_config.events.params.default": "json"},
+		Transforms: map[string]string{"component_instances.condition": "json", "component_instances.params": "json", "stages.nodes.approval.approvers.anyone": "marker", "stages.nodes.approval.approvers.code_owners": "marker", "stages.nodes.condition": "json", "stages.nodes.config": "json", "stages.nodes.matrix.dimensions": "json", "trigger_config.events.params.default": "json"},
 	},
 	"repository_pipeline_component": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-components/{component_id}"},
 		Params:     map[string]string{"component_id": "id", "repo_id": "repo_id"},
-		Transforms: map[string]string{"body.component_instances.params": "json", "body.nodes.node.approval.approvers.anyone": "marker", "body.nodes.node.approval.approvers.code_owners": "marker", "body.nodes.node.config": "json", "body.nodes.node.matrix.dimensions": "json", "body.parameters.allowed_values": "json", "body.parameters.default": "json"},
+		Renames:    map[string]string{"versions.published_by.published_by_imported": "imported"},
+		Transforms: map[string]string{"body.component_instances.condition": "json", "body.component_instances.params": "json", "body.nodes.node.approval.approvers.anyone": "marker", "body.nodes.node.approval.approvers.code_owners": "marker", "body.nodes.node.condition": "json", "body.nodes.node.config": "json", "body.nodes.node.matrix.dimensions": "json", "body.parameters.allowed_values": "json", "body.parameters.default": "json"},
+	},
+	"repository_pipeline_component_file": {
+		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-component-files/{component_name}", Query: map[string]string{"commit_sha": "commit_sha", "ref": "ref"}},
+		Params:     map[string]string{"component_name": "component_name", "repo_id": "repo_id"},
+		Renames:    map[string]string{"diagnostics.fix.fix_location": "location", "diagnostics.fix.fix_location.location_end": "end", "diagnostics.fix.fix_location.location_start": "start", "diagnostics.related.related_end": "end", "diagnostics.related.related_start": "start", "source_map.source_map_location": "location", "source_map.source_map_location.source_map_location_end": "end", "source_map.source_map_location.source_map_location_start": "start"},
+		Transforms: map[string]string{"body.component_instances.condition": "json", "body.component_instances.params": "json", "body.nodes.node.approval.approvers.anyone": "marker", "body.nodes.node.approval.approvers.code_owners": "marker", "body.nodes.node.condition": "json", "body.nodes.node.config": "json", "body.nodes.node.matrix.dimensions": "json", "body.parameters.allowed_values": "json", "body.parameters.default": "json"},
+	},
+	"repository_pipeline_component_files": {
+		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-component-files", Query: map[string]string{"ref": "ref"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params: map[string]string{"repo_id": "repo_id"},
 	},
 	"repository_pipeline_component_version": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-components/{component_id}/versions/{version}"},
 		Params:     map[string]string{"component_id": "component_id", "repo_id": "repo_id", "version": "version"},
 		Renames:    map[string]string{"body.outputs.outputs_source": "source"},
-		Transforms: map[string]string{"body.component_instances.params": "json", "body.nodes.node.approval.approvers.anyone": "marker", "body.nodes.node.approval.approvers.code_owners": "marker", "body.nodes.node.config": "json", "body.nodes.node.matrix.dimensions": "json", "body.parameters.allowed_values": "json", "body.parameters.default": "json"},
+		Transforms: map[string]string{"body.component_instances.condition": "json", "body.component_instances.params": "json", "body.nodes.node.approval.approvers.anyone": "marker", "body.nodes.node.approval.approvers.code_owners": "marker", "body.nodes.node.condition": "json", "body.nodes.node.config": "json", "body.nodes.node.matrix.dimensions": "json", "body.parameters.allowed_values": "json", "body.parameters.default": "json"},
 	},
 	"repository_pipeline_component_versions": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-components/{component_id}/versions", Query: map[string]string{"lifecycle_state": "lifecycle_state"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-components/{component_id}/versions", Query: map[string]string{"lifecycle_state": "lifecycle_state", "lifecycle_state_not": "lifecycle_state_not"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params: map[string]string{"component_id": "component_id", "repo_id": "repo_id"},
 	},
 	"repository_pipeline_components": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-components", Query: map[string]string{"own_scope_only": "own_scope_only", "search": "search"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params:     map[string]string{"repo_id": "repo_id"},
-		Transforms: map[string]string{"items.body.component_instances.params": "json", "items.body.nodes.node.approval.approvers.anyone": "marker", "items.body.nodes.node.approval.approvers.code_owners": "marker", "items.body.nodes.node.config": "json", "items.body.nodes.node.matrix.dimensions": "json", "items.body.parameters.allowed_values": "json", "items.body.parameters.default": "json"},
+		Renames:    map[string]string{"items.versions.published_by.published_by_imported": "imported"},
+		Transforms: map[string]string{"items.body.component_instances.condition": "json", "items.body.component_instances.params": "json", "items.body.nodes.node.approval.approvers.anyone": "marker", "items.body.nodes.node.approval.approvers.code_owners": "marker", "items.body.nodes.node.condition": "json", "items.body.nodes.node.config": "json", "items.body.nodes.node.matrix.dimensions": "json", "items.body.parameters.allowed_values": "json", "items.body.parameters.default": "json"},
 	},
 	"repository_pipeline_file": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-files/{pipeline_name}", Query: map[string]string{"commit_sha": "commit_sha", "ref": "ref"}},
 		Params:     map[string]string{"pipeline_name": "pipeline_name", "repo_id": "repo_id"},
-		Renames:    map[string]string{"diagnostics.fix.fix_location": "location", "diagnostics.fix.fix_location.location_end": "end", "diagnostics.fix.fix_location.location_start": "start", "diagnostics.related.related_end": "end", "diagnostics.related.related_start": "start"},
-		Transforms: map[string]string{"definition.component_instances.params": "json", "definition.stages.nodes.approval.approvers.anyone": "marker", "definition.stages.nodes.approval.approvers.code_owners": "marker", "definition.stages.nodes.config": "json", "definition.stages.nodes.matrix.dimensions": "json", "definition.trigger_config.events.params.default": "json"},
+		Renames:    map[string]string{"diagnostics.fix.fix_location": "location", "diagnostics.fix.fix_location.location_end": "end", "diagnostics.fix.fix_location.location_start": "start", "diagnostics.related.related_end": "end", "diagnostics.related.related_start": "start", "source_map.source_map_location": "location", "source_map.source_map_location.source_map_location_end": "end", "source_map.source_map_location.source_map_location_start": "start"},
+		Transforms: map[string]string{"definition.component_instances.condition": "json", "definition.component_instances.params": "json", "definition.stages.nodes.approval.approvers.anyone": "marker", "definition.stages.nodes.approval.approvers.code_owners": "marker", "definition.stages.nodes.condition": "json", "definition.stages.nodes.config": "json", "definition.stages.nodes.matrix.dimensions": "json", "definition.trigger_config.events.params.default": "json"},
 	},
 	"repository_pipeline_files": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/pipeline-files", Query: map[string]string{"ref": "ref"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
@@ -1149,7 +1268,7 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/pipelines", Query: map[string]string{"status": "status"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
 		Params:     map[string]string{"repo_id": "repo_id"},
 		Renames:    map[string]string{"items.diagnostics.warnings.warnings_target": "target"},
-		Transforms: map[string]string{"items.component_instances.params": "json", "items.stages.nodes.approval.approvers.anyone": "marker", "items.stages.nodes.approval.approvers.code_owners": "marker", "items.stages.nodes.config": "json", "items.stages.nodes.matrix.dimensions": "json", "items.trigger_config.events.params.default": "json"},
+		Transforms: map[string]string{"items.component_instances.condition": "json", "items.component_instances.params": "json", "items.stages.nodes.approval.approvers.anyone": "marker", "items.stages.nodes.approval.approvers.code_owners": "marker", "items.stages.nodes.condition": "json", "items.stages.nodes.config": "json", "items.stages.nodes.matrix.dimensions": "json", "items.trigger_config.events.params.default": "json"},
 	},
 	"repository_profile": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/profile", Query: map[string]string{"ref": "ref"}},
@@ -1182,20 +1301,23 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"repo_id": "repo_id"},
 	},
 	"repository_release": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/releases/{tag_name}"},
-		Params: map[string]string{"repo_id": "repo_id", "tag_name": "tag_name"},
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/releases/{tag_name}"},
+		Params:  map[string]string{"repo_id": "repo_id", "tag_name": "tag_name"},
+		Renames: map[string]string{"assets.uploader.uploader_imported": "imported"},
 	},
 	"repository_release_asset": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/releases/{tag_name}/assets/{asset_id}", Query: map[string]string{"redirect": "redirect"}},
 		Params: map[string]string{"asset_id": "asset_id", "repo_id": "repo_id", "tag_name": "tag_name"},
 	},
 	"repository_releases": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/releases", Query: map[string]string{"include_drafts": "include_drafts"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
-		Params: map[string]string{"repo_id": "repo_id"},
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/releases", Query: map[string]string{"include_drafts": "include_drafts"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
+		Params:  map[string]string{"repo_id": "repo_id"},
+		Renames: map[string]string{"items.assets.uploader.uploader_imported": "imported"},
 	},
 	"repository_releases_latest": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/releases/latest"},
-		Params: map[string]string{"repo_id": "repo_id"},
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/releases/latest"},
+		Params:  map[string]string{"repo_id": "repo_id"},
+		Renames: map[string]string{"assets.uploader.uploader_imported": "imported"},
 	},
 	"repository_resolved_provider_connections": {
 		Read:       operation{Method: "GET", Path: "/repositories/{repo_id}/resolved-provider-connections"},
@@ -1235,8 +1357,9 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"repo_id": "repo_id"},
 	},
 	"repository_wiki_page": {
-		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/wiki/pages/{path}"},
-		Params: map[string]string{"path": "path", "repo_id": "repo_id"},
+		Read:    operation{Method: "GET", Path: "/repositories/{repo_id}/wiki/pages/{path}"},
+		Params:  map[string]string{"path": "path", "repo_id": "repo_id"},
+		Renames: map[string]string{"commit.author.author_imported": "imported"},
 	},
 	"repository_wiki_pages": {
 		Read:   operation{Method: "GET", Path: "/repositories/{repo_id}/wiki/pages", Query: map[string]string{"prefix": "prefix"}, Pages: &pages{Param: "next_token", Items: "items", Limit: 0}},
@@ -1263,15 +1386,16 @@ var dataSourceAPIs = map[string]dataSourceAPI{
 		Params: map[string]string{"team_id": "team_id"},
 	},
 	"team_members": {
-		Read:   operation{Method: "GET", Path: "/teams/{team_id}/members", Pages: &pages{Param: "next_token", Items: "members", Limit: 0}},
-		Params: map[string]string{"team_id": "team_id"},
+		Read:    operation{Method: "GET", Path: "/teams/{team_id}/members", Pages: &pages{Param: "next_token", Items: "members", Limit: 0}},
+		Params:  map[string]string{"team_id": "team_id"},
+		Renames: map[string]string{"members.user.user_imported": "imported"},
 	},
 	"template": {
 		Read:   operation{Method: "GET", Path: "/templates/{template_kind}/{template_key}"},
 		Params: map[string]string{"template_key": "template_key", "template_kind": "template_kind"},
 	},
 	"templates": {
-		Read:   operation{Method: "GET", Path: "/templates", Query: map[string]string{"kind": "kind"}},
+		Read:   operation{Method: "GET", Path: "/templates", Query: map[string]string{"kind": "kind", "kind_not": "kind_not"}},
 		Params: map[string]string{},
 	},
 	"user": {

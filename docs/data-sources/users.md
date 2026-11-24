@@ -30,7 +30,7 @@ data "gitmoap_users" "acme" {
 
 ### Required
 
-- `group_id` (String) The group whose members to list (required)
+- `group_id` (String) The group whose members to list
 
 ### Read-Only
 

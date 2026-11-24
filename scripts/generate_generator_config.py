@@ -41,7 +41,9 @@ Resources are detected from the shape of the paths:
     - PUT  /things/{key}      + GET /things/{key}           upsert by key
     - PUT  /things/{key}      + GET /things                 upsert by key, read from the list
     - PUT|PATCH /settings     + GET /settings               singleton
-A resource that can be created but not deleted is skipped: it records an action, like publishing.
+What's created at a path none of these relate to its own goes in CREATED_AT, and what can only be
+read from a list its owner keeps in another response, in LISTED_IN. A resource that can be created
+but not deleted is skipped: it records an action, like publishing.
 
 Data sources come from every remaining GET that returns JSON: item, list and singleton.
 
@@ -94,14 +96,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # re.search against the path, and applied to both resources and data sources. New API areas are
 # included by default, so a new endpoint shows up unless it matches something here.
 EXCLUDED_PATHS = {
-    r"^/(\.well-known|auth|oauth|scim|packages)(/|$)": "protocol endpoint",
+    r"^/(\.well-known|auth|oauth|scim|packages|go)(/|$)": "protocol endpoint",
     r"^/admin(/|$)": "platform administration",
     r"^/(user|notifications)(/|$)": "scoped to the calling user",
-    r"^/(legal|contact|feedback|search|resolve|scopes|capabilities|marketplace|billing)(/|$)": "platform utility",
+    r"^/(legal|contact|feedback|search|resolve|scopes|capabilities|marketplace|billing|explore)(/|$)": "platform utility",
+    r"/mentionable(/|$)": "editor autocompletion",
     r"/(issues|merge-requests|pipeline-runs|ai-sessions|ritual-runs|messages|reactions|anchors|code-todos)(/|$)": "day-to-day workflow object",
-    r"/(commits|tree|tree-paths|blob|compare|diff|diff-file|diff-files|file-lines|grep|code-search|search|contributors|commit-authors|languages|codeowners|pipeline-diff)(/|$)": "git content browsing",
+    r"/(commits|tree|tree-paths|blob|contents|raw|compare|diff|diff-file|diff-files|file-lines|grep|code-search|search|contributors|commit-authors|languages|codeowners|pipeline-diff)(/|$)": "git content browsing",
     r"/specs(/|$)": "git content browsing",
     r"/(activity|audit-log|insights|usage|egress-usage|people|deliveries|trigger-evaluations|fork-inventory|joinable-iterations)(/|$)": "reporting or activity feed",
+    r"/outbound/(destinations|events)(/|$)": "reporting or activity feed",
     r"/(contributions|burndown|velocity|digests|review-queue|ritual-calendar|findings|backlinks|revisions|graph|overview|upgrade-impact|usages|drift|explain|review|archive|watch|export)(/|$)": "reporting or activity feed",
     r"/(attachments|avatar|star|transfer|[a-z-]+-preview|pipelines-preview)(/|$)": "action or binary upload",
     r"/(billing|limits|limit-increase|limit-increase-requests)(/|$)": "billing and quotas",
@@ -151,6 +155,7 @@ CREATE_PATH_PARAMS = {
     "group_approval_policy": ["group_id"],
     "group_branch_rule": ["group_id"],
     "group_catalog_environment": ["group_id"],
+    "group_chat_subscription": ["group_id"],
     "group_fork_settings": ["group_id"],
     "group_issue_blueprint": ["group_id"],
     "group_issue_settings": ["group_id"],
@@ -160,6 +165,8 @@ CREATE_PATH_PARAMS = {
     "group_member": ["group_id"],
     "group_milestone": ["group_id"],
     "group_mr_settings": ["group_id"],
+    "group_outbound": ["group_id"],
+    "group_outbound_rule": ["group_id"],
     "group_pipeline_variable": ["group_id", "name"],
     "group_provider_connection": ["group_id"],
     "group_provider_policy": ["group_id"],
@@ -180,6 +187,7 @@ CREATE_PATH_PARAMS = {
     "repository_branch": ["repo_id"],
     "repository_branch_rule": ["repo_id"],
     "repository_catalog_environment": ["repo_id"],
+    "repository_chat_subscription": ["repo_id"],
     "repository_fork": ["repo_id"],
     "repository_fork_settings": ["repo_id"],
     "repository_issue_blueprint": ["repo_id"],
@@ -187,6 +195,7 @@ CREATE_PATH_PARAMS = {
     "repository_label": ["repo_id"],
     "repository_member": ["repo_id"],
     "repository_milestone": ["repo_id"],
+    "repository_mirror": ["repo_id"],
     "repository_mr_settings": ["repo_id"],
     "repository_pipeline_variable": ["repo_id", "name"],
     "repository_provider_connection": ["repo_id"],
@@ -210,36 +219,89 @@ CREATE_PATH_PARAMS = {
 # step, as in schema.ignores. The shallowest attribute of a name keeps it. The provider code maps
 # the renamed attribute to its API field by hand.
 RENAME_NESTED: dict[str, dict[str, str]] = {
-    "data source ai_agent_memory": {"history.updated_by": "history_updated_by"},
-    "data source group_access": {"entries.limited_to.subject": "limited_to_subject", "entries.limited_to.subject.principal": "subject_principal", "entries.limited_to.subject.team": "subject_team", "entries.source.at": "source_at"},
-    "data source group_ai_org_conventions": {"history.updated_by": "history_updated_by"},
-    "data source group_ai_org_squad_memory": {"history.updated_by": "history_updated_by"},
+    "data source ai_agent": {"suspended_by.imported": "suspended_by_imported"},
+    "data source ai_agent_memory": {"history.updated_by": "history_updated_by", "history.updated_by.imported": "updated_by_imported"},
+    "data source ai_gate": {"approvers.imported": "approvers_imported", "decided_by.imported": "decided_by_imported"},
+    "data source catalog_service": {"owner.actor.imported": "actor_imported"},
+    "data source catalog_service_deployments": {"items.triggered_by.imported": "triggered_by_imported"},
+    "data source channel": {"direct_agent.imported": "direct_agent_imported", "direct_user.imported": "direct_user_imported"},
+    "data source channel_members": {"items.member.imported": "member_imported"},
+    "data source group_access": {
+        "entries.limited_to.created_by.imported": "created_by_imported",
+        "entries.limited_to.subject": "limited_to_subject",
+        "entries.limited_to.subject.principal": "subject_principal",
+        "entries.limited_to.subject.team": "subject_team",
+        "entries.source.at": "source_at",
+    },
+    "data source group_ai_org": {"created_by.imported": "created_by_imported"},
+    "data source group_ai_org_agents": {"items.suspended_by.imported": "suspended_by_imported"},
+    "data source group_ai_org_conventions": {"history.updated_by": "history_updated_by", "history.updated_by.imported": "updated_by_imported"},
+    "data source group_ai_org_gates": {"items.approvers.imported": "approvers_imported", "items.decided_by.imported": "decided_by_imported"},
+    "data source group_ai_org_squad_memory": {"history.updated_by": "history_updated_by", "history.updated_by.imported": "updated_by_imported"},
     "data source group_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
+    "data source group_catalog_service_by_slug": {"owner.actor.imported": "actor_imported"},
+    "data source group_channels": {"items.direct_agent.imported": "direct_agent_imported", "items.direct_user.imported": "direct_user_imported"},
     "data source group_issue_blueprint": {"facets.binding.binding": "criterion"},
     "data source group_issue_blueprints": {"group_issue_blueprints.facets.binding.binding": "criterion"},
-    "data source provider_submission": {"manifest.capabilities": "manifest_capabilities", "mirror_result.capabilities": "mirror_result_capabilities"},
-    "data source repository_access": {"entries.limited_to.subject": "limited_to_subject", "entries.limited_to.subject.principal": "subject_principal", "entries.limited_to.subject.team": "subject_team", "entries.source.at": "source_at"},
+    "data source group_outbound": {"rules.created_by.imported": "created_by_imported"},
+    "data source group_sso_connection": {"last_test.by.imported": "by_imported"},
+    "data source group_wiki_page": {"commit.author.imported": "author_imported"},
+    "data source provider_submission": {"manifest.capabilities": "manifest_capabilities", "mirror_result.capabilities": "mirror_result_capabilities", "submitted_by.imported": "submitted_by_imported"},
+    "data source repository_access": {
+        "entries.limited_to.created_by.imported": "created_by_imported",
+        "entries.limited_to.subject": "limited_to_subject",
+        "entries.limited_to.subject.principal": "subject_principal",
+        "entries.limited_to.subject.team": "subject_team",
+        "entries.source.at": "source_at",
+    },
     "data source repository_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
-    "data source repository_catalog_resolve": {"resolved.service.owner": "service_owner", "resolved.service.owner.actor": "owner_actor"},
+    "data source repository_catalog_resolve": {"resolved.service.owner": "service_owner", "resolved.service.owner.actor": "owner_actor", "resolved.service.owner.actor.imported": "actor_imported"},
+    "data source repository_fork": {"auto_sync.actor.imported": "actor_imported"},
     "data source repository_issue_blueprint": {"facets.binding.binding": "criterion"},
     "data source repository_issue_blueprints": {"repository_issue_blueprints.facets.binding.binding": "criterion"},
     "data source repository_pipeline": {"diagnostics.warnings.target": "warnings_target"},
+    "data source repository_pipeline_component": {"versions.published_by.imported": "published_by_imported"},
+    "data source repository_pipeline_component_file": {
+        "diagnostics.fix.location": "fix_location",
+        "diagnostics.fix.location.end": "location_end",
+        "diagnostics.fix.location.start": "location_start",
+        "diagnostics.related.end": "related_end",
+        "diagnostics.related.start": "related_start",
+        "source_map.location": "source_map_location",
+        "source_map.location.end": "source_map_location_end",
+        "source_map.location.start": "source_map_location_start",
+    },
     "data source repository_pipeline_component_version": {"body.outputs.source": "outputs_source"},
+    "data source repository_pipeline_components": {"items.versions.published_by.imported": "published_by_imported"},
     "data source repository_pipeline_file": {
         "diagnostics.fix.location": "fix_location",
         "diagnostics.fix.location.end": "location_end",
         "diagnostics.fix.location.start": "location_start",
         "diagnostics.related.end": "related_end",
         "diagnostics.related.start": "related_start",
+        "source_map.location": "source_map_location",
+        "source_map.location.end": "source_map_location_end",
+        "source_map.location.start": "source_map_location_start",
     },
     "data source repository_pipelines": {"items.diagnostics.warnings.target": "warnings_target"},
-    "resource ai_agent_memory": {"history.updated_by": "history_updated_by"},
-    "resource group_ai_org_conventions": {"history.updated_by": "history_updated_by"},
-    "resource group_ai_org_squad_memory": {"history.updated_by": "history_updated_by"},
+    "data source repository_release": {"assets.uploader.imported": "uploader_imported"},
+    "data source repository_releases": {"items.assets.uploader.imported": "uploader_imported"},
+    "data source repository_releases_latest": {"assets.uploader.imported": "uploader_imported"},
+    "data source repository_wiki_page": {"commit.author.imported": "author_imported"},
+    "data source team_members": {"members.user.imported": "user_imported"},
+    "resource ai_agent_memory": {"history.updated_by": "history_updated_by", "history.updated_by.imported": "updated_by_imported"},
+    "resource catalog_service": {"owner.actor.imported": "actor_imported"},
+    "resource group_ai_org_conventions": {"history.updated_by": "history_updated_by", "history.updated_by.imported": "updated_by_imported"},
+    "resource group_ai_org_squad_memory": {"history.updated_by": "history_updated_by", "history.updated_by.imported": "updated_by_imported"},
     "resource group_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
     "resource group_issue_blueprint": {"facets.binding.binding": "criterion"},
+    "resource group_sso_connection": {"last_test.by.imported": "by_imported"},
+    "resource group_wiki_page": {"commit.author.imported": "author_imported"},
     "resource repository_approval_policy": {"rules.defined_at": "rules_defined_at", "rules_here.approvers": "rules_here_approvers", "rules_here.approvers.role": "approver_role", "rules_here.approvers.role.at": "role_at", "rules_here.defined_at": "rules_here_defined_at"},
     "resource repository_issue_blueprint": {"facets.binding.binding": "criterion"},
+    "resource repository_release": {"assets.uploader.imported": "uploader_imported"},
+    "resource repository_wiki_page": {"commit.author.imported": "author_imported"},
+    "resource team_member": {"member.user.imported": "user_imported"},
 }
 
 # Root attributes whose name Terraform reserves, renamed: name -> new name. The provider maps the
@@ -255,6 +317,14 @@ RESERVED_RENAMES = {
 LISTED_IN = {
     "/approval-rules/{rule_id}": ("/approval-policy", "rules_here"),
     "/access/grants/{grant_id}": ("/access", "entries"),
+    "/outbound-rules/{outbound_rule_id}": ("/outbound", "rules"),
+}
+
+# Objects created at a path that isn't their collection's, or their collection's under an owner, so
+# the script can't find what creates them: path of the object -> the path that creates it. The
+# resource is named after the creating path, and LISTED_IN's response paths follow its owner.
+CREATED_AT = {
+    "/outbound-rules/{outbound_rule_id}": "/groups/{group_id}/outbound/rules",
 }
 
 # Grants are made for a list of subjects, and answered with the grants made. A grant resource is one
@@ -267,6 +337,7 @@ SINGLE_GRANT = {"/groups/{group_id}/access/grants", "/repositories/{repo_id}/acc
 # name, their alias, the name with its abbreviation expanded (repo_id -> repository_id), or the
 # resource's own field (label_key -> key on a label).
 PATH_PARAM_ATTRIBUTES: dict[str, dict[str, str]] = {
+    "resource group_outbound_rule": {"outbound_rule_id": "rule_id"},
     "resource service_account_token": {"token_id": "access_token.access_token_id"},
 }
 
@@ -458,6 +529,11 @@ class Spec:
             properties = schema.get("properties") or {}
             if not properties:
                 return "free-form object", {}
+            # The provider finds a field in the JSON by its attribute's name, and an ignore can't
+            # name a field like "$ref" either: the whole object goes.
+            odd = [name for name in properties if tf_identifier(name) != name]
+            if odd:
+                return f"fields Terraform has no name for: {', '.join(odd)}", {}
             problems, unusable = {}, 0
             for name, prop in properties.items():
                 reason, nested = visit(prop, (*location, name), ancestors)
@@ -656,8 +732,18 @@ def schema_identity(spec: Spec, node) -> set[int]:
     return identity
 
 
+def owner_of(path: str) -> str:
+    """The path of the object a collection belongs to: /groups/{group_id}/outbound/rules ->
+    /groups/{group_id}."""
+    parts = segments(path)
+    last = max((index for index, part in enumerate(parts) if is_param(part)), default=-1)
+    return "/" + "/".join(parts[: last + 1]) if last >= 0 else ""
+
+
 def find_creators(spec: Spec, item_path: str) -> list[str]:
     """The POST paths that create what item_path reads."""
+    if item_path in CREATED_AT:
+        return [CREATED_AT[item_path]]
     parent = item_path.rsplit("/", 1)[0]
     if has_json_body(spec, parent, "post"):
         return [parent]
@@ -718,10 +804,10 @@ def discover_resources(spec: Spec, report: Report) -> list[ResourceShape]:
                 continue
             last = path.rsplit("/", 1)[1]
             for creator in creators:
-                name = name_from_path(f"{creator}/{last}" if len(creators) > 1 else path)
+                name = name_from_path(f"{creator}/{last}" if len(creators) > 1 or path in CREATED_AT else path)
                 creator_read = read
                 if listed:
-                    creator_read, read_is_list = (creator.removesuffix(parent) + listed[0], "get"), True
+                    creator_read, read_is_list = (owner_of(creator) + listed[0], "get"), True
                     if not spec.op(*creator_read):
                         report.problem(f"resource {name}", f"LISTED_IN reads it from {creator_read[0]}, which has no GET. Fix: correct LISTED_IN")
                         continue
@@ -733,6 +819,15 @@ def discover_resources(spec: Spec, report: Report) -> list[ResourceShape]:
             shapes.append(ResourceShape(name_from_path(path), (path, "put"), parent_read, (path, "put"), delete, read_is_list=True))
         elif updater:
             report.skip(f"resource at {path}", "can be updated but not created through the API")
+    for path, creator in sorted(CREATED_AT.items()):
+        if path not in spec.paths or not has_json_body(spec, creator, "post"):
+            report.problem(f"path {path}", f"is in CREATED_AT, but it or a POST at {creator} isn't in the spec any more. Fix: remove it from CREATED_AT")
+        else:
+            del CREATED_AT[path]
+            found = find_creators(spec, path)
+            CREATED_AT[path] = creator
+            if found:
+                report.problem(f"path {path}", f"is in CREATED_AT, but the script finds what creates it by itself now: {', '.join(found)}. Fix: remove it from CREATED_AT")
     for path in sorted(LISTED_IN):
         if path not in spec.paths:
             report.problem(f"path {path}", "is in LISTED_IN but isn't in the spec any more. Fix: remove it from LISTED_IN")

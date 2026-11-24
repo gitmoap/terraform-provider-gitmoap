@@ -3,13 +3,13 @@
 page_title: "gitmoap_catalog_scorecard_results Data Source - gitmoap"
 subcategory: ""
 description: |-
-  List a scorecard's results, worst state first. Returns one result per service and check, failing first, then stale, expired, unknown, passing and not applicable. Beside the page sits a summary over the whole scorecard, never just the page: how many services reach each level and how many are not scored at all. Filter by state, check_key or service_id; page with limit and next_token.
+  List a scorecard's results, worst state first. Returns one result per service and check, failing first, then stale, expired, unknown, passing and not applicable. Beside the page sits a summary over the whole scorecard, never just the page: how many services reach each level and how many are not scored at all. Filter by state, check_key or service_id, and leave values out with state_not, check_key_not and service_id_not; page with limit and next_token.
   The token needs catalog:read.
 ---
 
 # gitmoap_catalog_scorecard_results (Data Source)
 
-List a scorecard's results, worst state first. Returns one result per service and check, failing first, then stale, expired, unknown, passing and not applicable. Beside the page sits a summary over the whole scorecard, never just the page: how many services reach each level and how many are not scored at all. Filter by `state`, `check_key` or `service_id`; page with `limit` and `next_token`.
+List a scorecard's results, worst state first. Returns one result per service and check, failing first, then stale, expired, unknown, passing and not applicable. Beside the page sits a summary over the whole scorecard, never just the page: how many services reach each level and how many are not scored at all. Filter by `state`, `check_key` or `service_id`, and leave values out with `state_not`, `check_key_not` and `service_id_not`; page with `limit` and `next_token`.
 
 The token needs `catalog:read`.
 
@@ -39,9 +39,16 @@ data "gitmoap_catalog_scorecard_results" "example" {
 
 ### Optional
 
-- `check_key` (String) Filter to one check
-- `service_id` (String) Filter to one service. `summary` is unaffected and stays scorecard-wide, so a per-service count is folded from `items` — which with this filter is that service's complete result set
-- `state` (String) Filter to one check state
+- `check_key` (List of String) Only these checks, by key; repeat it, or separate with commas, for any of them
+- `check_key_not` (List of String) Checks to leave out, by key. Repeat it, or separate values with commas, for several, up to 20
+- `service_id` (List of String) Narrow to these services — *what does this scorecard say about **this** service?*
+
+The one question the other filters cannot express, and the one a service's own page asks. Without it a client holding a `service_id` has to page the whole scorecard and discard almost all of it, which is `N_services × N_checks` rows to find `N_checks` of them.
+
+**`summary` is unaffected and stays scorecard-wide**, deliberately: it is the denominator the domain exists to keep honest, and a summary that narrowed with this filter would make one field mean two things. With a `service_id` set, `items` *is* the service's complete result set — bounded by `MAX_CHECKS_PER_SCORECARD`, comfortably under the page cap — so a caller wanting per-service counts folds them from the rows rather than reading a number that describes the estate.
+- `service_id_not` (List of String) Services to leave out of the results. Repeat it, or separate values with commas, for several, up to 20
+- `state` (List of String) Check states — failing, stale, expired, unknown, passing or not_applicable; repeat it, or separate with commas, for any of them
+- `state_not` (List of String) Check states to leave out. Repeat it, or separate values with commas, for several, up to 20
 
 ### Read-Only
 
@@ -84,15 +91,29 @@ Read-Only:
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
+- `imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--items--attested_by--imported))
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--items--attested_by--imported"></a>
+### Nested Schema for `items.attested_by.imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.
+
 
 
 

@@ -26,14 +26,14 @@ func GroupCatalogEnvironmentsDataSourceSchema(ctx context.Context) schema.Schema
 			"include_archived": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Include archived environments (excluded by default)",
-				MarkdownDescription: "Include archived environments (excluded by default)",
+				Description:         "Include archived environments. Excluded by default, because an archived environment is out of resolution and therefore out of the estate.",
+				MarkdownDescription: "Include archived environments. Excluded by default, because an archived environment is out of resolution and therefore out of the estate.",
 			},
 			"inherited": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Also return the ancestor-group environments this scope may reference, with a nearer slug shadowing a farther one",
-				MarkdownDescription: "Also return the ancestor-group environments this scope may reference, with a nearer slug shadowing a farther one",
+				Description:         "Also return the ancestor-group environments this scope may reference — what a pipeline author needs, since a node's `environment:` resolves up the chain — with a nearer slug shadowing a farther one",
+				MarkdownDescription: "Also return the ancestor-group environments this scope may reference — what a pipeline author needs, since a node's `environment:` resolves up the chain — with a nearer slug shadowing a farther one",
 			},
 			"items": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -91,15 +91,23 @@ func GroupCatalogEnvironmentsDataSourceSchema(ctx context.Context) schema.Schema
 				Description:         "Match the slug or display name",
 				MarkdownDescription: "Match the slug or display name",
 			},
-			"tier": schema.StringAttribute{
+			"tier": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by tier",
-				MarkdownDescription: "Filter by tier",
+				Description:         "Environment tiers — development, testing, staging or production; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Environment tiers — development, testing, staging or production; repeat it, or separate with commas, for any of them",
+			},
+			"tier_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Environment tiers to leave out. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Environment tiers to leave out. Repeat it, or separate values with commas, for several, up to 20",
 			},
 		},
-		Description:         "List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless include_archived=true. With inherited=true the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by tier or search; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group. The token needs catalog:read.",
-		MarkdownDescription: "List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless `include_archived=true`. With `inherited=true` the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by `tier` or `search`; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.\n\nThe token needs `catalog:read`.",
+		Description:         "List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless include_archived=true. With inherited=true the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by tier or search, and leave tiers out with tier_not; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group. The token needs catalog:read.",
+		MarkdownDescription: "List a group's environments. Returns the environments the group declares, alphabetically by slug, leaving out archived ones unless `include_archived=true`. With `inherited=true` the ancestor groups' environments are included too, a nearer slug shadowing a farther one, except those of a group you cannot see. Filter by `tier` or `search`, and leave tiers out with `tier_not`; pages hold up to 100 environments (20 by default). Reporters and above may call it: environments are not public, even on a public group.\n\nThe token needs `catalog:read`.",
 	}
 }
 
@@ -109,7 +117,8 @@ type GroupCatalogEnvironmentsModel struct {
 	Inherited       types.Bool   `tfsdk:"inherited"`
 	Items           types.List   `tfsdk:"items"`
 	Search          types.String `tfsdk:"search"`
-	Tier            types.String `tfsdk:"tier"`
+	Tier            types.List   `tfsdk:"tier"`
+	TierNot         types.List   `tfsdk:"tier_not"`
 }
 
 var _ basetypes.ObjectTypable = ItemsType{}

@@ -5,10 +5,8 @@ package datasource_templates
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -82,32 +80,30 @@ func TemplatesDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 				Computed: true,
 			},
-			"kind": schema.StringAttribute{
+			"kind": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only templates of this kind",
-				MarkdownDescription: "Only templates of this kind",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"license",
-						"gitignore",
-						"changelog",
-						"contributing",
-						"code_of_conduct",
-						"security",
-						"catalog",
-					),
-				},
+				Description:         "Template kinds — license, gitignore, changelog, contributing, code_of_conduct, security or catalog; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Template kinds — license, gitignore, changelog, contributing, code_of_conduct, security or catalog; repeat it, or separate with commas, for any of them",
+			},
+			"kind_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Template kinds to leave out. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Template kinds to leave out. Repeat it, or separate values with commas, for several, up to 20",
 			},
 		},
-		Description:         "List file templates. The templates a new file can start from — licences, .gitignore files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without kind, every template.",
-		MarkdownDescription: "List file templates. The templates a new file can start from — licences, `.gitignore` files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without `kind`, every template.",
+		Description:         "List file templates. The templates a new file can start from — licences, .gitignore files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without kind, every template; leave kinds out with kind_not.",
+		MarkdownDescription: "List file templates. The templates a new file can start from — licences, `.gitignore` files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without `kind`, every template; leave kinds out with `kind_not`.",
 	}
 }
 
 type TemplatesModel struct {
-	Items types.List   `tfsdk:"items"`
-	Kind  types.String `tfsdk:"kind"`
+	Items   types.List `tfsdk:"items"`
+	Kind    types.List `tfsdk:"kind"`
+	KindNot types.List `tfsdk:"kind_not"`
 }
 
 var _ basetypes.ObjectTypable = ItemsType{}

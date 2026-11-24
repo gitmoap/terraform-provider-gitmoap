@@ -61,8 +61,13 @@ func (d *restDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 	query := url.Values{}
 	for param, attribute := range d.api.Read.Query {
-		if text, err := attributeText(config, attribute); err == nil {
-			query.Set(param, text) // the rest aren't set
+		values, err := queryValues(config, attribute)
+		if err != nil {
+			fail(err)
+			return
+		}
+		if len(values) > 0 {
+			query[param] = values
 		}
 	}
 	response, err := d.client.Get(ctx, path, query, d.api.Read.Pages)

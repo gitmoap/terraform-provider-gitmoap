@@ -34,7 +34,7 @@ data "gitmoap_repository_pipelines" "api" {
 
 ### Optional
 
-- `status` (String) Lifecycle filter: draft | published | all (default published; drafts writers-only)
+- `status` (String) `published` (the default), `draft` or `all`; drafts are listed only to those who can manage pipelines
 
 ### Read-Only
 
@@ -72,6 +72,9 @@ Read-Only:
 - `component_id` (String)
 - `component_ref` (String) The reference as the author wrote it, kept for display. It is not used to find the
 component.
+- `condition` (String) On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.
+
+JSON: set it with `jsonencode()`.
 - `id` (String)
 - `name` (String) Display name, also put in front of the display names of the steps it expands into.
 - `params` (String) Values for the component's parameters, by parameter name.
@@ -90,15 +93,29 @@ Read-Only:
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
+- `imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--items--created_by--imported))
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--items--created_by--imported"></a>
+### Nested Schema for `items.created_by.imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.
+
 
 
 <a id="nestedatt--items--diagnostics"></a>
@@ -212,6 +229,9 @@ list may only name approvers the environment also names. (see [below for nested 
 - `changes` (List of String) Path globs that decide whether this step runs: when none of them matches a path the push
 changed, the step is skipped. When absent and `service` is set, the service's own path globs
 apply.
+- `condition` (String) On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.
+
+JSON: set it with `jsonencode()`.
 - `config` (String) The step's provider-specific configuration, checked against the capability's
 `config_schema` when the run starts.
 

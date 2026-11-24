@@ -34,9 +34,11 @@ data "gitmoap_group_catalog_deployments" "acme" {
 
 ### Optional
 
-- `environment_id` (String) Show only these environments, as a comma-separated list of ids
+- `environment_id` (List of String) Show only these environments; repeat it, or separate with commas, for any of them
+- `environment_id_not` (List of String) Environments to leave out of the board. Repeat it, or separate values with commas, for several, up to 20
 - `search` (String) Match a service's name, description or slug substring
-- `tier` (String) Show only environments of this tier
+- `tier` (List of String) Show only environments of these tiers; repeat it, or separate with commas, for any of them
+- `tier_not` (List of String) Environment tiers to leave out of the board. Repeat it, or separate values with commas, for several, up to 20
 
 ### Read-Only
 
@@ -151,12 +153,25 @@ Read-Only:
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
+- `imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--rows--service--owner--actor--imported))
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--rows--service--owner--actor--imported"></a>
+### Nested Schema for `rows.service.owner.actor.imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.

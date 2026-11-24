@@ -3,12 +3,12 @@
 page_title: "gitmoap_templates Data Source - gitmoap"
 subcategory: ""
 description: |-
-  List file templates. The templates a new file can start from — licences, .gitignore files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without kind, every template.
+  List file templates. The templates a new file can start from — licences, .gitignore files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without kind, every template; leave kinds out with kind_not.
 ---
 
 # gitmoap_templates (Data Source)
 
-List file templates. The templates a new file can start from — licences, `.gitignore` files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without `kind`, every template.
+List file templates. The templates a new file can start from — licences, `.gitignore` files, and a repository's paperwork: a changelog, a contributing guide, a code of conduct, a security policy and a service catalog. Without `kind`, every template; leave kinds out with `kind_not`.
 
 ## Example Usage
 
@@ -22,7 +22,8 @@ data "gitmoap_templates" "example" {
 
 ### Optional
 
-- `kind` (String) Only templates of this kind
+- `kind` (List of String) Template kinds — license, gitignore, changelog, contributing, code_of_conduct, security or catalog; repeat it, or separate with commas, for any of them
+- `kind_not` (List of String) Template kinds to leave out. Repeat it, or separate values with commas, for several, up to 20
 
 ### Read-Only
 

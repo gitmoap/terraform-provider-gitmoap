@@ -18,6 +18,11 @@ import (
 func ProviderVersionDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"auth_schema": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The credentials this version reads, as a JSON Schema: a closed object of named fields, each\na string, a number, a boolean or a map of strings, and which of them this version requires.\nA connection is validated against every version's fields together, and a step on this\nversion does not start when its connection lacks a field this version requires.\n\nJSON: set it with `jsonencode()`.",
+				MarkdownDescription: "The credentials this version reads, as a JSON Schema: a closed object of named fields, each\na string, a number, a boolean or a map of strings, and which of them this version requires.\nA connection is validated against every version's fields together, and a step on this\nversion does not start when its connection lacks a field this version requires.\n\nJSON: set it with `jsonencode()`.",
+			},
 			"capabilities": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -192,6 +197,12 @@ func ProviderVersionDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Where the cosign signature is stored in the registry, when the images are signed.",
 				MarkdownDescription: "Where the cosign signature is stored in the registry, when the images are signed.",
 			},
+			"launcher_requires": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "What this version needs from the machine that runs its steps. A step on this version is\nnot started where those needs cannot be met: it fails at once, as a problem on Gitmoap's\nside rather than in the pipeline. Empty for most versions.",
+				MarkdownDescription: "What this version needs from the machine that runs its steps. A step on this version is\nnot started where those needs cannot be met: it fails at once, as a problem on Gitmoap's\nside rather than in the pipeline. Empty for most versions.",
+			},
 			"lifecycle_state": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Lifecycle state of a published `ProviderVersionManifest`. `Active` is the\ndefault; `Deprecated` still runs but the trigger-time validator surfaces a\nwarning; `Sunset` runs only inside its grace window, after which a trigger\nreferencing it fails validation.",
@@ -242,10 +253,12 @@ func ProviderVersionDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type ProviderVersionModel struct {
+	AuthSchema         types.String `tfsdk:"auth_schema"`
 	Capabilities       types.List   `tfsdk:"capabilities"`
 	Changelog          types.String `tfsdk:"changelog"`
 	ContractVersion    types.Int64  `tfsdk:"contract_version"`
 	CosignSignatureRef types.String `tfsdk:"cosign_signature_ref"`
+	LauncherRequires   types.List   `tfsdk:"launcher_requires"`
 	LifecycleState     types.String `tfsdk:"lifecycle_state"`
 	ManifestDigest     types.String `tfsdk:"manifest_digest"`
 	ProviderId         types.String `tfsdk:"provider_id"`

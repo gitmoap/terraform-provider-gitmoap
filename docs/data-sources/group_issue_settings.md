@@ -69,8 +69,7 @@ Set `value` to `disabled`, `restore`, or set the other fields. (see [below for n
 - `todo_policy` (String) What a bare `// TODO:` in a push becomes.
 - `todo_promote_type` (String) The kind of work item. The type decides where an item may live (a group or a repository), which
 types it may have as children, and which fields it accepts.
-- `transitions` (Attributes) Which status categories a work item may move to from each category, as a map from a category to
-the categories it may move to. A category not listed may move anywhere. (see [below for nested schema](#nestedatt--transitions))
+- `transitions` (Map of List of String) Which status categories a work item may move to from each category, as a map from a category to the categories it may move to. A category not listed may move anywhere.
 
 <a id="nestedatt--on_branch_created"></a>
 ### Nested Schema for `on_branch_created`
@@ -135,11 +134,3 @@ column, a merge can move it, and a progress rollup can count it as not done.
 it must be open.
 - `name` (String)
 - `status_id` (String)
-
-
-<a id="nestedatt--transitions"></a>
-### Nested Schema for `transitions`
-
-Read-Only:
-
-- `table` (String) JSON: set it with `jsonencode()`.

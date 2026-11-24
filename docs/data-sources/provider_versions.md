@@ -37,10 +37,19 @@ data "gitmoap_provider_versions" "example" {
 
 Read-Only:
 
+- `auth_schema` (String) The credentials this version reads, as a JSON Schema: a closed object of named fields, each
+a string, a number, a boolean or a map of strings, and which of them this version requires.
+A connection is validated against every version's fields together, and a step on this
+version does not start when its connection lacks a field this version requires.
+
+JSON: set it with `jsonencode()`.
 - `capabilities` (Attributes List) (see [below for nested schema](#nestedatt--items--capabilities))
 - `changelog` (String)
 - `contract_version` (Number)
 - `cosign_signature_ref` (String) Where the cosign signature is stored in the registry, when the images are signed.
+- `launcher_requires` (List of String) What this version needs from the machine that runs its steps. A step on this version is
+not started where those needs cannot be met: it fails at once, as a problem on Gitmoap's
+side rather than in the pipeline. Empty for most versions.
 - `lifecycle_state` (String) Lifecycle state of a published `ProviderVersionManifest`. `Active` is the
 default; `Deprecated` still runs but the trigger-time validator surfaces a
 warning; `Sunset` runs only inside its grace window, after which a trigger

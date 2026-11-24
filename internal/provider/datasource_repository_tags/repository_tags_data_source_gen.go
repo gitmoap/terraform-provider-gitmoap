@@ -126,14 +126,14 @@ func RepositoryTagsDataSourceSchema(ctx context.Context) schema.Schema {
 			"search": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter tags by name substring",
-				MarkdownDescription: "Filter tags by name substring",
+				Description:         "Only the tags whose name holds this",
+				MarkdownDescription: "Only the tags whose name holds this",
 			},
 			"sort": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Sort order: name_asc (default), name_desc, version_desc — highest version first, then the tags that are no version — or created_desc, newest first",
-				MarkdownDescription: "Sort order: name_asc (default), name_desc, version_desc — highest version first, then the tags that are no version — or created_desc, newest first",
+				Description:         "Sort order: `name_asc` (default), `name_desc`, `version_desc` — highest version first, then the tags that are no version — or `created_desc`, newest first",
+				MarkdownDescription: "Sort order: `name_asc` (default), `name_desc`, `version_desc` — highest version first, then the tags that are no version — or `created_desc`, newest first",
 			},
 		},
 		Description:         "List tags in a repository. The repository's tags in name order, ascending by default — or by version, highest first, or newest first — optionally narrowed to names containing a search term (case-insensitive). Each comes with the commit it points to. Page with next_token, passed back unchanged with the same sort; a sort other than those listed, or a token this listing did not hand out, is refused. The token needs tag:read.",

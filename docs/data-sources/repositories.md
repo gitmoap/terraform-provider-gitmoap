@@ -31,8 +31,8 @@ data "gitmoap_repositories" "platform" {
 ### Optional
 
 - `fork` (String) Whether forks are listed: `include` (the default), `exclude` or `only`
-- `group_id` (String) Filter by group ID (mutually exclusive with group_path; one is required)
-- `group_path` (String) Filter by group path (mutually exclusive with group_id; one is required)
+- `group_id` (String) The group whose repositories are listed (mutually exclusive with `group_path`; one is required)
+- `group_path` (String) The path of the group whose repositories are listed (mutually exclusive with `group_id`; one is required)
 
 ### Read-Only
 
@@ -44,6 +44,9 @@ data "gitmoap_repositories" "platform" {
 Read-Only:
 
 - `ancestor_group_ids` (List of String)
+- `archived_at` (String) When the repository was archived: from then on it is read-only — it can be read, cloned,
+starred, governed, unarchived or deleted, and nothing else changes it. Absent while it is
+not archived.
 - `avatar` (String)
 - `catalog_enabled` (Boolean) Whether the service catalog reads this repository's catalog file. A new fork starts with
 this off: the file names its upstream's services.
@@ -58,6 +61,14 @@ public repository, public and internal forks of an internal one. Absent on a pri
 repository, because no fork of it is visible to all of its readers.
 - `full_path` (String)
 - `group_id` (String)
+- `last_pushed_at` (String) When the default branch last moved — a push, a web commit, a merge, a fork's copy or sync —
+as the event that moved it says. Absent while it never has, or not since the platform began
+recording it. Never touched by a settings change, which moves `updated_at` instead.
+- `listed` (Boolean) Whether a public repository is on Explore and in the sitemap. An unlisted one is exactly as
+public — readable at its address, cloneable, found by search — and only absent from the
+front door. Means nothing on a repository that is not public, until it is made public.
+- `mirrored_from` (String) The source this repository mirrors, when it is a mirror: its branches and tags follow the
+source, and nothing else moves them. Absent otherwise.
 - `pipelines_enabled` (Boolean) Whether pushes, merge requests and schedules start pipeline runs here. A new fork starts
 with this off, so it runs nothing until one of its Maintainers turns it on.
 - `repository_id` (String)

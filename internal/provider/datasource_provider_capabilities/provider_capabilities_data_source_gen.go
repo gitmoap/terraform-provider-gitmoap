@@ -5,10 +5,8 @@ package datasource_provider_capabilities
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -188,22 +186,19 @@ func ProviderCapabilitiesDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Provider slug",
 				MarkdownDescription: "Provider slug",
 			},
-			"stage_type": schema.StringAttribute{
+			"stage_type": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by stage type",
-				MarkdownDescription: "Filter by stage type",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"source",
-						"build",
-						"test",
-						"publish",
-						"deploy",
-						"notify",
-						"custom",
-					),
-				},
+				Description:         "Stage types — source, build, test, publish, deploy, notify or custom; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Stage types — source, build, test, publish, deploy, notify or custom; repeat it, or separate with commas, for any of them",
+			},
+			"stage_type_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Stage types to leave out. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Stage types to leave out. Repeat it, or separate values with commas, for several, up to 20",
 			},
 			"version": schema.StringAttribute{
 				Optional:            true,
@@ -212,16 +207,17 @@ func ProviderCapabilitiesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Pin to a version (default: latest)",
 			},
 		},
-		Description:         "List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the version you name; the response says which version it used. Narrow them with stage_type. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
-		MarkdownDescription: "List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the `version` you name; the response says which version it used. Narrow them with `stage_type`. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
+		Description:         "List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the version you name; the response says which version it used. Narrow them with stage_type, or leave stages out with stage_type_not. A private provider is visible only to members of the organization that owns it; anyone else gets 404. Open to any signed-in caller. The token needs provider_catalog:read.",
+		MarkdownDescription: "List capabilities offered by a provider at its latest (or pinned) version. Capabilities at the provider's latest version that is not sunset, or at the `version` you name; the response says which version it used. Narrow them with `stage_type`, or leave stages out with `stage_type_not`. A private provider is visible only to members of the organization that owns it; anyone else gets `404`. Open to any signed-in caller.\n\nThe token needs `provider_catalog:read`.",
 	}
 }
 
 type ProviderCapabilitiesModel struct {
-	Items      types.List   `tfsdk:"items"`
-	ProviderId types.String `tfsdk:"provider_id"`
-	StageType  types.String `tfsdk:"stage_type"`
-	Version    types.String `tfsdk:"version"`
+	Items        types.List   `tfsdk:"items"`
+	ProviderId   types.String `tfsdk:"provider_id"`
+	StageType    types.List   `tfsdk:"stage_type"`
+	StageTypeNot types.List   `tfsdk:"stage_type_not"`
+	Version      types.String `tfsdk:"version"`
 }
 
 var _ basetypes.ObjectTypable = ItemsType{}

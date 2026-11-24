@@ -62,7 +62,7 @@ the other fields. Every action also carries `summary`, one line for the person d
 `address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a
 line saying how many more there were.
 
-`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`. (see [below for nested schema](#nestedatt--subject))
+`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `claim_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`. (see [below for nested schema](#nestedatt--subject))
 
 <a id="nestedatt--agent"></a>
 ### Nested Schema for `agent`
@@ -72,15 +72,29 @@ Read-Only:
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
+- `imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--agent--imported))
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--agent--imported"></a>
+### Nested Schema for `agent.imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.
+
 
 
 <a id="nestedatt--approvers"></a>
@@ -88,18 +102,32 @@ digits, a shape no open account may take, with an address under `.invalid`.
 
 Read-Only:
 
+- `approvers_imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--approvers--approvers_imported))
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--approvers--approvers_imported"></a>
+### Nested Schema for `approvers.approvers_imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.
+
 
 
 <a id="nestedatt--decided_by"></a>
@@ -109,16 +137,30 @@ Read-Only:
 
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
+- `decided_by_imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--decided_by--decided_by_imported))
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--decided_by--decided_by_imported"></a>
+### Nested Schema for `decided_by.decided_by_imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.
+
 
 
 <a id="nestedatt--subject"></a>

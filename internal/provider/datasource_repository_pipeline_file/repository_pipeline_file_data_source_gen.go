@@ -42,6 +42,11 @@ func RepositoryPipelineFileDataSourceSchema(ctx context.Context) schema.Schema {
 									Description:         "The reference as the author wrote it, kept for display. It is not used to find the\ncomponent.",
 									MarkdownDescription: "The reference as the author wrote it, kept for display. It is not used to find the\ncomponent.",
 								},
+								"condition": schema.StringAttribute{
+									Computed:            true,
+									Description:         "On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.\n\nJSON: set it with `jsonencode()`.",
+									MarkdownDescription: "On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.\n\nJSON: set it with `jsonencode()`.",
+								},
 								"id": schema.StringAttribute{
 									Computed: true,
 								},
@@ -221,6 +226,11 @@ func RepositoryPipelineFileDataSourceSchema(ctx context.Context) schema.Schema {
 												Computed:            true,
 												Description:         "Path globs that decide whether this step runs: when none of them matches a path the push\nchanged, the step is skipped. When absent and `service` is set, the service's own path globs\napply.",
 												MarkdownDescription: "Path globs that decide whether this step runs: when none of them matches a path the push\nchanged, the step is skipped. When absent and `service` is set, the service's own path globs\napply.",
+											},
+											"condition": schema.StringAttribute{
+												Computed:            true,
+												Description:         "On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.\n\nJSON: set it with `jsonencode()`.",
+												MarkdownDescription: "On which runs a step runs, or which of two values a choice takes, decided when a run starts from what the run knows then: its event, branch, tag, commit, merge request, schedule and repository, and the values a person started it with. `true` or `false`, or an object with exactly one operator key: a comparison of two operands, `&&` and `||` over two conditions, `!` over one, `contains`, `startswith`, `endswith` and `strcontains`, or a boolean read alone. A condition decides what a run does, never who may do it: anyone who can push a branch or a tag can make one true for their own run.\n\nJSON: set it with `jsonencode()`.",
 											},
 											"config": schema.StringAttribute{
 												Computed:            true,
@@ -775,6 +785,121 @@ func RepositoryPipelineFileDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Repository id",
 				MarkdownDescription: "Repository id",
 			},
+			"source_map": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"pointer": schema.StringAttribute{
+							Computed:            true,
+							Description:         "JSON pointer into the definition or body beside it. In a pipeline's definition\n`/stages/<s>/nodes/<n>` is a step's label, `/stages/<s>/nodes/<n>/config/<key>` a value of\nits `with`, `/stages/<s>` a stage, `/edges/<i>` an edge and `/component_instances/<i>` a\ncomponent instance; in a component's body a step is at `/nodes/<i>/node`, and its contract at\n`/parameters/<i>`, `/inputs/<i>` and `/outputs/<i>`.",
+							MarkdownDescription: "JSON pointer into the definition or body beside it. In a pipeline's definition\n`/stages/<s>/nodes/<n>` is a step's label, `/stages/<s>/nodes/<n>/config/<key>` a value of\nits `with`, `/stages/<s>` a stage, `/edges/<i>` an edge and `/component_instances/<i>` a\ncomponent instance; in a component's body a step is at `/nodes/<i>/node`, and its contract at\n`/parameters/<i>`, `/inputs/<i>` and `/outputs/<i>`.",
+						},
+						"provenance": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"key": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The instance's key.",
+									MarkdownDescription: "The instance's key.",
+								},
+								"kind": schema.StringAttribute{
+									Computed: true,
+								},
+								"label": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The repeated block's label.",
+									MarkdownDescription: "The repeated block's label.",
+								},
+							},
+							CustomType: ProvenanceType{
+								ObjectType: types.ObjectType{
+									AttrTypes: ProvenanceValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "How a part of a pipeline came by its value when its files do not write it out.\n\n`kind` says which applies: `computed`; `defaulted`; `generated`, with `key`, `label`.",
+							MarkdownDescription: "How a part of a pipeline came by its value when its files do not write it out.\n\n`kind` says which applies: `computed`; `defaulted`; `generated`, with `key`, `label`.",
+						},
+						"source_map_location": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"path": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The file's path from the repository's root.",
+									MarkdownDescription: "The file's path from the repository's root.",
+								},
+								"source_map_location_end": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"column": schema.Int64Attribute{
+											Computed:            true,
+											Description:         "The column, counted from 1 in Unicode characters.",
+											MarkdownDescription: "The column, counted from 1 in Unicode characters.",
+										},
+										"line": schema.Int64Attribute{
+											Computed:            true,
+											Description:         "The line, counted from 1.",
+											MarkdownDescription: "The line, counted from 1.",
+										},
+										"offset": schema.Int64Attribute{
+											Computed:            true,
+											Description:         "The byte offset from the start of the file.",
+											MarkdownDescription: "The byte offset from the start of the file.",
+										},
+									},
+									CustomType: SourceMapLocationEndType{
+										ObjectType: types.ObjectType{
+											AttrTypes: SourceMapLocationEndValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "A position in a file.",
+									MarkdownDescription: "A position in a file.",
+								},
+								"source_map_location_start": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"column": schema.Int64Attribute{
+											Computed:            true,
+											Description:         "The column, counted from 1 in Unicode characters.",
+											MarkdownDescription: "The column, counted from 1 in Unicode characters.",
+										},
+										"line": schema.Int64Attribute{
+											Computed:            true,
+											Description:         "The line, counted from 1.",
+											MarkdownDescription: "The line, counted from 1.",
+										},
+										"offset": schema.Int64Attribute{
+											Computed:            true,
+											Description:         "The byte offset from the start of the file.",
+											MarkdownDescription: "The byte offset from the start of the file.",
+										},
+									},
+									CustomType: SourceMapLocationStartType{
+										ObjectType: types.ObjectType{
+											AttrTypes: SourceMapLocationStartValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "A position in a file.",
+									MarkdownDescription: "A position in a file.",
+								},
+							},
+							CustomType: SourceMapLocationType{
+								ObjectType: types.ObjectType{
+									AttrTypes: SourceMapLocationValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "A span of a file.",
+							MarkdownDescription: "A span of a file.",
+						},
+					},
+					CustomType: SourceMapType{
+						ObjectType: types.ObjectType{
+							AttrTypes: SourceMapValue{}.AttributeTypes(ctx),
+						},
+					},
+				},
+				Computed:            true,
+				Description:         "Where each part of `definition` is written in `files`, and how a value the files compute,\ndefault or repeat came by it. Empty when there is no `definition`.",
+				MarkdownDescription: "Where each part of `definition` is written in `files`, and how a value the files compute,\ndefault or repeat came by it. Empty when there is no `definition`.",
+			},
 			"text": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The file its block is in, as committed.",
@@ -799,6 +924,7 @@ type RepositoryPipelineFileModel struct {
 	PipelineName types.String    `tfsdk:"pipeline_name"`
 	Ref          types.String    `tfsdk:"ref"`
 	RepoId       types.String    `tfsdk:"repo_id"`
+	SourceMap    types.List      `tfsdk:"source_map"`
 	Text         types.String    `tfsdk:"text"`
 }
 
@@ -1649,6 +1775,24 @@ func (t ComponentInstancesType) ValueFromObject(ctx context.Context, in basetype
 			fmt.Sprintf(`component_ref expected to be basetypes.StringValue, was: %T`, componentRefAttribute))
 	}
 
+	conditionAttribute, ok := attributes["condition"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`condition is missing from object`)
+
+		return nil, diags
+	}
+
+	conditionVal, ok := conditionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`condition expected to be basetypes.StringValue, was: %T`, conditionAttribute))
+	}
+
 	idAttribute, ok := attributes["id"]
 
 	if !ok {
@@ -1746,6 +1890,7 @@ func (t ComponentInstancesType) ValueFromObject(ctx context.Context, in basetype
 	return ComponentInstancesValue{
 		ComponentId:  componentIdVal,
 		ComponentRef: componentRefVal,
+		Condition:    conditionVal,
 		Id:           idVal,
 		Name:         nameVal,
 		Params:       paramsVal,
@@ -1854,6 +1999,24 @@ func NewComponentInstancesValue(attributeTypes map[string]attr.Type, attributes 
 			fmt.Sprintf(`component_ref expected to be basetypes.StringValue, was: %T`, componentRefAttribute))
 	}
 
+	conditionAttribute, ok := attributes["condition"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`condition is missing from object`)
+
+		return NewComponentInstancesValueUnknown(), diags
+	}
+
+	conditionVal, ok := conditionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`condition expected to be basetypes.StringValue, was: %T`, conditionAttribute))
+	}
+
 	idAttribute, ok := attributes["id"]
 
 	if !ok {
@@ -1951,6 +2114,7 @@ func NewComponentInstancesValue(attributeTypes map[string]attr.Type, attributes 
 	return ComponentInstancesValue{
 		ComponentId:  componentIdVal,
 		ComponentRef: componentRefVal,
+		Condition:    conditionVal,
 		Id:           idVal,
 		Name:         nameVal,
 		Params:       paramsVal,
@@ -2030,6 +2194,7 @@ var _ basetypes.ObjectValuable = ComponentInstancesValue{}
 type ComponentInstancesValue struct {
 	ComponentId  basetypes.StringValue `tfsdk:"component_id"`
 	ComponentRef basetypes.StringValue `tfsdk:"component_ref"`
+	Condition    basetypes.StringValue `tfsdk:"condition"`
 	Id           basetypes.StringValue `tfsdk:"id"`
 	Name         basetypes.StringValue `tfsdk:"name"`
 	Params       basetypes.StringValue `tfsdk:"params"`
@@ -2039,13 +2204,14 @@ type ComponentInstancesValue struct {
 }
 
 func (v ComponentInstancesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 8)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["component_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["component_ref"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["condition"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["params"] = basetypes.StringType{}.TerraformType(ctx)
@@ -2058,7 +2224,7 @@ func (v ComponentInstancesValue) ToTerraformValue(ctx context.Context) (tftypes.
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 8)
 
 		val, err = v.ComponentId.ToTerraformValue(ctx)
 
@@ -2075,6 +2241,14 @@ func (v ComponentInstancesValue) ToTerraformValue(ctx context.Context) (tftypes.
 		}
 
 		vals["component_ref"] = val
+
+		val, err = v.Condition.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["condition"] = val
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -2161,6 +2335,7 @@ func (v ComponentInstancesValue) ToObjectValue(ctx context.Context) (basetypes.O
 		return types.ObjectUnknown(map[string]attr.Type{
 			"component_id":  basetypes.StringType{},
 			"component_ref": basetypes.StringType{},
+			"condition":     basetypes.StringType{},
 			"id":            basetypes.StringType{},
 			"name":          basetypes.StringType{},
 			"params":        basetypes.StringType{},
@@ -2174,6 +2349,7 @@ func (v ComponentInstancesValue) ToObjectValue(ctx context.Context) (basetypes.O
 	attributeTypes := map[string]attr.Type{
 		"component_id":  basetypes.StringType{},
 		"component_ref": basetypes.StringType{},
+		"condition":     basetypes.StringType{},
 		"id":            basetypes.StringType{},
 		"name":          basetypes.StringType{},
 		"params":        basetypes.StringType{},
@@ -2196,6 +2372,7 @@ func (v ComponentInstancesValue) ToObjectValue(ctx context.Context) (basetypes.O
 		map[string]attr.Value{
 			"component_id":  v.ComponentId,
 			"component_ref": v.ComponentRef,
+			"condition":     v.Condition,
 			"id":            v.Id,
 			"name":          v.Name,
 			"params":        v.Params,
@@ -2226,6 +2403,10 @@ func (v ComponentInstancesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.ComponentRef.Equal(other.ComponentRef) {
+		return false
+	}
+
+	if !v.Condition.Equal(other.Condition) {
 		return false
 	}
 
@@ -2264,6 +2445,7 @@ func (v ComponentInstancesValue) AttributeTypes(ctx context.Context) map[string]
 	return map[string]attr.Type{
 		"component_id":  basetypes.StringType{},
 		"component_ref": basetypes.StringType{},
+		"condition":     basetypes.StringType{},
 		"id":            basetypes.StringType{},
 		"name":          basetypes.StringType{},
 		"params":        basetypes.StringType{},
@@ -3494,6 +3676,24 @@ func (t NodesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`changes expected to be basetypes.ListValue, was: %T`, changesAttribute))
 	}
 
+	conditionAttribute, ok := attributes["condition"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`condition is missing from object`)
+
+		return nil, diags
+	}
+
+	conditionVal, ok := conditionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`condition expected to be basetypes.StringValue, was: %T`, conditionAttribute))
+	}
+
 	configAttribute, ok := attributes["config"]
 
 	if !ok {
@@ -3773,6 +3973,7 @@ func (t NodesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		Approval:          approvalVal,
 		CapabilityId:      capabilityIdVal,
 		Changes:           changesVal,
+		Condition:         conditionVal,
 		Config:            configVal,
 		Connection:        connectionVal,
 		Cpu:               cpuVal,
@@ -3927,6 +4128,24 @@ func NewNodesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`changes expected to be basetypes.ListValue, was: %T`, changesAttribute))
 	}
 
+	conditionAttribute, ok := attributes["condition"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`condition is missing from object`)
+
+		return NewNodesValueUnknown(), diags
+	}
+
+	conditionVal, ok := conditionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`condition expected to be basetypes.StringValue, was: %T`, conditionAttribute))
+	}
+
 	configAttribute, ok := attributes["config"]
 
 	if !ok {
@@ -4206,6 +4425,7 @@ func NewNodesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		Approval:          approvalVal,
 		CapabilityId:      capabilityIdVal,
 		Changes:           changesVal,
+		Condition:         conditionVal,
 		Config:            configVal,
 		Connection:        connectionVal,
 		Cpu:               cpuVal,
@@ -4297,6 +4517,7 @@ type NodesValue struct {
 	Approval          basetypes.ObjectValue `tfsdk:"approval"`
 	CapabilityId      basetypes.StringValue `tfsdk:"capability_id"`
 	Changes           basetypes.ListValue   `tfsdk:"changes"`
+	Condition         basetypes.StringValue `tfsdk:"condition"`
 	Config            basetypes.StringValue `tfsdk:"config"`
 	Connection        basetypes.StringValue `tfsdk:"connection"`
 	Cpu               basetypes.StringValue `tfsdk:"cpu"`
@@ -4316,7 +4537,7 @@ type NodesValue struct {
 }
 
 func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 19)
+	attrTypes := make(map[string]tftypes.Type, 20)
 
 	var val tftypes.Value
 	var err error
@@ -4329,6 +4550,7 @@ func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["changes"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
+	attrTypes["condition"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["config"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["connection"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["cpu"] = basetypes.StringType{}.TerraformType(ctx)
@@ -4353,7 +4575,7 @@ func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 19)
+		vals := make(map[string]tftypes.Value, 20)
 
 		val, err = v.AllowFailure.ToTerraformValue(ctx)
 
@@ -4386,6 +4608,14 @@ func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["changes"] = val
+
+		val, err = v.Condition.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["condition"] = val
 
 		val, err = v.Config.ToTerraformValue(ctx)
 
@@ -4621,6 +4851,7 @@ func (v NodesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"changes": basetypes.ListType{
 				ElemType: types.StringType,
 			},
+			"condition":   basetypes.StringType{},
 			"config":      basetypes.StringType{},
 			"connection":  basetypes.StringType{},
 			"cpu":         basetypes.StringType{},
@@ -4652,6 +4883,7 @@ func (v NodesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"changes": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+		"condition":   basetypes.StringType{},
 		"config":      basetypes.StringType{},
 		"connection":  basetypes.StringType{},
 		"cpu":         basetypes.StringType{},
@@ -4688,6 +4920,7 @@ func (v NodesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"approval":            approval,
 			"capability_id":       v.CapabilityId,
 			"changes":             changesVal,
+			"condition":           v.Condition,
 			"config":              v.Config,
 			"connection":          v.Connection,
 			"cpu":                 v.Cpu,
@@ -4736,6 +4969,10 @@ func (v NodesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Changes.Equal(other.Changes) {
+		return false
+	}
+
+	if !v.Condition.Equal(other.Condition) {
 		return false
 	}
 
@@ -4820,6 +5057,7 @@ func (v NodesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"changes": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+		"condition":   basetypes.StringType{},
 		"config":      basetypes.StringType{},
 		"connection":  basetypes.StringType{},
 		"cpu":         basetypes.StringType{},
@@ -14937,5 +15175,2283 @@ func (v FilesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"blob_sha": basetypes.StringType{},
 		"path":     basetypes.StringType{},
 		"text":     basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = SourceMapType{}
+
+type SourceMapType struct {
+	basetypes.ObjectType
+}
+
+func (t SourceMapType) Equal(o attr.Type) bool {
+	other, ok := o.(SourceMapType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SourceMapType) String() string {
+	return "SourceMapType"
+}
+
+func (t SourceMapType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	pointerAttribute, ok := attributes["pointer"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`pointer is missing from object`)
+
+		return nil, diags
+	}
+
+	pointerVal, ok := pointerAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`pointer expected to be basetypes.StringValue, was: %T`, pointerAttribute))
+	}
+
+	provenanceAttribute, ok := attributes["provenance"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`provenance is missing from object`)
+
+		return nil, diags
+	}
+
+	provenanceVal, ok := provenanceAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`provenance expected to be basetypes.ObjectValue, was: %T`, provenanceAttribute))
+	}
+
+	sourceMapLocationAttribute, ok := attributes["source_map_location"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_map_location is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceMapLocationVal, ok := sourceMapLocationAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_map_location expected to be basetypes.ObjectValue, was: %T`, sourceMapLocationAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SourceMapValue{
+		Pointer:           pointerVal,
+		Provenance:        provenanceVal,
+		SourceMapLocation: sourceMapLocationVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapValueNull() SourceMapValue {
+	return SourceMapValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSourceMapValueUnknown() SourceMapValue {
+	return SourceMapValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSourceMapValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SourceMapValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SourceMapValue Attribute Value",
+				"While creating a SourceMapValue value, a missing attribute value was detected. "+
+					"A SourceMapValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SourceMapValue Attribute Type",
+				"While creating a SourceMapValue value, an invalid attribute value was detected. "+
+					"A SourceMapValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SourceMapValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SourceMapValue Attribute Value",
+				"While creating a SourceMapValue value, an extra attribute value was detected. "+
+					"A SourceMapValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SourceMapValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSourceMapValueUnknown(), diags
+	}
+
+	pointerAttribute, ok := attributes["pointer"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`pointer is missing from object`)
+
+		return NewSourceMapValueUnknown(), diags
+	}
+
+	pointerVal, ok := pointerAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`pointer expected to be basetypes.StringValue, was: %T`, pointerAttribute))
+	}
+
+	provenanceAttribute, ok := attributes["provenance"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`provenance is missing from object`)
+
+		return NewSourceMapValueUnknown(), diags
+	}
+
+	provenanceVal, ok := provenanceAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`provenance expected to be basetypes.ObjectValue, was: %T`, provenanceAttribute))
+	}
+
+	sourceMapLocationAttribute, ok := attributes["source_map_location"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_map_location is missing from object`)
+
+		return NewSourceMapValueUnknown(), diags
+	}
+
+	sourceMapLocationVal, ok := sourceMapLocationAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_map_location expected to be basetypes.ObjectValue, was: %T`, sourceMapLocationAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSourceMapValueUnknown(), diags
+	}
+
+	return SourceMapValue{
+		Pointer:           pointerVal,
+		Provenance:        provenanceVal,
+		SourceMapLocation: sourceMapLocationVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SourceMapValue {
+	object, diags := NewSourceMapValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSourceMapValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SourceMapType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSourceMapValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSourceMapValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSourceMapValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSourceMapValueMust(SourceMapValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SourceMapType) ValueType(ctx context.Context) attr.Value {
+	return SourceMapValue{}
+}
+
+var _ basetypes.ObjectValuable = SourceMapValue{}
+
+type SourceMapValue struct {
+	Pointer           basetypes.StringValue `tfsdk:"pointer"`
+	Provenance        basetypes.ObjectValue `tfsdk:"provenance"`
+	SourceMapLocation basetypes.ObjectValue `tfsdk:"source_map_location"`
+	state             attr.ValueState
+}
+
+func (v SourceMapValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["pointer"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["provenance"] = basetypes.ObjectType{
+		AttrTypes: ProvenanceValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["source_map_location"] = basetypes.ObjectType{
+		AttrTypes: SourceMapLocationValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Pointer.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["pointer"] = val
+
+		val, err = v.Provenance.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["provenance"] = val
+
+		val, err = v.SourceMapLocation.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_map_location"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SourceMapValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SourceMapValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SourceMapValue) String() string {
+	return "SourceMapValue"
+}
+
+func (v SourceMapValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var provenance basetypes.ObjectValue
+
+	if v.Provenance.IsNull() {
+		provenance = types.ObjectNull(
+			ProvenanceValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Provenance.IsUnknown() {
+		provenance = types.ObjectUnknown(
+			ProvenanceValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Provenance.IsNull() && !v.Provenance.IsUnknown() {
+		provenance = types.ObjectValueMust(
+			ProvenanceValue{}.AttributeTypes(ctx),
+			v.Provenance.Attributes(),
+		)
+	}
+
+	var sourceMapLocation basetypes.ObjectValue
+
+	if v.SourceMapLocation.IsNull() {
+		sourceMapLocation = types.ObjectNull(
+			SourceMapLocationValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.SourceMapLocation.IsUnknown() {
+		sourceMapLocation = types.ObjectUnknown(
+			SourceMapLocationValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.SourceMapLocation.IsNull() && !v.SourceMapLocation.IsUnknown() {
+		sourceMapLocation = types.ObjectValueMust(
+			SourceMapLocationValue{}.AttributeTypes(ctx),
+			v.SourceMapLocation.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"pointer": basetypes.StringType{},
+		"provenance": basetypes.ObjectType{
+			AttrTypes: ProvenanceValue{}.AttributeTypes(ctx),
+		},
+		"source_map_location": basetypes.ObjectType{
+			AttrTypes: SourceMapLocationValue{}.AttributeTypes(ctx),
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"pointer":             v.Pointer,
+			"provenance":          provenance,
+			"source_map_location": sourceMapLocation,
+		})
+
+	return objVal, diags
+}
+
+func (v SourceMapValue) Equal(o attr.Value) bool {
+	other, ok := o.(SourceMapValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Pointer.Equal(other.Pointer) {
+		return false
+	}
+
+	if !v.Provenance.Equal(other.Provenance) {
+		return false
+	}
+
+	if !v.SourceMapLocation.Equal(other.SourceMapLocation) {
+		return false
+	}
+
+	return true
+}
+
+func (v SourceMapValue) Type(ctx context.Context) attr.Type {
+	return SourceMapType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SourceMapValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"pointer": basetypes.StringType{},
+		"provenance": basetypes.ObjectType{
+			AttrTypes: ProvenanceValue{}.AttributeTypes(ctx),
+		},
+		"source_map_location": basetypes.ObjectType{
+			AttrTypes: SourceMapLocationValue{}.AttributeTypes(ctx),
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = ProvenanceType{}
+
+type ProvenanceType struct {
+	basetypes.ObjectType
+}
+
+func (t ProvenanceType) Equal(o attr.Type) bool {
+	other, ok := o.(ProvenanceType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ProvenanceType) String() string {
+	return "ProvenanceType"
+}
+
+func (t ProvenanceType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	keyAttribute, ok := attributes["key"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`key is missing from object`)
+
+		return nil, diags
+	}
+
+	keyVal, ok := keyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return nil, diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	labelAttribute, ok := attributes["label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`label is missing from object`)
+
+		return nil, diags
+	}
+
+	labelVal, ok := labelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`label expected to be basetypes.StringValue, was: %T`, labelAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ProvenanceValue{
+		Key:   keyVal,
+		Kind:  kindVal,
+		Label: labelVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProvenanceValueNull() ProvenanceValue {
+	return ProvenanceValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewProvenanceValueUnknown() ProvenanceValue {
+	return ProvenanceValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewProvenanceValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ProvenanceValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ProvenanceValue Attribute Value",
+				"While creating a ProvenanceValue value, a missing attribute value was detected. "+
+					"A ProvenanceValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProvenanceValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ProvenanceValue Attribute Type",
+				"While creating a ProvenanceValue value, an invalid attribute value was detected. "+
+					"A ProvenanceValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProvenanceValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ProvenanceValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ProvenanceValue Attribute Value",
+				"While creating a ProvenanceValue value, an extra attribute value was detected. "+
+					"A ProvenanceValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ProvenanceValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewProvenanceValueUnknown(), diags
+	}
+
+	keyAttribute, ok := attributes["key"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`key is missing from object`)
+
+		return NewProvenanceValueUnknown(), diags
+	}
+
+	keyVal, ok := keyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
+	}
+
+	kindAttribute, ok := attributes["kind"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`kind is missing from object`)
+
+		return NewProvenanceValueUnknown(), diags
+	}
+
+	kindVal, ok := kindAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`kind expected to be basetypes.StringValue, was: %T`, kindAttribute))
+	}
+
+	labelAttribute, ok := attributes["label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`label is missing from object`)
+
+		return NewProvenanceValueUnknown(), diags
+	}
+
+	labelVal, ok := labelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`label expected to be basetypes.StringValue, was: %T`, labelAttribute))
+	}
+
+	if diags.HasError() {
+		return NewProvenanceValueUnknown(), diags
+	}
+
+	return ProvenanceValue{
+		Key:   keyVal,
+		Kind:  kindVal,
+		Label: labelVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProvenanceValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ProvenanceValue {
+	object, diags := NewProvenanceValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewProvenanceValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ProvenanceType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewProvenanceValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewProvenanceValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewProvenanceValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewProvenanceValueMust(ProvenanceValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ProvenanceType) ValueType(ctx context.Context) attr.Value {
+	return ProvenanceValue{}
+}
+
+var _ basetypes.ObjectValuable = ProvenanceValue{}
+
+type ProvenanceValue struct {
+	Key   basetypes.StringValue `tfsdk:"key"`
+	Kind  basetypes.StringValue `tfsdk:"kind"`
+	Label basetypes.StringValue `tfsdk:"label"`
+	state attr.ValueState
+}
+
+func (v ProvenanceValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["label"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Key.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["key"] = val
+
+		val, err = v.Kind.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["kind"] = val
+
+		val, err = v.Label.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["label"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ProvenanceValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ProvenanceValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ProvenanceValue) String() string {
+	return "ProvenanceValue"
+}
+
+func (v ProvenanceValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"key":   basetypes.StringType{},
+		"kind":  basetypes.StringType{},
+		"label": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"key":   v.Key,
+			"kind":  v.Kind,
+			"label": v.Label,
+		})
+
+	return objVal, diags
+}
+
+func (v ProvenanceValue) Equal(o attr.Value) bool {
+	other, ok := o.(ProvenanceValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Key.Equal(other.Key) {
+		return false
+	}
+
+	if !v.Kind.Equal(other.Kind) {
+		return false
+	}
+
+	if !v.Label.Equal(other.Label) {
+		return false
+	}
+
+	return true
+}
+
+func (v ProvenanceValue) Type(ctx context.Context) attr.Type {
+	return ProvenanceType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ProvenanceValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"key":   basetypes.StringType{},
+		"kind":  basetypes.StringType{},
+		"label": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = SourceMapLocationType{}
+
+type SourceMapLocationType struct {
+	basetypes.ObjectType
+}
+
+func (t SourceMapLocationType) Equal(o attr.Type) bool {
+	other, ok := o.(SourceMapLocationType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SourceMapLocationType) String() string {
+	return "SourceMapLocationType"
+}
+
+func (t SourceMapLocationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	pathAttribute, ok := attributes["path"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`path is missing from object`)
+
+		return nil, diags
+	}
+
+	pathVal, ok := pathAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`path expected to be basetypes.StringValue, was: %T`, pathAttribute))
+	}
+
+	sourceMapLocationEndAttribute, ok := attributes["source_map_location_end"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_map_location_end is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceMapLocationEndVal, ok := sourceMapLocationEndAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_map_location_end expected to be basetypes.ObjectValue, was: %T`, sourceMapLocationEndAttribute))
+	}
+
+	sourceMapLocationStartAttribute, ok := attributes["source_map_location_start"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_map_location_start is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceMapLocationStartVal, ok := sourceMapLocationStartAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_map_location_start expected to be basetypes.ObjectValue, was: %T`, sourceMapLocationStartAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SourceMapLocationValue{
+		Path:                   pathVal,
+		SourceMapLocationEnd:   sourceMapLocationEndVal,
+		SourceMapLocationStart: sourceMapLocationStartVal,
+		state:                  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapLocationValueNull() SourceMapLocationValue {
+	return SourceMapLocationValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSourceMapLocationValueUnknown() SourceMapLocationValue {
+	return SourceMapLocationValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSourceMapLocationValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SourceMapLocationValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SourceMapLocationValue Attribute Value",
+				"While creating a SourceMapLocationValue value, a missing attribute value was detected. "+
+					"A SourceMapLocationValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapLocationValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SourceMapLocationValue Attribute Type",
+				"While creating a SourceMapLocationValue value, an invalid attribute value was detected. "+
+					"A SourceMapLocationValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapLocationValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SourceMapLocationValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SourceMapLocationValue Attribute Value",
+				"While creating a SourceMapLocationValue value, an extra attribute value was detected. "+
+					"A SourceMapLocationValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SourceMapLocationValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSourceMapLocationValueUnknown(), diags
+	}
+
+	pathAttribute, ok := attributes["path"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`path is missing from object`)
+
+		return NewSourceMapLocationValueUnknown(), diags
+	}
+
+	pathVal, ok := pathAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`path expected to be basetypes.StringValue, was: %T`, pathAttribute))
+	}
+
+	sourceMapLocationEndAttribute, ok := attributes["source_map_location_end"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_map_location_end is missing from object`)
+
+		return NewSourceMapLocationValueUnknown(), diags
+	}
+
+	sourceMapLocationEndVal, ok := sourceMapLocationEndAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_map_location_end expected to be basetypes.ObjectValue, was: %T`, sourceMapLocationEndAttribute))
+	}
+
+	sourceMapLocationStartAttribute, ok := attributes["source_map_location_start"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_map_location_start is missing from object`)
+
+		return NewSourceMapLocationValueUnknown(), diags
+	}
+
+	sourceMapLocationStartVal, ok := sourceMapLocationStartAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_map_location_start expected to be basetypes.ObjectValue, was: %T`, sourceMapLocationStartAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSourceMapLocationValueUnknown(), diags
+	}
+
+	return SourceMapLocationValue{
+		Path:                   pathVal,
+		SourceMapLocationEnd:   sourceMapLocationEndVal,
+		SourceMapLocationStart: sourceMapLocationStartVal,
+		state:                  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapLocationValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SourceMapLocationValue {
+	object, diags := NewSourceMapLocationValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSourceMapLocationValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SourceMapLocationType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSourceMapLocationValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSourceMapLocationValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSourceMapLocationValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSourceMapLocationValueMust(SourceMapLocationValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SourceMapLocationType) ValueType(ctx context.Context) attr.Value {
+	return SourceMapLocationValue{}
+}
+
+var _ basetypes.ObjectValuable = SourceMapLocationValue{}
+
+type SourceMapLocationValue struct {
+	Path                   basetypes.StringValue `tfsdk:"path"`
+	SourceMapLocationEnd   basetypes.ObjectValue `tfsdk:"source_map_location_end"`
+	SourceMapLocationStart basetypes.ObjectValue `tfsdk:"source_map_location_start"`
+	state                  attr.ValueState
+}
+
+func (v SourceMapLocationValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["path"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["source_map_location_end"] = basetypes.ObjectType{
+		AttrTypes: SourceMapLocationEndValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+	attrTypes["source_map_location_start"] = basetypes.ObjectType{
+		AttrTypes: SourceMapLocationStartValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Path.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["path"] = val
+
+		val, err = v.SourceMapLocationEnd.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_map_location_end"] = val
+
+		val, err = v.SourceMapLocationStart.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_map_location_start"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SourceMapLocationValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SourceMapLocationValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SourceMapLocationValue) String() string {
+	return "SourceMapLocationValue"
+}
+
+func (v SourceMapLocationValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var sourceMapLocationEnd basetypes.ObjectValue
+
+	if v.SourceMapLocationEnd.IsNull() {
+		sourceMapLocationEnd = types.ObjectNull(
+			SourceMapLocationEndValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.SourceMapLocationEnd.IsUnknown() {
+		sourceMapLocationEnd = types.ObjectUnknown(
+			SourceMapLocationEndValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.SourceMapLocationEnd.IsNull() && !v.SourceMapLocationEnd.IsUnknown() {
+		sourceMapLocationEnd = types.ObjectValueMust(
+			SourceMapLocationEndValue{}.AttributeTypes(ctx),
+			v.SourceMapLocationEnd.Attributes(),
+		)
+	}
+
+	var sourceMapLocationStart basetypes.ObjectValue
+
+	if v.SourceMapLocationStart.IsNull() {
+		sourceMapLocationStart = types.ObjectNull(
+			SourceMapLocationStartValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.SourceMapLocationStart.IsUnknown() {
+		sourceMapLocationStart = types.ObjectUnknown(
+			SourceMapLocationStartValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.SourceMapLocationStart.IsNull() && !v.SourceMapLocationStart.IsUnknown() {
+		sourceMapLocationStart = types.ObjectValueMust(
+			SourceMapLocationStartValue{}.AttributeTypes(ctx),
+			v.SourceMapLocationStart.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"path": basetypes.StringType{},
+		"source_map_location_end": basetypes.ObjectType{
+			AttrTypes: SourceMapLocationEndValue{}.AttributeTypes(ctx),
+		},
+		"source_map_location_start": basetypes.ObjectType{
+			AttrTypes: SourceMapLocationStartValue{}.AttributeTypes(ctx),
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"path":                      v.Path,
+			"source_map_location_end":   sourceMapLocationEnd,
+			"source_map_location_start": sourceMapLocationStart,
+		})
+
+	return objVal, diags
+}
+
+func (v SourceMapLocationValue) Equal(o attr.Value) bool {
+	other, ok := o.(SourceMapLocationValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Path.Equal(other.Path) {
+		return false
+	}
+
+	if !v.SourceMapLocationEnd.Equal(other.SourceMapLocationEnd) {
+		return false
+	}
+
+	if !v.SourceMapLocationStart.Equal(other.SourceMapLocationStart) {
+		return false
+	}
+
+	return true
+}
+
+func (v SourceMapLocationValue) Type(ctx context.Context) attr.Type {
+	return SourceMapLocationType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SourceMapLocationValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"path": basetypes.StringType{},
+		"source_map_location_end": basetypes.ObjectType{
+			AttrTypes: SourceMapLocationEndValue{}.AttributeTypes(ctx),
+		},
+		"source_map_location_start": basetypes.ObjectType{
+			AttrTypes: SourceMapLocationStartValue{}.AttributeTypes(ctx),
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = SourceMapLocationEndType{}
+
+type SourceMapLocationEndType struct {
+	basetypes.ObjectType
+}
+
+func (t SourceMapLocationEndType) Equal(o attr.Type) bool {
+	other, ok := o.(SourceMapLocationEndType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SourceMapLocationEndType) String() string {
+	return "SourceMapLocationEndType"
+}
+
+func (t SourceMapLocationEndType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	columnAttribute, ok := attributes["column"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`column is missing from object`)
+
+		return nil, diags
+	}
+
+	columnVal, ok := columnAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`column expected to be basetypes.Int64Value, was: %T`, columnAttribute))
+	}
+
+	lineAttribute, ok := attributes["line"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`line is missing from object`)
+
+		return nil, diags
+	}
+
+	lineVal, ok := lineAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`line expected to be basetypes.Int64Value, was: %T`, lineAttribute))
+	}
+
+	offsetAttribute, ok := attributes["offset"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`offset is missing from object`)
+
+		return nil, diags
+	}
+
+	offsetVal, ok := offsetAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`offset expected to be basetypes.Int64Value, was: %T`, offsetAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SourceMapLocationEndValue{
+		Column: columnVal,
+		Line:   lineVal,
+		Offset: offsetVal,
+		state:  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapLocationEndValueNull() SourceMapLocationEndValue {
+	return SourceMapLocationEndValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSourceMapLocationEndValueUnknown() SourceMapLocationEndValue {
+	return SourceMapLocationEndValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSourceMapLocationEndValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SourceMapLocationEndValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SourceMapLocationEndValue Attribute Value",
+				"While creating a SourceMapLocationEndValue value, a missing attribute value was detected. "+
+					"A SourceMapLocationEndValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapLocationEndValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SourceMapLocationEndValue Attribute Type",
+				"While creating a SourceMapLocationEndValue value, an invalid attribute value was detected. "+
+					"A SourceMapLocationEndValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapLocationEndValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SourceMapLocationEndValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SourceMapLocationEndValue Attribute Value",
+				"While creating a SourceMapLocationEndValue value, an extra attribute value was detected. "+
+					"A SourceMapLocationEndValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SourceMapLocationEndValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSourceMapLocationEndValueUnknown(), diags
+	}
+
+	columnAttribute, ok := attributes["column"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`column is missing from object`)
+
+		return NewSourceMapLocationEndValueUnknown(), diags
+	}
+
+	columnVal, ok := columnAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`column expected to be basetypes.Int64Value, was: %T`, columnAttribute))
+	}
+
+	lineAttribute, ok := attributes["line"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`line is missing from object`)
+
+		return NewSourceMapLocationEndValueUnknown(), diags
+	}
+
+	lineVal, ok := lineAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`line expected to be basetypes.Int64Value, was: %T`, lineAttribute))
+	}
+
+	offsetAttribute, ok := attributes["offset"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`offset is missing from object`)
+
+		return NewSourceMapLocationEndValueUnknown(), diags
+	}
+
+	offsetVal, ok := offsetAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`offset expected to be basetypes.Int64Value, was: %T`, offsetAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSourceMapLocationEndValueUnknown(), diags
+	}
+
+	return SourceMapLocationEndValue{
+		Column: columnVal,
+		Line:   lineVal,
+		Offset: offsetVal,
+		state:  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapLocationEndValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SourceMapLocationEndValue {
+	object, diags := NewSourceMapLocationEndValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSourceMapLocationEndValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SourceMapLocationEndType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSourceMapLocationEndValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSourceMapLocationEndValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSourceMapLocationEndValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSourceMapLocationEndValueMust(SourceMapLocationEndValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SourceMapLocationEndType) ValueType(ctx context.Context) attr.Value {
+	return SourceMapLocationEndValue{}
+}
+
+var _ basetypes.ObjectValuable = SourceMapLocationEndValue{}
+
+type SourceMapLocationEndValue struct {
+	Column basetypes.Int64Value `tfsdk:"column"`
+	Line   basetypes.Int64Value `tfsdk:"line"`
+	Offset basetypes.Int64Value `tfsdk:"offset"`
+	state  attr.ValueState
+}
+
+func (v SourceMapLocationEndValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["column"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["line"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["offset"] = basetypes.Int64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Column.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["column"] = val
+
+		val, err = v.Line.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["line"] = val
+
+		val, err = v.Offset.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["offset"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SourceMapLocationEndValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SourceMapLocationEndValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SourceMapLocationEndValue) String() string {
+	return "SourceMapLocationEndValue"
+}
+
+func (v SourceMapLocationEndValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"column": basetypes.Int64Type{},
+		"line":   basetypes.Int64Type{},
+		"offset": basetypes.Int64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"column": v.Column,
+			"line":   v.Line,
+			"offset": v.Offset,
+		})
+
+	return objVal, diags
+}
+
+func (v SourceMapLocationEndValue) Equal(o attr.Value) bool {
+	other, ok := o.(SourceMapLocationEndValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Column.Equal(other.Column) {
+		return false
+	}
+
+	if !v.Line.Equal(other.Line) {
+		return false
+	}
+
+	if !v.Offset.Equal(other.Offset) {
+		return false
+	}
+
+	return true
+}
+
+func (v SourceMapLocationEndValue) Type(ctx context.Context) attr.Type {
+	return SourceMapLocationEndType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SourceMapLocationEndValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"column": basetypes.Int64Type{},
+		"line":   basetypes.Int64Type{},
+		"offset": basetypes.Int64Type{},
+	}
+}
+
+var _ basetypes.ObjectTypable = SourceMapLocationStartType{}
+
+type SourceMapLocationStartType struct {
+	basetypes.ObjectType
+}
+
+func (t SourceMapLocationStartType) Equal(o attr.Type) bool {
+	other, ok := o.(SourceMapLocationStartType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SourceMapLocationStartType) String() string {
+	return "SourceMapLocationStartType"
+}
+
+func (t SourceMapLocationStartType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	columnAttribute, ok := attributes["column"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`column is missing from object`)
+
+		return nil, diags
+	}
+
+	columnVal, ok := columnAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`column expected to be basetypes.Int64Value, was: %T`, columnAttribute))
+	}
+
+	lineAttribute, ok := attributes["line"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`line is missing from object`)
+
+		return nil, diags
+	}
+
+	lineVal, ok := lineAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`line expected to be basetypes.Int64Value, was: %T`, lineAttribute))
+	}
+
+	offsetAttribute, ok := attributes["offset"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`offset is missing from object`)
+
+		return nil, diags
+	}
+
+	offsetVal, ok := offsetAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`offset expected to be basetypes.Int64Value, was: %T`, offsetAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SourceMapLocationStartValue{
+		Column: columnVal,
+		Line:   lineVal,
+		Offset: offsetVal,
+		state:  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapLocationStartValueNull() SourceMapLocationStartValue {
+	return SourceMapLocationStartValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSourceMapLocationStartValueUnknown() SourceMapLocationStartValue {
+	return SourceMapLocationStartValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSourceMapLocationStartValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SourceMapLocationStartValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SourceMapLocationStartValue Attribute Value",
+				"While creating a SourceMapLocationStartValue value, a missing attribute value was detected. "+
+					"A SourceMapLocationStartValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapLocationStartValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SourceMapLocationStartValue Attribute Type",
+				"While creating a SourceMapLocationStartValue value, an invalid attribute value was detected. "+
+					"A SourceMapLocationStartValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SourceMapLocationStartValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SourceMapLocationStartValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SourceMapLocationStartValue Attribute Value",
+				"While creating a SourceMapLocationStartValue value, an extra attribute value was detected. "+
+					"A SourceMapLocationStartValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SourceMapLocationStartValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSourceMapLocationStartValueUnknown(), diags
+	}
+
+	columnAttribute, ok := attributes["column"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`column is missing from object`)
+
+		return NewSourceMapLocationStartValueUnknown(), diags
+	}
+
+	columnVal, ok := columnAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`column expected to be basetypes.Int64Value, was: %T`, columnAttribute))
+	}
+
+	lineAttribute, ok := attributes["line"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`line is missing from object`)
+
+		return NewSourceMapLocationStartValueUnknown(), diags
+	}
+
+	lineVal, ok := lineAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`line expected to be basetypes.Int64Value, was: %T`, lineAttribute))
+	}
+
+	offsetAttribute, ok := attributes["offset"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`offset is missing from object`)
+
+		return NewSourceMapLocationStartValueUnknown(), diags
+	}
+
+	offsetVal, ok := offsetAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`offset expected to be basetypes.Int64Value, was: %T`, offsetAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSourceMapLocationStartValueUnknown(), diags
+	}
+
+	return SourceMapLocationStartValue{
+		Column: columnVal,
+		Line:   lineVal,
+		Offset: offsetVal,
+		state:  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSourceMapLocationStartValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SourceMapLocationStartValue {
+	object, diags := NewSourceMapLocationStartValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSourceMapLocationStartValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SourceMapLocationStartType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSourceMapLocationStartValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSourceMapLocationStartValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSourceMapLocationStartValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSourceMapLocationStartValueMust(SourceMapLocationStartValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SourceMapLocationStartType) ValueType(ctx context.Context) attr.Value {
+	return SourceMapLocationStartValue{}
+}
+
+var _ basetypes.ObjectValuable = SourceMapLocationStartValue{}
+
+type SourceMapLocationStartValue struct {
+	Column basetypes.Int64Value `tfsdk:"column"`
+	Line   basetypes.Int64Value `tfsdk:"line"`
+	Offset basetypes.Int64Value `tfsdk:"offset"`
+	state  attr.ValueState
+}
+
+func (v SourceMapLocationStartValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["column"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["line"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["offset"] = basetypes.Int64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Column.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["column"] = val
+
+		val, err = v.Line.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["line"] = val
+
+		val, err = v.Offset.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["offset"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SourceMapLocationStartValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SourceMapLocationStartValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SourceMapLocationStartValue) String() string {
+	return "SourceMapLocationStartValue"
+}
+
+func (v SourceMapLocationStartValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"column": basetypes.Int64Type{},
+		"line":   basetypes.Int64Type{},
+		"offset": basetypes.Int64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"column": v.Column,
+			"line":   v.Line,
+			"offset": v.Offset,
+		})
+
+	return objVal, diags
+}
+
+func (v SourceMapLocationStartValue) Equal(o attr.Value) bool {
+	other, ok := o.(SourceMapLocationStartValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Column.Equal(other.Column) {
+		return false
+	}
+
+	if !v.Line.Equal(other.Line) {
+		return false
+	}
+
+	if !v.Offset.Equal(other.Offset) {
+		return false
+	}
+
+	return true
+}
+
+func (v SourceMapLocationStartValue) Type(ctx context.Context) attr.Type {
+	return SourceMapLocationStartType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SourceMapLocationStartValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"column": basetypes.Int64Type{},
+		"line":   basetypes.Int64Type{},
+		"offset": basetypes.Int64Type{},
 	}
 }

@@ -3,13 +3,13 @@
 page_title: "gitmoap_providers Data Source - gitmoap"
 subcategory: ""
 description: |-
-  Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted.
+  Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted. Leave categories and tiers out with category_not and tier_not.
   The token needs provider_catalog:read.
 ---
 
 # gitmoap_providers (Data Source)
 
-Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted.
+Browse the provider marketplace. The provider catalogue with trust badges, install counts and categories — searched, narrowed by facet and sorted. Leave categories and tiers out with `category_not` and `tier_not`.
 
 The token needs `provider_catalog:read`.
 
@@ -25,12 +25,14 @@ data "gitmoap_providers" "example" {
 
 ### Optional
 
-- `category` (String) Filter to providers declaring this category
+- `category` (List of String) Providers declaring one of these categories; repeat it, or separate with commas, for any of them
+- `category_not` (List of String) Categories to leave out: a provider declaring any of them is left out, whatever else it declares. Repeat it, or separate values with commas, for several, up to 20
 - `featured` (Boolean) Only editorially-featured providers, ordered by rank
-- `owning_group` (String) List one org's private providers (members only)
-- `q` (String) Free-text match over name/description/keywords
-- `sort` (String) relevance | installs | name | recently_updated
-- `tier` (String) Filter by tier
+- `owning_group` (String) List one organization's private providers (members only)
+- `q` (String) Free-text match over name, description and keywords
+- `sort` (String) `relevance` (default), `installs`, `name` or `recently_updated`
+- `tier` (List of String) Provider tiers — platform, verified, community or private; repeat it, or separate with commas, for any of them
+- `tier_not` (List of String) Provider tiers to leave out. Repeat it, or separate values with commas, for several, up to 20
 - `verified_only` (Boolean) Only providers whose publisher namespace is verified
 
 ### Read-Only

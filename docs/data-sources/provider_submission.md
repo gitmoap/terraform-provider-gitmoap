@@ -82,9 +82,18 @@ Read-Only:
 
 Read-Only:
 
+- `auth_schema` (String) The credentials this version reads, as a JSON Schema: a closed object of named fields, each
+a string, a number, a boolean or a map of strings, and which of them this version requires.
+A connection is validated against every version's fields together, and a step on this
+version does not start when its connection lacks a field this version requires.
+
+JSON: set it with `jsonencode()`.
 - `changelog` (String)
 - `contract_version` (Number)
 - `cosign_signature_ref` (String) Where the cosign signature is stored in the registry, when the images are signed.
+- `launcher_requires` (List of String) What this version needs from the machine that runs its steps. A step on this version is
+not started where those needs cannot be met: it fails at once, as a problem on Gitmoap's
+side rather than in the pipeline. Empty for most versions.
 - `lifecycle_state` (String) Lifecycle state of a published `ProviderVersionManifest`. `Active` is the
 default; `Deprecated` still runs but the trigger-time validator surfaces a
 warning; `Sunset` runs only inside its grace window, after which a trigger
@@ -198,15 +207,29 @@ Read-Only:
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
+- `imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--reviewer--imported))
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--reviewer--imported"></a>
+### Nested Schema for `reviewer.imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.
+
 
 
 <a id="nestedatt--source_image_refs"></a>
@@ -226,12 +249,25 @@ Read-Only:
 - `avatar_url` (String) The principal's picture, when one is known. Absent otherwise: a client derives the
 deterministic avatar URL itself.
 - `email` (String) The principal's address. An agent's is a generated no-reply address — the author of its
-commits. `unknown` on a deleted actor and empty on a redacted one.
+commits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.
 - `id` (String) The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on
-a redacted actor.
+a redacted actor and on an outside author (`imported`).
 - `kind` (String) A person, a service account or an AI organization's agent — which of the three a principal is,
 and so which page it links to: a person's profile, a service account's page or an agent's page.
+- `submitted_by_imported` (Attributes) An author who wrote on another host — a work item, a merge request, a comment, a release an import
+brought — and whom nobody here is linked to yet. (see [below for nested schema](#nestedatt--submitted_by--submitted_by_imported))
 - `username` (String) The name to show: a person's or service account's username, or an agent's handle (which
 always ends in `-ai`). `deleted-user` when the actor no longer resolves, `redacted` when the
 caller may not see who it was. A closed account whose work stays is `closed-` and twelve hex
 digits, a shape no open account may take, with an address under `.invalid`.
+
+<a id="nestedatt--submitted_by--submitted_by_imported"></a>
+### Nested Schema for `submitted_by.submitted_by_imported`
+
+Read-Only:
+
+- `identity_id` (String) The outside author's id among the organization's imported identities.
+- `login` (String) Their login on that host.
+- `name` (String) Their name on that host, when it gave one.
+- `profile_url` (String) Their profile's address on that host, when it gave one.
+- `source_host` (String) The host they wrote on, such as `github.com`.

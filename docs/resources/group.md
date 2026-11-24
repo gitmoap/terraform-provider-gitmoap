@@ -83,6 +83,7 @@ resource "gitmoap_group_approval_rule" "reviewed" {
 - `description` (String)
 - `display_name` (String)
 - `parent_group_id` (String)
+- `purge_on_destroy` (Boolean) Delete the group for good on destroy. Otherwise destroying it schedules its deletion: it's gone for everyone at once, but an Owner can restore it for seven days, and until then it keeps its path, so no new group can take it. A group is deleted for good only once what it held is: set it on the repositories and subgroups in it too.
 - `visibility` (String)
 
 ### Read-Only

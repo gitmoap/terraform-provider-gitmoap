@@ -22,6 +22,11 @@ func RepositoryDataSourceSchema(ctx context.Context) schema.Schema {
 				ElementType: types.StringType,
 				Computed:    true,
 			},
+			"archived_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "When the repository was archived: from then on it is read-only — it can be read, cloned,\nstarred, governed, unarchived or deleted, and nothing else changes it. Absent while it is\nnot archived.",
+				MarkdownDescription: "When the repository was archived: from then on it is read-only — it can be read, cloned,\nstarred, governed, unarchived or deleted, and nothing else changes it. Absent while it is\nnot archived.",
+			},
 			"avatar": schema.StringAttribute{
 				Computed: true,
 			},
@@ -134,6 +139,21 @@ func RepositoryDataSourceSchema(ctx context.Context) schema.Schema {
 			"group_id": schema.StringAttribute{
 				Computed: true,
 			},
+			"last_pushed_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "When the default branch last moved — a push, a web commit, a merge, a fork's copy or sync —\nas the event that moved it says. Absent while it never has, or not since the platform began\nrecording it. Never touched by a settings change, which moves `updated_at` instead.",
+				MarkdownDescription: "When the default branch last moved — a push, a web commit, a merge, a fork's copy or sync —\nas the event that moved it says. Absent while it never has, or not since the platform began\nrecording it. Never touched by a settings change, which moves `updated_at` instead.",
+			},
+			"listed": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether a public repository is on Explore and in the sitemap. An unlisted one is exactly as\npublic — readable at its address, cloneable, found by search — and only absent from the\nfront door. Means nothing on a repository that is not public, until it is made public.",
+				MarkdownDescription: "Whether a public repository is on Explore and in the sitemap. An unlisted one is exactly as\npublic — readable at its address, cloneable, found by search — and only absent from the\nfront door. Means nothing on a repository that is not public, until it is made public.",
+			},
+			"mirrored_from": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The source this repository mirrors, when it is a mirror: its branches and tags follow the\nsource, and nothing else moves them. Absent otherwise.",
+				MarkdownDescription: "The source this repository mirrors, when it is a mirror: its branches and tags follow the\nsource, and nothing else moves them. Absent otherwise.",
+			},
 			"pipelines_enabled": schema.BoolAttribute{
 				Computed:            true,
 				Description:         "Whether pushes, merge requests and schedules start pipeline runs here. A new fork starts\nwith this off, so it runs nothing until one of its Maintainers turns it on.",
@@ -174,6 +194,7 @@ func RepositoryDataSourceSchema(ctx context.Context) schema.Schema {
 
 type RepositoryModel struct {
 	AncestorGroupIds types.List   `tfsdk:"ancestor_group_ids"`
+	ArchivedAt       types.String `tfsdk:"archived_at"`
 	Avatar           types.String `tfsdk:"avatar"`
 	CatalogEnabled   types.Bool   `tfsdk:"catalog_enabled"`
 	CreatedAt        types.String `tfsdk:"created_at"`
@@ -186,6 +207,9 @@ type RepositoryModel struct {
 	ForksCount       types.Int64  `tfsdk:"forks_count"`
 	FullPath         types.String `tfsdk:"full_path"`
 	GroupId          types.String `tfsdk:"group_id"`
+	LastPushedAt     types.String `tfsdk:"last_pushed_at"`
+	Listed           types.Bool   `tfsdk:"listed"`
+	MirroredFrom     types.String `tfsdk:"mirrored_from"`
 	PipelinesEnabled types.Bool   `tfsdk:"pipelines_enabled"`
 	RemoteUrl        types.String `tfsdk:"remote_url"`
 	RepositoryId     types.String `tfsdk:"repository_id"`

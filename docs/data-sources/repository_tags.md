@@ -34,8 +34,8 @@ data "gitmoap_repository_tags" "api" {
 
 ### Optional
 
-- `search` (String) Filter tags by name substring
-- `sort` (String) Sort order: name_asc (default), name_desc, version_desc — highest version first, then the tags that are no version — or created_desc, newest first
+- `search` (String) Only the tags whose name holds this
+- `sort` (String) Sort order: `name_asc` (default), `name_desc`, `version_desc` — highest version first, then the tags that are no version — or `created_desc`, newest first
 
 ### Read-Only
 

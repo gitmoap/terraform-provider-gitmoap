@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -37,6 +38,12 @@ func newRestResource(name string, schemaFunc func(context.Context) schema.Schema
 	return func() resource.Resource {
 		return &restResource{name: name, api: resourceAPIs[name], schema: schemaFunc, override: resourceOverrides[name]}
 	}
+}
+
+// updateOnly lists the attributes only the update operation takes: the generated ones, and the
+// override's.
+func (r *restResource) updateOnly() []string {
+	return append(slices.Clip(r.api.UpdateOnly), r.override.UpdateOnly...)
 }
 
 func (r *restResource) fields() fields {
@@ -132,13 +139,13 @@ func (r *restResource) Create(ctx context.Context, req resource.CreateRequest, r
 	// What only an update takes, it sets now.
 	call, err = r.newCall("update", *r.api.Update, state, values)
 	if err != nil {
-		resp.Diagnostics.AddError(r.typeName()+" was created, but setting "+strings.Join(r.api.UpdateOnly, ", ")+" failed", err.Error())
+		resp.Diagnostics.AddError(r.typeName()+" was created, but setting "+strings.Join(r.updateOnly(), ", ")+" failed", err.Error())
 		return
 	}
 	call.plan, call.state = planned, state
 	updated, err := r.send(ctx, call)
 	if err != nil {
-		resp.Diagnostics.AddError(r.typeName()+" was created, but setting "+strings.Join(r.api.UpdateOnly, ", ")+" failed", err.Error())
+		resp.Diagnostics.AddError(r.typeName()+" was created, but setting "+strings.Join(r.updateOnly(), ", ")+" failed", err.Error())
 		return
 	}
 	state, diags = r.settle(ctx, "update", planned, updated)
@@ -151,7 +158,7 @@ func (r *restResource) setsUpdateOnly(planned tftypes.Value) bool {
 	if r.api.Update == nil {
 		return false
 	}
-	for _, name := range r.api.UpdateOnly {
+	for _, name := range r.updateOnly() {
 		if value, ok := attributeAt(planned, name); ok && value.IsKnown() && !value.IsNull() {
 			return true
 		}
@@ -215,7 +222,12 @@ func (r *restResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 	call.state = req.State.Raw
-	if _, err := r.send(ctx, call); err != nil && !IsNotFound(err) {
+	_, err = r.send(ctx, call)
+	var warned *warning
+	switch {
+	case errors.As(err, &warned):
+		resp.Diagnostics.AddWarning(r.typeName()+" was deleted, but "+warned.summary, warned.err.Error())
+	case err != nil && !IsNotFound(err):
 		resp.Diagnostics.AddError("Couldn't delete "+r.typeName(), err.Error())
 	}
 }
@@ -263,6 +275,7 @@ func (r *restResource) settle(ctx context.Context, operation string, planned tft
 				return unknownToNull(state), diags
 			}
 		}
+		r.keepKeyed(object, planned)
 		converted, err := fromJSON(planned.Type(), object, planned, "", r.fields())
 		if err != nil {
 			diags.AddError("Couldn't "+operation+" "+r.typeName(), err.Error())
@@ -314,7 +327,39 @@ func (r *restResource) fetch(ctx context.Context, state tftypes.Value) (object m
 			return nil, false, err
 		}
 	}
+	r.keepKeyed(object, state)
 	return object, true, nil
+}
+
+// keepKeyed keeps, in each of the override's KeyedLists, the objects reference has, in its order:
+// the API returns them all, and the configuration may set only some. When reference has none, as
+// after an import, it keeps every one.
+func (r *restResource) keepKeyed(object map[string]any, reference tftypes.Value) {
+	for attribute, key := range r.override.KeyedLists {
+		wanted, ok := jsonAt(reference, attribute)
+		order, isList := wanted.([]any)
+		field := r.fields().field(attribute, attribute)
+		items, hasItems := object[field].([]any)
+		if !ok || !isList || !hasItems {
+			continue
+		}
+		byKey := map[string]any{}
+		for _, item := range items {
+			if fields, ok := item.(map[string]any); ok {
+				if text, ok := scalarText(fields[key]); ok {
+					byKey[text] = item
+				}
+			}
+		}
+		kept := []any{}
+		for _, element := range order {
+			fields, _ := element.(map[string]any)
+			if text, ok := scalarText(fields[key]); ok && byKey[text] != nil {
+				kept = append(kept, byKey[text])
+			}
+		}
+		object[field] = kept
+	}
 }
 
 // findItem returns the item of a list response that's the object state identifies, or nil. The
@@ -367,7 +412,7 @@ func (r *restResource) newCall(name string, op operation, identity, values tftyp
 				// left out of the configuration, it isn't sent at all. Sent back as it was, it can
 				// contradict a field beside it — a provider connection's environment_bound false
 				// beside its environment_ids is refused.
-				if slices.Contains(r.api.UpdateOnly, attribute) {
+				if slices.Contains(r.updateOnly(), attribute) {
 					continue
 				}
 				value, _ = attributeAt(identity, attribute)

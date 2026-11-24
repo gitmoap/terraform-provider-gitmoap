@@ -392,6 +392,33 @@ func attributeText(value tftypes.Value, path string) (string, error) {
 	return text, nil
 }
 
+// queryValues returns what a query parameter takes from an attribute: its value as text, or each
+// element's, for a list or a set, which the API takes as the parameter repeated. Nothing when it's
+// null.
+func queryValues(value tftypes.Value, path string) ([]string, error) {
+	attribute, ok := attributeAt(value, path)
+	if !ok {
+		return nil, fmt.Errorf("there's no attribute %s", path)
+	}
+	converted, set, err := toJSON(attribute, path, fields{})
+	if err != nil || !set {
+		return nil, err
+	}
+	elements, isList := converted.([]any)
+	if !isList {
+		elements = []any{converted}
+	}
+	texts := make([]string, 0, len(elements))
+	for _, element := range elements {
+		text, ok := scalarText(element)
+		if !ok {
+			return nil, fmt.Errorf("%s can't be sent as a query parameter: it holds a %T", path, element)
+		}
+		texts = append(texts, text)
+	}
+	return texts, nil
+}
+
 // listItems returns the items of a list response: the response itself, or the array in field.
 func listItems(response any, field string) ([]any, bool) {
 	if field == "" {

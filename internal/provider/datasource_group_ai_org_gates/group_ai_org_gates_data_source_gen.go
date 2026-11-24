@@ -5,10 +5,8 @@ package datasource_group_ai_org_gates
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -37,13 +35,50 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
-									MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
+									Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.",
+									MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.",
 								},
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
-									MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
+									Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor and on an outside author (`imported`).",
+									MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor and on an outside author (`imported`).",
+								},
+								"imported": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"identity_id": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The outside author's id among the organization's imported identities.",
+											MarkdownDescription: "The outside author's id among the organization's imported identities.",
+										},
+										"login": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Their login on that host.",
+											MarkdownDescription: "Their login on that host.",
+										},
+										"name": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Their name on that host, when it gave one.",
+											MarkdownDescription: "Their name on that host, when it gave one.",
+										},
+										"profile_url": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Their profile's address on that host, when it gave one.",
+											MarkdownDescription: "Their profile's address on that host, when it gave one.",
+										},
+										"source_host": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The host they wrote on, such as `github.com`.",
+											MarkdownDescription: "The host they wrote on, such as `github.com`.",
+										},
+									},
+									CustomType: ImportedType{
+										ObjectType: types.ObjectType{
+											AttrTypes: ImportedValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "An author who wrote on another host — a work item, a merge request, a comment, a release an import\nbrought — and whom nobody here is linked to yet.",
+									MarkdownDescription: "An author who wrote on another host — a work item, a merge request, a comment, a release an import\nbrought — and whom nobody here is linked to yet.",
 								},
 								"kind": schema.StringAttribute{
 									Computed:            true,
@@ -68,6 +103,43 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 						"approvers": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
+									"approvers_imported": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"identity_id": schema.StringAttribute{
+												Computed:            true,
+												Description:         "The outside author's id among the organization's imported identities.",
+												MarkdownDescription: "The outside author's id among the organization's imported identities.",
+											},
+											"login": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Their login on that host.",
+												MarkdownDescription: "Their login on that host.",
+											},
+											"name": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Their name on that host, when it gave one.",
+												MarkdownDescription: "Their name on that host, when it gave one.",
+											},
+											"profile_url": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Their profile's address on that host, when it gave one.",
+												MarkdownDescription: "Their profile's address on that host, when it gave one.",
+											},
+											"source_host": schema.StringAttribute{
+												Computed:            true,
+												Description:         "The host they wrote on, such as `github.com`.",
+												MarkdownDescription: "The host they wrote on, such as `github.com`.",
+											},
+										},
+										CustomType: ApproversImportedType{
+											ObjectType: types.ObjectType{
+												AttrTypes: ApproversImportedValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "An author who wrote on another host — a work item, a merge request, a comment, a release an import\nbrought — and whom nobody here is linked to yet.",
+										MarkdownDescription: "An author who wrote on another host — a work item, a merge request, a comment, a release an import\nbrought — and whom nobody here is linked to yet.",
+									},
 									"avatar_url": schema.StringAttribute{
 										Computed:            true,
 										Description:         "The principal's picture, when one is known. Absent otherwise: a client derives the\ndeterministic avatar URL itself.",
@@ -75,13 +147,13 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"email": schema.StringAttribute{
 										Computed:            true,
-										Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
-										MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
+										Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.",
+										MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.",
 									},
 									"id": schema.StringAttribute{
 										Computed:            true,
-										Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
-										MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
+										Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor and on an outside author (`imported`).",
+										MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor and on an outside author (`imported`).",
 									},
 									"kind": schema.StringAttribute{
 										Computed:            true,
@@ -131,15 +203,52 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 									Description:         "The principal's picture, when one is known. Absent otherwise: a client derives the\ndeterministic avatar URL itself.",
 									MarkdownDescription: "The principal's picture, when one is known. Absent otherwise: a client derives the\ndeterministic avatar URL itself.",
 								},
+								"decided_by_imported": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"identity_id": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The outside author's id among the organization's imported identities.",
+											MarkdownDescription: "The outside author's id among the organization's imported identities.",
+										},
+										"login": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Their login on that host.",
+											MarkdownDescription: "Their login on that host.",
+										},
+										"name": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Their name on that host, when it gave one.",
+											MarkdownDescription: "Their name on that host, when it gave one.",
+										},
+										"profile_url": schema.StringAttribute{
+											Computed:            true,
+											Description:         "Their profile's address on that host, when it gave one.",
+											MarkdownDescription: "Their profile's address on that host, when it gave one.",
+										},
+										"source_host": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The host they wrote on, such as `github.com`.",
+											MarkdownDescription: "The host they wrote on, such as `github.com`.",
+										},
+									},
+									CustomType: DecidedByImportedType{
+										ObjectType: types.ObjectType{
+											AttrTypes: DecidedByImportedValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "An author who wrote on another host — a work item, a merge request, a comment, a release an import\nbrought — and whom nobody here is linked to yet.",
+									MarkdownDescription: "An author who wrote on another host — a work item, a merge request, a comment, a release an import\nbrought — and whom nobody here is linked to yet.",
+								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
-									MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor and empty on a redacted one.",
+									Description:         "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.",
+									MarkdownDescription: "The principal's address. An agent's is a generated no-reply address — the author of its\ncommits. `unknown` on a deleted actor, and empty on a redacted one and on an outside author.",
 								},
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
-									MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor.",
+									Description:         "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor and on an outside author (`imported`).",
+									MarkdownDescription: "The principal's id: a user id, a service account id or an agent id, as `kind` says. Empty on\na redacted actor and on an outside author (`imported`).",
 								},
 								"kind": schema.StringAttribute{
 									Computed:            true,
@@ -340,8 +449,8 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							Computed:            true,
-							Description:         "The exact action a gate waits on, as it is stored and served. `action` says which, and decides\nthe other fields. Every action also carries `summary`, one line for the person deciding, and\n`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a\nline saying how many more there were.\n\n`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`.",
-							MarkdownDescription: "The exact action a gate waits on, as it is stored and served. `action` says which, and decides\nthe other fields. Every action also carries `summary`, one line for the person deciding, and\n`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a\nline saying how many more there were.\n\n`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`.",
+							Description:         "The exact action a gate waits on, as it is stored and served. `action` says which, and decides\nthe other fields. Every action also carries `summary`, one line for the person deciding, and\n`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a\nline saying how many more there were.\n\n`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `claim_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`.",
+							MarkdownDescription: "The exact action a gate waits on, as it is stored and served. `action` says which, and decides\nthe other fields. Every action also carries `summary`, one line for the person deciding, and\n`address`, what it is about, when it has one. A list longer than 50 is cut to 50 and ends with a\nline saying how many more there were.\n\n`action` says which applies: `merge`, with `address`, `merge_request_iid`, `repository_id`, `source_sha`, `summary`, `target_branch`, `target_sha`; `open_merge_request`, with `address`, `repository_id`, `source_branch`, `source_sha`, `summary`, `target_branch`; `create_work_item`, with `address`, `body_digest`, `scope_id`, `summary`; `close_work_item`, with `address`, `issue_uid`, `summary`; `claim_work_item`, with `address`, `issue_uid`, `summary`; `release`, with `address`, `repository_id`, `summary`, `tag`, `target_sha`; `deploy`, with `address`, `environments`, `repository_id`, `sha`, `summary`; `privileged_push`, with `address`, `branch`, `from_sha`, `paths`, `repository_id`, `summary`, `to`; `add_dependency`, with `address`, `branch`, `dependencies`, `from_sha`, `repository_id`, `summary`, `to`; `external_write`, with `address`, `body_digest`, `method`, `path`, `summary`; `session_spend`, with `address`, `session_id`, `step`, `summary`; `ritual_outcome`, with `address`, `outcome_digest`, `run_id`, `summary`.",
 						},
 					},
 					CustomType: ItemsType{
@@ -354,28 +463,33 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The gates of this page.",
 				MarkdownDescription: "The gates of this page.",
 			},
-			"session_id": schema.StringAttribute{
+			"session_id": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only the gates this session raised",
-				MarkdownDescription: "Only the gates this session raised",
+				Description:         "Only the gates these sessions raised",
+				MarkdownDescription: "Only the gates these sessions raised",
 			},
-			"state": schema.StringAttribute{
+			"session_id_not": schema.ListAttribute{
+				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "Only gates in this state",
-				MarkdownDescription: "Only gates in this state",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"pending",
-						"approved",
-						"denied",
-						"expired",
-						"withdrawn",
-						"consumed",
-						"notified",
-					),
-				},
+				Description:         "Sessions whose gates to leave out. A gate no session raised is kept. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Sessions whose gates to leave out. A gate no session raised is kept. Repeat it, or separate values with commas, for several, up to 20",
+			},
+			"state": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Only gates in these states; repeat it, or separate with commas, for any of them",
+				MarkdownDescription: "Only gates in these states; repeat it, or separate with commas, for any of them",
+			},
+			"state_not": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Gate states to leave out. Repeat it, or separate values with commas, for several, up to 20",
+				MarkdownDescription: "Gate states to leave out. Repeat it, or separate values with commas, for several, up to 20",
 			},
 		},
 		Description:         "An organization's gates — the actions its agents wait on a person to decide, those waiting first, then the newest. session_id keeps one session's. A gate shows the exact action it waits on: the merge request and its head, the paths a push changes, the full text of an outgoing message. The board sees every gate; anyone else who can read the organization sees the gates whose session they can read, and those they are named to decide. The token needs ai_org:read.",
@@ -384,10 +498,12 @@ func GroupAiOrgGatesDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type GroupAiOrgGatesModel struct {
-	GroupId   types.String `tfsdk:"group_id"`
-	Items     types.List   `tfsdk:"items"`
-	SessionId types.String `tfsdk:"session_id"`
-	State     types.String `tfsdk:"state"`
+	GroupId      types.String `tfsdk:"group_id"`
+	Items        types.List   `tfsdk:"items"`
+	SessionId    types.List   `tfsdk:"session_id"`
+	SessionIdNot types.List   `tfsdk:"session_id_not"`
+	State        types.List   `tfsdk:"state"`
+	StateNot     types.List   `tfsdk:"state_not"`
 }
 
 var _ basetypes.ObjectTypable = ItemsType{}
@@ -1789,6 +1905,24 @@ func (t AgentType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	importedAttribute, ok := attributes["imported"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`imported is missing from object`)
+
+		return nil, diags
+	}
+
+	importedVal, ok := importedAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`imported expected to be basetypes.ObjectValue, was: %T`, importedAttribute))
+	}
+
 	kindAttribute, ok := attributes["kind"]
 
 	if !ok {
@@ -1833,6 +1967,7 @@ func (t AgentType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		AvatarUrl: avatarUrlVal,
 		Email:     emailVal,
 		Id:        idVal,
+		Imported:  importedVal,
 		Kind:      kindVal,
 		Username:  usernameVal,
 		state:     attr.ValueStateKnown,
@@ -1956,6 +2091,24 @@ func NewAgentValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	importedAttribute, ok := attributes["imported"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`imported is missing from object`)
+
+		return NewAgentValueUnknown(), diags
+	}
+
+	importedVal, ok := importedAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`imported expected to be basetypes.ObjectValue, was: %T`, importedAttribute))
+	}
+
 	kindAttribute, ok := attributes["kind"]
 
 	if !ok {
@@ -2000,6 +2153,7 @@ func NewAgentValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		AvatarUrl: avatarUrlVal,
 		Email:     emailVal,
 		Id:        idVal,
+		Imported:  importedVal,
 		Kind:      kindVal,
 		Username:  usernameVal,
 		state:     attr.ValueStateKnown,
@@ -2077,13 +2231,14 @@ type AgentValue struct {
 	AvatarUrl basetypes.StringValue `tfsdk:"avatar_url"`
 	Email     basetypes.StringValue `tfsdk:"email"`
 	Id        basetypes.StringValue `tfsdk:"id"`
+	Imported  basetypes.ObjectValue `tfsdk:"imported"`
 	Kind      basetypes.StringValue `tfsdk:"kind"`
 	Username  basetypes.StringValue `tfsdk:"username"`
 	state     attr.ValueState
 }
 
 func (v AgentValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
@@ -2091,6 +2246,9 @@ func (v AgentValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["avatar_url"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["email"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["imported"] = basetypes.ObjectType{
+		AttrTypes: ImportedValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["username"] = basetypes.StringType{}.TerraformType(ctx)
 
@@ -2098,7 +2256,7 @@ func (v AgentValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.AvatarUrl.ToTerraformValue(ctx)
 
@@ -2123,6 +2281,14 @@ func (v AgentValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["id"] = val
+
+		val, err = v.Imported.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["imported"] = val
 
 		val, err = v.Kind.ToTerraformValue(ctx)
 
@@ -2169,12 +2335,36 @@ func (v AgentValue) String() string {
 func (v AgentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var imported basetypes.ObjectValue
+
+	if v.Imported.IsNull() {
+		imported = types.ObjectNull(
+			ImportedValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Imported.IsUnknown() {
+		imported = types.ObjectUnknown(
+			ImportedValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Imported.IsNull() && !v.Imported.IsUnknown() {
+		imported = types.ObjectValueMust(
+			ImportedValue{}.AttributeTypes(ctx),
+			v.Imported.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"avatar_url": basetypes.StringType{},
 		"email":      basetypes.StringType{},
 		"id":         basetypes.StringType{},
-		"kind":       basetypes.StringType{},
-		"username":   basetypes.StringType{},
+		"imported": basetypes.ObjectType{
+			AttrTypes: ImportedValue{}.AttributeTypes(ctx),
+		},
+		"kind":     basetypes.StringType{},
+		"username": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -2191,6 +2381,7 @@ func (v AgentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"avatar_url": v.AvatarUrl,
 			"email":      v.Email,
 			"id":         v.Id,
+			"imported":   imported,
 			"kind":       v.Kind,
 			"username":   v.Username,
 		})
@@ -2225,6 +2416,10 @@ func (v AgentValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Imported.Equal(other.Imported) {
+		return false
+	}
+
 	if !v.Kind.Equal(other.Kind) {
 		return false
 	}
@@ -2249,8 +2444,555 @@ func (v AgentValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"avatar_url": basetypes.StringType{},
 		"email":      basetypes.StringType{},
 		"id":         basetypes.StringType{},
-		"kind":       basetypes.StringType{},
-		"username":   basetypes.StringType{},
+		"imported": basetypes.ObjectType{
+			AttrTypes: ImportedValue{}.AttributeTypes(ctx),
+		},
+		"kind":     basetypes.StringType{},
+		"username": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ImportedType{}
+
+type ImportedType struct {
+	basetypes.ObjectType
+}
+
+func (t ImportedType) Equal(o attr.Type) bool {
+	other, ok := o.(ImportedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ImportedType) String() string {
+	return "ImportedType"
+}
+
+func (t ImportedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	identityIdAttribute, ok := attributes["identity_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`identity_id is missing from object`)
+
+		return nil, diags
+	}
+
+	identityIdVal, ok := identityIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`identity_id expected to be basetypes.StringValue, was: %T`, identityIdAttribute))
+	}
+
+	loginAttribute, ok := attributes["login"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`login is missing from object`)
+
+		return nil, diags
+	}
+
+	loginVal, ok := loginAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`login expected to be basetypes.StringValue, was: %T`, loginAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	profileUrlAttribute, ok := attributes["profile_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`profile_url is missing from object`)
+
+		return nil, diags
+	}
+
+	profileUrlVal, ok := profileUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`profile_url expected to be basetypes.StringValue, was: %T`, profileUrlAttribute))
+	}
+
+	sourceHostAttribute, ok := attributes["source_host"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_host is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceHostVal, ok := sourceHostAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_host expected to be basetypes.StringValue, was: %T`, sourceHostAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ImportedValue{
+		IdentityId: identityIdVal,
+		Login:      loginVal,
+		Name:       nameVal,
+		ProfileUrl: profileUrlVal,
+		SourceHost: sourceHostVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewImportedValueNull() ImportedValue {
+	return ImportedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewImportedValueUnknown() ImportedValue {
+	return ImportedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewImportedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ImportedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ImportedValue Attribute Value",
+				"While creating a ImportedValue value, a missing attribute value was detected. "+
+					"A ImportedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ImportedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ImportedValue Attribute Type",
+				"While creating a ImportedValue value, an invalid attribute value was detected. "+
+					"A ImportedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ImportedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ImportedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ImportedValue Attribute Value",
+				"While creating a ImportedValue value, an extra attribute value was detected. "+
+					"A ImportedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ImportedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewImportedValueUnknown(), diags
+	}
+
+	identityIdAttribute, ok := attributes["identity_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`identity_id is missing from object`)
+
+		return NewImportedValueUnknown(), diags
+	}
+
+	identityIdVal, ok := identityIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`identity_id expected to be basetypes.StringValue, was: %T`, identityIdAttribute))
+	}
+
+	loginAttribute, ok := attributes["login"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`login is missing from object`)
+
+		return NewImportedValueUnknown(), diags
+	}
+
+	loginVal, ok := loginAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`login expected to be basetypes.StringValue, was: %T`, loginAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewImportedValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	profileUrlAttribute, ok := attributes["profile_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`profile_url is missing from object`)
+
+		return NewImportedValueUnknown(), diags
+	}
+
+	profileUrlVal, ok := profileUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`profile_url expected to be basetypes.StringValue, was: %T`, profileUrlAttribute))
+	}
+
+	sourceHostAttribute, ok := attributes["source_host"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_host is missing from object`)
+
+		return NewImportedValueUnknown(), diags
+	}
+
+	sourceHostVal, ok := sourceHostAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_host expected to be basetypes.StringValue, was: %T`, sourceHostAttribute))
+	}
+
+	if diags.HasError() {
+		return NewImportedValueUnknown(), diags
+	}
+
+	return ImportedValue{
+		IdentityId: identityIdVal,
+		Login:      loginVal,
+		Name:       nameVal,
+		ProfileUrl: profileUrlVal,
+		SourceHost: sourceHostVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewImportedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ImportedValue {
+	object, diags := NewImportedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewImportedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ImportedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewImportedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewImportedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewImportedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewImportedValueMust(ImportedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ImportedType) ValueType(ctx context.Context) attr.Value {
+	return ImportedValue{}
+}
+
+var _ basetypes.ObjectValuable = ImportedValue{}
+
+type ImportedValue struct {
+	IdentityId basetypes.StringValue `tfsdk:"identity_id"`
+	Login      basetypes.StringValue `tfsdk:"login"`
+	Name       basetypes.StringValue `tfsdk:"name"`
+	ProfileUrl basetypes.StringValue `tfsdk:"profile_url"`
+	SourceHost basetypes.StringValue `tfsdk:"source_host"`
+	state      attr.ValueState
+}
+
+func (v ImportedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["identity_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["login"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["profile_url"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["source_host"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.IdentityId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["identity_id"] = val
+
+		val, err = v.Login.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["login"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.ProfileUrl.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["profile_url"] = val
+
+		val, err = v.SourceHost.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_host"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ImportedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ImportedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ImportedValue) String() string {
+	return "ImportedValue"
+}
+
+func (v ImportedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"identity_id": basetypes.StringType{},
+		"login":       basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"profile_url": basetypes.StringType{},
+		"source_host": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"identity_id": v.IdentityId,
+			"login":       v.Login,
+			"name":        v.Name,
+			"profile_url": v.ProfileUrl,
+			"source_host": v.SourceHost,
+		})
+
+	return objVal, diags
+}
+
+func (v ImportedValue) Equal(o attr.Value) bool {
+	other, ok := o.(ImportedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.IdentityId.Equal(other.IdentityId) {
+		return false
+	}
+
+	if !v.Login.Equal(other.Login) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.ProfileUrl.Equal(other.ProfileUrl) {
+		return false
+	}
+
+	if !v.SourceHost.Equal(other.SourceHost) {
+		return false
+	}
+
+	return true
+}
+
+func (v ImportedValue) Type(ctx context.Context) attr.Type {
+	return ImportedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ImportedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"identity_id": basetypes.StringType{},
+		"login":       basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"profile_url": basetypes.StringType{},
+		"source_host": basetypes.StringType{},
 	}
 }
 
@@ -2278,6 +3020,24 @@ func (t ApproversType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	var diags diag.Diagnostics
 
 	attributes := in.Attributes()
+
+	approversImportedAttribute, ok := attributes["approvers_imported"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approvers_imported is missing from object`)
+
+		return nil, diags
+	}
+
+	approversImportedVal, ok := approversImportedAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approvers_imported expected to be basetypes.ObjectValue, was: %T`, approversImportedAttribute))
+	}
 
 	avatarUrlAttribute, ok := attributes["avatar_url"]
 
@@ -2374,12 +3134,13 @@ func (t ApproversType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	}
 
 	return ApproversValue{
-		AvatarUrl: avatarUrlVal,
-		Email:     emailVal,
-		Id:        idVal,
-		Kind:      kindVal,
-		Username:  usernameVal,
-		state:     attr.ValueStateKnown,
+		ApproversImported: approversImportedVal,
+		AvatarUrl:         avatarUrlVal,
+		Email:             emailVal,
+		Id:                idVal,
+		Kind:              kindVal,
+		Username:          usernameVal,
+		state:             attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2446,6 +3207,24 @@ func NewApproversValue(attributeTypes map[string]attr.Type, attributes map[strin
 		return NewApproversValueUnknown(), diags
 	}
 
+	approversImportedAttribute, ok := attributes["approvers_imported"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`approvers_imported is missing from object`)
+
+		return NewApproversValueUnknown(), diags
+	}
+
+	approversImportedVal, ok := approversImportedAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`approvers_imported expected to be basetypes.ObjectValue, was: %T`, approversImportedAttribute))
+	}
+
 	avatarUrlAttribute, ok := attributes["avatar_url"]
 
 	if !ok {
@@ -2541,12 +3320,13 @@ func NewApproversValue(attributeTypes map[string]attr.Type, attributes map[strin
 	}
 
 	return ApproversValue{
-		AvatarUrl: avatarUrlVal,
-		Email:     emailVal,
-		Id:        idVal,
-		Kind:      kindVal,
-		Username:  usernameVal,
-		state:     attr.ValueStateKnown,
+		ApproversImported: approversImportedVal,
+		AvatarUrl:         avatarUrlVal,
+		Email:             emailVal,
+		Id:                idVal,
+		Kind:              kindVal,
+		Username:          usernameVal,
+		state:             attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2618,20 +3398,24 @@ func (t ApproversType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ApproversValue{}
 
 type ApproversValue struct {
-	AvatarUrl basetypes.StringValue `tfsdk:"avatar_url"`
-	Email     basetypes.StringValue `tfsdk:"email"`
-	Id        basetypes.StringValue `tfsdk:"id"`
-	Kind      basetypes.StringValue `tfsdk:"kind"`
-	Username  basetypes.StringValue `tfsdk:"username"`
-	state     attr.ValueState
+	ApproversImported basetypes.ObjectValue `tfsdk:"approvers_imported"`
+	AvatarUrl         basetypes.StringValue `tfsdk:"avatar_url"`
+	Email             basetypes.StringValue `tfsdk:"email"`
+	Id                basetypes.StringValue `tfsdk:"id"`
+	Kind              basetypes.StringValue `tfsdk:"kind"`
+	Username          basetypes.StringValue `tfsdk:"username"`
+	state             attr.ValueState
 }
 
 func (v ApproversValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["approvers_imported"] = basetypes.ObjectType{
+		AttrTypes: ApproversImportedValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["avatar_url"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["email"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
@@ -2642,7 +3426,15 @@ func (v ApproversValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
+
+		val, err = v.ApproversImported.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["approvers_imported"] = val
 
 		val, err = v.AvatarUrl.ToTerraformValue(ctx)
 
@@ -2713,7 +3505,31 @@ func (v ApproversValue) String() string {
 func (v ApproversValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var approversImported basetypes.ObjectValue
+
+	if v.ApproversImported.IsNull() {
+		approversImported = types.ObjectNull(
+			ApproversImportedValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.ApproversImported.IsUnknown() {
+		approversImported = types.ObjectUnknown(
+			ApproversImportedValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.ApproversImported.IsNull() && !v.ApproversImported.IsUnknown() {
+		approversImported = types.ObjectValueMust(
+			ApproversImportedValue{}.AttributeTypes(ctx),
+			v.ApproversImported.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
+		"approvers_imported": basetypes.ObjectType{
+			AttrTypes: ApproversImportedValue{}.AttributeTypes(ctx),
+		},
 		"avatar_url": basetypes.StringType{},
 		"email":      basetypes.StringType{},
 		"id":         basetypes.StringType{},
@@ -2732,11 +3548,12 @@ func (v ApproversValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"avatar_url": v.AvatarUrl,
-			"email":      v.Email,
-			"id":         v.Id,
-			"kind":       v.Kind,
-			"username":   v.Username,
+			"approvers_imported": approversImported,
+			"avatar_url":         v.AvatarUrl,
+			"email":              v.Email,
+			"id":                 v.Id,
+			"kind":               v.Kind,
+			"username":           v.Username,
 		})
 
 	return objVal, diags
@@ -2755,6 +3572,10 @@ func (v ApproversValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.ApproversImported.Equal(other.ApproversImported) {
+		return false
 	}
 
 	if !v.AvatarUrl.Equal(other.AvatarUrl) {
@@ -2790,11 +3611,558 @@ func (v ApproversValue) Type(ctx context.Context) attr.Type {
 
 func (v ApproversValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"approvers_imported": basetypes.ObjectType{
+			AttrTypes: ApproversImportedValue{}.AttributeTypes(ctx),
+		},
 		"avatar_url": basetypes.StringType{},
 		"email":      basetypes.StringType{},
 		"id":         basetypes.StringType{},
 		"kind":       basetypes.StringType{},
 		"username":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ApproversImportedType{}
+
+type ApproversImportedType struct {
+	basetypes.ObjectType
+}
+
+func (t ApproversImportedType) Equal(o attr.Type) bool {
+	other, ok := o.(ApproversImportedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ApproversImportedType) String() string {
+	return "ApproversImportedType"
+}
+
+func (t ApproversImportedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	identityIdAttribute, ok := attributes["identity_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`identity_id is missing from object`)
+
+		return nil, diags
+	}
+
+	identityIdVal, ok := identityIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`identity_id expected to be basetypes.StringValue, was: %T`, identityIdAttribute))
+	}
+
+	loginAttribute, ok := attributes["login"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`login is missing from object`)
+
+		return nil, diags
+	}
+
+	loginVal, ok := loginAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`login expected to be basetypes.StringValue, was: %T`, loginAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	profileUrlAttribute, ok := attributes["profile_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`profile_url is missing from object`)
+
+		return nil, diags
+	}
+
+	profileUrlVal, ok := profileUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`profile_url expected to be basetypes.StringValue, was: %T`, profileUrlAttribute))
+	}
+
+	sourceHostAttribute, ok := attributes["source_host"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_host is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceHostVal, ok := sourceHostAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_host expected to be basetypes.StringValue, was: %T`, sourceHostAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ApproversImportedValue{
+		IdentityId: identityIdVal,
+		Login:      loginVal,
+		Name:       nameVal,
+		ProfileUrl: profileUrlVal,
+		SourceHost: sourceHostVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewApproversImportedValueNull() ApproversImportedValue {
+	return ApproversImportedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewApproversImportedValueUnknown() ApproversImportedValue {
+	return ApproversImportedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewApproversImportedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ApproversImportedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ApproversImportedValue Attribute Value",
+				"While creating a ApproversImportedValue value, a missing attribute value was detected. "+
+					"A ApproversImportedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ApproversImportedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ApproversImportedValue Attribute Type",
+				"While creating a ApproversImportedValue value, an invalid attribute value was detected. "+
+					"A ApproversImportedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ApproversImportedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ApproversImportedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ApproversImportedValue Attribute Value",
+				"While creating a ApproversImportedValue value, an extra attribute value was detected. "+
+					"A ApproversImportedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ApproversImportedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	identityIdAttribute, ok := attributes["identity_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`identity_id is missing from object`)
+
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	identityIdVal, ok := identityIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`identity_id expected to be basetypes.StringValue, was: %T`, identityIdAttribute))
+	}
+
+	loginAttribute, ok := attributes["login"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`login is missing from object`)
+
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	loginVal, ok := loginAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`login expected to be basetypes.StringValue, was: %T`, loginAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	profileUrlAttribute, ok := attributes["profile_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`profile_url is missing from object`)
+
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	profileUrlVal, ok := profileUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`profile_url expected to be basetypes.StringValue, was: %T`, profileUrlAttribute))
+	}
+
+	sourceHostAttribute, ok := attributes["source_host"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_host is missing from object`)
+
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	sourceHostVal, ok := sourceHostAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_host expected to be basetypes.StringValue, was: %T`, sourceHostAttribute))
+	}
+
+	if diags.HasError() {
+		return NewApproversImportedValueUnknown(), diags
+	}
+
+	return ApproversImportedValue{
+		IdentityId: identityIdVal,
+		Login:      loginVal,
+		Name:       nameVal,
+		ProfileUrl: profileUrlVal,
+		SourceHost: sourceHostVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewApproversImportedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ApproversImportedValue {
+	object, diags := NewApproversImportedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewApproversImportedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ApproversImportedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewApproversImportedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewApproversImportedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewApproversImportedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewApproversImportedValueMust(ApproversImportedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ApproversImportedType) ValueType(ctx context.Context) attr.Value {
+	return ApproversImportedValue{}
+}
+
+var _ basetypes.ObjectValuable = ApproversImportedValue{}
+
+type ApproversImportedValue struct {
+	IdentityId basetypes.StringValue `tfsdk:"identity_id"`
+	Login      basetypes.StringValue `tfsdk:"login"`
+	Name       basetypes.StringValue `tfsdk:"name"`
+	ProfileUrl basetypes.StringValue `tfsdk:"profile_url"`
+	SourceHost basetypes.StringValue `tfsdk:"source_host"`
+	state      attr.ValueState
+}
+
+func (v ApproversImportedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["identity_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["login"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["profile_url"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["source_host"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.IdentityId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["identity_id"] = val
+
+		val, err = v.Login.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["login"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.ProfileUrl.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["profile_url"] = val
+
+		val, err = v.SourceHost.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_host"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ApproversImportedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ApproversImportedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ApproversImportedValue) String() string {
+	return "ApproversImportedValue"
+}
+
+func (v ApproversImportedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"identity_id": basetypes.StringType{},
+		"login":       basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"profile_url": basetypes.StringType{},
+		"source_host": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"identity_id": v.IdentityId,
+			"login":       v.Login,
+			"name":        v.Name,
+			"profile_url": v.ProfileUrl,
+			"source_host": v.SourceHost,
+		})
+
+	return objVal, diags
+}
+
+func (v ApproversImportedValue) Equal(o attr.Value) bool {
+	other, ok := o.(ApproversImportedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.IdentityId.Equal(other.IdentityId) {
+		return false
+	}
+
+	if !v.Login.Equal(other.Login) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.ProfileUrl.Equal(other.ProfileUrl) {
+		return false
+	}
+
+	if !v.SourceHost.Equal(other.SourceHost) {
+		return false
+	}
+
+	return true
+}
+
+func (v ApproversImportedValue) Type(ctx context.Context) attr.Type {
+	return ApproversImportedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ApproversImportedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"identity_id": basetypes.StringType{},
+		"login":       basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"profile_url": basetypes.StringType{},
+		"source_host": basetypes.StringType{},
 	}
 }
 
@@ -2839,6 +4207,24 @@ func (t DecidedByType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`avatar_url expected to be basetypes.StringValue, was: %T`, avatarUrlAttribute))
+	}
+
+	decidedByImportedAttribute, ok := attributes["decided_by_imported"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`decided_by_imported is missing from object`)
+
+		return nil, diags
+	}
+
+	decidedByImportedVal, ok := decidedByImportedAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`decided_by_imported expected to be basetypes.ObjectValue, was: %T`, decidedByImportedAttribute))
 	}
 
 	emailAttribute, ok := attributes["email"]
@@ -2918,12 +4304,13 @@ func (t DecidedByType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	}
 
 	return DecidedByValue{
-		AvatarUrl: avatarUrlVal,
-		Email:     emailVal,
-		Id:        idVal,
-		Kind:      kindVal,
-		Username:  usernameVal,
-		state:     attr.ValueStateKnown,
+		AvatarUrl:         avatarUrlVal,
+		DecidedByImported: decidedByImportedVal,
+		Email:             emailVal,
+		Id:                idVal,
+		Kind:              kindVal,
+		Username:          usernameVal,
+		state:             attr.ValueStateKnown,
 	}, diags
 }
 
@@ -3008,6 +4395,24 @@ func NewDecidedByValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`avatar_url expected to be basetypes.StringValue, was: %T`, avatarUrlAttribute))
 	}
 
+	decidedByImportedAttribute, ok := attributes["decided_by_imported"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`decided_by_imported is missing from object`)
+
+		return NewDecidedByValueUnknown(), diags
+	}
+
+	decidedByImportedVal, ok := decidedByImportedAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`decided_by_imported expected to be basetypes.ObjectValue, was: %T`, decidedByImportedAttribute))
+	}
+
 	emailAttribute, ok := attributes["email"]
 
 	if !ok {
@@ -3085,12 +4490,13 @@ func NewDecidedByValue(attributeTypes map[string]attr.Type, attributes map[strin
 	}
 
 	return DecidedByValue{
-		AvatarUrl: avatarUrlVal,
-		Email:     emailVal,
-		Id:        idVal,
-		Kind:      kindVal,
-		Username:  usernameVal,
-		state:     attr.ValueStateKnown,
+		AvatarUrl:         avatarUrlVal,
+		DecidedByImported: decidedByImportedVal,
+		Email:             emailVal,
+		Id:                idVal,
+		Kind:              kindVal,
+		Username:          usernameVal,
+		state:             attr.ValueStateKnown,
 	}, diags
 }
 
@@ -3162,21 +4568,25 @@ func (t DecidedByType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = DecidedByValue{}
 
 type DecidedByValue struct {
-	AvatarUrl basetypes.StringValue `tfsdk:"avatar_url"`
-	Email     basetypes.StringValue `tfsdk:"email"`
-	Id        basetypes.StringValue `tfsdk:"id"`
-	Kind      basetypes.StringValue `tfsdk:"kind"`
-	Username  basetypes.StringValue `tfsdk:"username"`
-	state     attr.ValueState
+	AvatarUrl         basetypes.StringValue `tfsdk:"avatar_url"`
+	DecidedByImported basetypes.ObjectValue `tfsdk:"decided_by_imported"`
+	Email             basetypes.StringValue `tfsdk:"email"`
+	Id                basetypes.StringValue `tfsdk:"id"`
+	Kind              basetypes.StringValue `tfsdk:"kind"`
+	Username          basetypes.StringValue `tfsdk:"username"`
+	state             attr.ValueState
 }
 
 func (v DecidedByValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["avatar_url"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["decided_by_imported"] = basetypes.ObjectType{
+		AttrTypes: DecidedByImportedValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["email"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["kind"] = basetypes.StringType{}.TerraformType(ctx)
@@ -3186,7 +4596,7 @@ func (v DecidedByValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.AvatarUrl.ToTerraformValue(ctx)
 
@@ -3195,6 +4605,14 @@ func (v DecidedByValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["avatar_url"] = val
+
+		val, err = v.DecidedByImported.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["decided_by_imported"] = val
 
 		val, err = v.Email.ToTerraformValue(ctx)
 
@@ -3257,12 +4675,36 @@ func (v DecidedByValue) String() string {
 func (v DecidedByValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var decidedByImported basetypes.ObjectValue
+
+	if v.DecidedByImported.IsNull() {
+		decidedByImported = types.ObjectNull(
+			DecidedByImportedValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.DecidedByImported.IsUnknown() {
+		decidedByImported = types.ObjectUnknown(
+			DecidedByImportedValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.DecidedByImported.IsNull() && !v.DecidedByImported.IsUnknown() {
+		decidedByImported = types.ObjectValueMust(
+			DecidedByImportedValue{}.AttributeTypes(ctx),
+			v.DecidedByImported.Attributes(),
+		)
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"avatar_url": basetypes.StringType{},
-		"email":      basetypes.StringType{},
-		"id":         basetypes.StringType{},
-		"kind":       basetypes.StringType{},
-		"username":   basetypes.StringType{},
+		"decided_by_imported": basetypes.ObjectType{
+			AttrTypes: DecidedByImportedValue{}.AttributeTypes(ctx),
+		},
+		"email":    basetypes.StringType{},
+		"id":       basetypes.StringType{},
+		"kind":     basetypes.StringType{},
+		"username": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -3276,11 +4718,12 @@ func (v DecidedByValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"avatar_url": v.AvatarUrl,
-			"email":      v.Email,
-			"id":         v.Id,
-			"kind":       v.Kind,
-			"username":   v.Username,
+			"avatar_url":          v.AvatarUrl,
+			"decided_by_imported": decidedByImported,
+			"email":               v.Email,
+			"id":                  v.Id,
+			"kind":                v.Kind,
+			"username":            v.Username,
 		})
 
 	return objVal, diags
@@ -3302,6 +4745,10 @@ func (v DecidedByValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.AvatarUrl.Equal(other.AvatarUrl) {
+		return false
+	}
+
+	if !v.DecidedByImported.Equal(other.DecidedByImported) {
 		return false
 	}
 
@@ -3335,10 +4782,557 @@ func (v DecidedByValue) Type(ctx context.Context) attr.Type {
 func (v DecidedByValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"avatar_url": basetypes.StringType{},
-		"email":      basetypes.StringType{},
-		"id":         basetypes.StringType{},
-		"kind":       basetypes.StringType{},
-		"username":   basetypes.StringType{},
+		"decided_by_imported": basetypes.ObjectType{
+			AttrTypes: DecidedByImportedValue{}.AttributeTypes(ctx),
+		},
+		"email":    basetypes.StringType{},
+		"id":       basetypes.StringType{},
+		"kind":     basetypes.StringType{},
+		"username": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = DecidedByImportedType{}
+
+type DecidedByImportedType struct {
+	basetypes.ObjectType
+}
+
+func (t DecidedByImportedType) Equal(o attr.Type) bool {
+	other, ok := o.(DecidedByImportedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DecidedByImportedType) String() string {
+	return "DecidedByImportedType"
+}
+
+func (t DecidedByImportedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	identityIdAttribute, ok := attributes["identity_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`identity_id is missing from object`)
+
+		return nil, diags
+	}
+
+	identityIdVal, ok := identityIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`identity_id expected to be basetypes.StringValue, was: %T`, identityIdAttribute))
+	}
+
+	loginAttribute, ok := attributes["login"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`login is missing from object`)
+
+		return nil, diags
+	}
+
+	loginVal, ok := loginAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`login expected to be basetypes.StringValue, was: %T`, loginAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	profileUrlAttribute, ok := attributes["profile_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`profile_url is missing from object`)
+
+		return nil, diags
+	}
+
+	profileUrlVal, ok := profileUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`profile_url expected to be basetypes.StringValue, was: %T`, profileUrlAttribute))
+	}
+
+	sourceHostAttribute, ok := attributes["source_host"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_host is missing from object`)
+
+		return nil, diags
+	}
+
+	sourceHostVal, ok := sourceHostAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_host expected to be basetypes.StringValue, was: %T`, sourceHostAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DecidedByImportedValue{
+		IdentityId: identityIdVal,
+		Login:      loginVal,
+		Name:       nameVal,
+		ProfileUrl: profileUrlVal,
+		SourceHost: sourceHostVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDecidedByImportedValueNull() DecidedByImportedValue {
+	return DecidedByImportedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDecidedByImportedValueUnknown() DecidedByImportedValue {
+	return DecidedByImportedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDecidedByImportedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DecidedByImportedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DecidedByImportedValue Attribute Value",
+				"While creating a DecidedByImportedValue value, a missing attribute value was detected. "+
+					"A DecidedByImportedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DecidedByImportedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DecidedByImportedValue Attribute Type",
+				"While creating a DecidedByImportedValue value, an invalid attribute value was detected. "+
+					"A DecidedByImportedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DecidedByImportedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DecidedByImportedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DecidedByImportedValue Attribute Value",
+				"While creating a DecidedByImportedValue value, an extra attribute value was detected. "+
+					"A DecidedByImportedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DecidedByImportedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	identityIdAttribute, ok := attributes["identity_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`identity_id is missing from object`)
+
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	identityIdVal, ok := identityIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`identity_id expected to be basetypes.StringValue, was: %T`, identityIdAttribute))
+	}
+
+	loginAttribute, ok := attributes["login"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`login is missing from object`)
+
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	loginVal, ok := loginAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`login expected to be basetypes.StringValue, was: %T`, loginAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	profileUrlAttribute, ok := attributes["profile_url"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`profile_url is missing from object`)
+
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	profileUrlVal, ok := profileUrlAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`profile_url expected to be basetypes.StringValue, was: %T`, profileUrlAttribute))
+	}
+
+	sourceHostAttribute, ok := attributes["source_host"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`source_host is missing from object`)
+
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	sourceHostVal, ok := sourceHostAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`source_host expected to be basetypes.StringValue, was: %T`, sourceHostAttribute))
+	}
+
+	if diags.HasError() {
+		return NewDecidedByImportedValueUnknown(), diags
+	}
+
+	return DecidedByImportedValue{
+		IdentityId: identityIdVal,
+		Login:      loginVal,
+		Name:       nameVal,
+		ProfileUrl: profileUrlVal,
+		SourceHost: sourceHostVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDecidedByImportedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DecidedByImportedValue {
+	object, diags := NewDecidedByImportedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDecidedByImportedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DecidedByImportedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDecidedByImportedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDecidedByImportedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDecidedByImportedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDecidedByImportedValueMust(DecidedByImportedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DecidedByImportedType) ValueType(ctx context.Context) attr.Value {
+	return DecidedByImportedValue{}
+}
+
+var _ basetypes.ObjectValuable = DecidedByImportedValue{}
+
+type DecidedByImportedValue struct {
+	IdentityId basetypes.StringValue `tfsdk:"identity_id"`
+	Login      basetypes.StringValue `tfsdk:"login"`
+	Name       basetypes.StringValue `tfsdk:"name"`
+	ProfileUrl basetypes.StringValue `tfsdk:"profile_url"`
+	SourceHost basetypes.StringValue `tfsdk:"source_host"`
+	state      attr.ValueState
+}
+
+func (v DecidedByImportedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["identity_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["login"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["profile_url"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["source_host"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.IdentityId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["identity_id"] = val
+
+		val, err = v.Login.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["login"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.ProfileUrl.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["profile_url"] = val
+
+		val, err = v.SourceHost.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["source_host"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DecidedByImportedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DecidedByImportedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DecidedByImportedValue) String() string {
+	return "DecidedByImportedValue"
+}
+
+func (v DecidedByImportedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"identity_id": basetypes.StringType{},
+		"login":       basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"profile_url": basetypes.StringType{},
+		"source_host": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"identity_id": v.IdentityId,
+			"login":       v.Login,
+			"name":        v.Name,
+			"profile_url": v.ProfileUrl,
+			"source_host": v.SourceHost,
+		})
+
+	return objVal, diags
+}
+
+func (v DecidedByImportedValue) Equal(o attr.Value) bool {
+	other, ok := o.(DecidedByImportedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.IdentityId.Equal(other.IdentityId) {
+		return false
+	}
+
+	if !v.Login.Equal(other.Login) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.ProfileUrl.Equal(other.ProfileUrl) {
+		return false
+	}
+
+	if !v.SourceHost.Equal(other.SourceHost) {
+		return false
+	}
+
+	return true
+}
+
+func (v DecidedByImportedValue) Type(ctx context.Context) attr.Type {
+	return DecidedByImportedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DecidedByImportedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"identity_id": basetypes.StringType{},
+		"login":       basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"profile_url": basetypes.StringType{},
+		"source_host": basetypes.StringType{},
 	}
 }
 

@@ -35,7 +35,7 @@ data "gitmoap_group_catalog_scorecards" "acme" {
 ### Optional
 
 - `enabled_only` (Boolean) Omit disabled scorecards
-- `include_inherited` (Boolean) Include ancestor scopes' scorecards. Defaults to true, because union inheritance is what makes a baseline a baseline
+- `include_inherited` (Boolean) Include ancestor scopes' scorecards. Defaults to true, because union inheritance is what makes a baseline a baseline — a listing showing only the scope's own rows would misreport what applies
 
 ### Read-Only
 

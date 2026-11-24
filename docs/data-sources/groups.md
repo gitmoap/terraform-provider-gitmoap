@@ -25,8 +25,8 @@ data "gitmoap_groups" "example" {
 
 ### Optional
 
-- `parent_group_id` (String) Filter by parent group ID (mutually exclusive with parent_group_path)
-- `parent_group_path` (String) Filter by parent group path (mutually exclusive with parent_group_id)
+- `parent_group_id` (String) List this group's subgroups (mutually exclusive with `parent_group_path`); without either, the top-level groups
+- `parent_group_path` (String) List the subgroups of the group at this path (mutually exclusive with `parent_group_id`)
 
 ### Read-Only
 

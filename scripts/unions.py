@@ -13,7 +13,8 @@ around it. So, before it runs:
 - A union of strings and an object becomes the object, with a value field for the strings:
   "disabled" is value = "disabled", and {"to": "done"} is to = "done".
 - A free-form object, or a union none of the above fits, becomes a string of JSON, set with
-  jsonencode().
+  jsonencode(). So does a union with a field Terraform has no name for, like a condition's
+  {"&&": [...]}.
 
 A rewritten schema carries MARK, saying how the provider translates its values: marker (a bool
 for an empty object), scalar_or_object (a value field for the strings), or json. The JSON of
@@ -23,6 +24,7 @@ everything else doesn't change, so it needs no translation.
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 
 MARK = "x-gitmoap-transform"
@@ -30,6 +32,8 @@ JSON_NOTE = "\n\nJSON: set it with `jsonencode()`."
 WAS = "x-gitmoap-was"  # what a JSON string was before: an empty object can still become a marker
 SCALARS = {"string", "integer", "number", "boolean"}
 ANNOTATIONS = ("description", "title", "examples", "example", "default", "format", "readOnly", "writeOnly", "deprecated")
+# A field name an attribute can have, and the provider can find in the JSON by that name.
+IDENTIFIER = re.compile(r"[a-z_][a-z0-9_]*")
 
 
 def schemas_in(doc: dict):
@@ -115,6 +119,14 @@ class Rewriter:
         kind = schema.get("type")
         return kind == "object" or (isinstance(kind, list) and "object" in kind)
 
+    def unnameable(self, variants: list) -> list[str]:
+        """The fields of object variants that no attribute could be named for, like "&&"."""
+        names = []
+        for variant in variants:
+            if self.kind(variant) == "object":
+                names += [name for name in self.parts(variant)[0] if not IDENTIFIER.fullmatch(name) and name not in names]
+        return names
+
     def tags(self, node) -> list | None:
         schema = self.deref(node)
         if "const" in schema and isinstance(schema["const"], str):
@@ -198,6 +210,9 @@ class Rewriter:
         if len(real) == 2 and not nullable and set(real_kinds) <= SCALARS and "string" in real_kinds:
             return  # and a string, or something that converts to one
         keep = {key: value for key, value in node.items() if key in ANNOTATIONS}
+        unnameable = self.unnameable(real)
+        if unnameable:
+            return self.fallback(node, f"Terraform has no name for its fields {', '.join(unnameable)}")
         if len(real) == 1:
             replacement, note, how = {"allOf": [real[0]]}, None, "one type"
         elif all(kind == "object" for kind in real_kinds):

@@ -100,3 +100,54 @@ func TestIsEmptyCollection(t *testing.T) {
 		}
 	}
 }
+
+// The outbound policy lists every service, and a configuration may set the mode of one: the state
+// keeps the services the reference names, in its order, or all of them when it names none.
+func TestKeepKeyed(t *testing.T) {
+	service := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"service": tftypes.String, "mode": tftypes.String}}
+	services := tftypes.List{ElementType: service}
+	object := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"services": services}}
+	r := &restResource{override: resourceOverride{KeyedLists: map[string]string{"services": "service"}}}
+	response := func() map[string]any {
+		return map[string]any{"services": []any{
+			map[string]any{"service": "ai_workspaces", "mode": "open"},
+			map[string]any{"service": "pipelines", "mode": "enforce"},
+		}}
+	}
+	planned := tftypes.NewValue(object, map[string]tftypes.Value{"services": tftypes.NewValue(services, []tftypes.Value{
+		tftypes.NewValue(service, map[string]tftypes.Value{"service": tftypes.NewValue(tftypes.String, "pipelines"), "mode": tftypes.NewValue(tftypes.String, tftypes.UnknownValue)}),
+	})})
+	got := response()
+	r.keepKeyed(got, planned)
+	if items := got["services"].([]any); len(items) != 1 || items[0].(map[string]any)["service"] != "pipelines" {
+		t.Errorf("with a plan naming pipelines: got %v", got["services"])
+	}
+	for name, reference := range map[string]tftypes.Value{
+		"null":    tftypes.NewValue(object, map[string]tftypes.Value{"services": tftypes.NewValue(services, nil)}),
+		"unknown": tftypes.NewValue(object, map[string]tftypes.Value{"services": tftypes.NewValue(services, tftypes.UnknownValue)}),
+	} {
+		got := response()
+		r.keepKeyed(got, reference)
+		if items := got["services"].([]any); len(items) != 2 {
+			t.Errorf("with %s services: kept %v, want both", name, items)
+		}
+	}
+}
+
+// An override's update-only attribute is set by an update right after creating, like a generated one.
+func TestOverrideUpdateOnly(t *testing.T) {
+	object := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"paused": tftypes.Bool, "events": tftypes.String}}
+	r := &restResource{
+		api:      resourceAPI{Update: &operation{Method: "PATCH", Path: "/x", Body: map[string]string{"events": "events"}}, UpdateOnly: []string{"events"}},
+		override: resourceOverride{UpdateOnly: []string{"paused"}},
+	}
+	plan := func(paused tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(object, map[string]tftypes.Value{"paused": paused, "events": tftypes.NewValue(tftypes.String, nil)})
+	}
+	if !r.setsUpdateOnly(plan(tftypes.NewValue(tftypes.Bool, true))) {
+		t.Error("paused set: want an update after creating")
+	}
+	if r.setsUpdateOnly(plan(tftypes.NewValue(tftypes.Bool, tftypes.UnknownValue))) {
+		t.Error("paused unknown: want no update after creating")
+	}
+}

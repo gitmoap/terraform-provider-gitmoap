@@ -76,14 +76,14 @@ func GroupsDataSourceSchema(ctx context.Context) schema.Schema {
 			"parent_group_id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by parent group ID (mutually exclusive with parent_group_path)",
-				MarkdownDescription: "Filter by parent group ID (mutually exclusive with parent_group_path)",
+				Description:         "List this group's subgroups (mutually exclusive with `parent_group_path`); without either, the top-level groups",
+				MarkdownDescription: "List this group's subgroups (mutually exclusive with `parent_group_path`); without either, the top-level groups",
 			},
 			"parent_group_path": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by parent group path (mutually exclusive with parent_group_id)",
-				MarkdownDescription: "Filter by parent group path (mutually exclusive with parent_group_id)",
+				Description:         "List the subgroups of the group at this path (mutually exclusive with `parent_group_id`)",
+				MarkdownDescription: "List the subgroups of the group at this path (mutually exclusive with `parent_group_id`)",
 			},
 		},
 		Description:         "List groups. Without a parent, lists top-level groups; with parent_group_id or parent_group_path (not both), lists that group's subgroups. Newest first, and only the groups the caller can see — public ones without signing in — so a page can hold fewer than limit groups while more remain (at most 100 per page). The token needs group:read.",
